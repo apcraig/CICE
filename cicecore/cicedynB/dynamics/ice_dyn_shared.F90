@@ -10,6 +10,7 @@
       module ice_dyn_shared
 
       use ice_kinds_mod
+      use ice_communicate, only: my_task, master_task
       use ice_constants, only: c0, c1, p01, p001
       use ice_blocks, only: nx_block, ny_block
       use ice_domain_size, only: max_blocks
@@ -100,7 +101,6 @@
       subroutine init_evp (dt)
 
       use ice_blocks, only: nx_block, ny_block
-      use ice_communicate, only: my_task, master_task
       use ice_constants, only: c0, c2, omega
       use ice_domain, only: nblocks
       use ice_domain_size, only: max_blocks
