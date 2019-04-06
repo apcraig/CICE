@@ -114,7 +114,7 @@ Table of namelist options
    "","``dumpfreq_n``", "integer", "frequency restart data is written", "1"
    "\*","``dump_last``", "true/false", "if true, write restart on last time step of simulation", ""
    "","", "", "**Model Output**", ""
-   "","``bfbflag``", "off/lsum4/lsum8/lsum16/ddpdd/reprosum", "global sum methods", "off"
+   "","``bfbflag``", "off/lsum4/lsum8/lsum16/reprosum", "global sum methods", "off"
    "\*","``diagfreq``", "integer", "frequency of diagnostic output in ``dt``", "24"
    "","", "*e.g.*, 10", "once every 10 time steps", ""
    "\*","``diag_type``", "``stdout``", "write diagnostic output to stdout", ""

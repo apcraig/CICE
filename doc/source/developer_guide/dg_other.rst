@@ -41,7 +41,8 @@ This is extremely unlikely to be bit-for-bit for different decompositions
 but is fast.  For CICE implemented in double precision, the differences in global sums
 for different decompositions should be at the roundoff level.
 
-lsum16 is a local sum computed with quadruple precision (16 byte) data and a scalar mpi allreduce.
+lsum16 is a local sum computed with quadruple precision (16 byte) data and a scalar mpi 
+allreduce.
 This is very likely to be bit-for-bit for different decompositions.  However,
 it should be noted that this implementation is not available or does not work
 properly with some compiler and some MPI implementation.  Support for quad precision 
@@ -53,11 +54,21 @@ it is used.
 
 reprosum is a fixed point method based on ordered double integer sums
 that requires two scalar reductions per global sum.  This is extremely likely to be bfb,
-but will be slightly more expensive than the lsum algorithms.  See :cite:`Mirin12`
+but will be slightly more expensive than the lsum algorithms.  See :cite:`Mirin12`.
+There is a reprosum
+mode where the algorithm with switch to the ddpdd method.  This happens if the 
+radix of real*8 and integer*8 is not the same.  If this happens with the ddpdd 
+code deprecated, the model will abort.  
 
 ddpdd is a parallel double-double algorithm using single scalar reduction.
 This is very likely to be bfb, but is not as fast or accurate as the reprosum
-implementation.  See :cite:`He01`
+implementation.  See :cite:`He01`.  The ddpdd algorithm has been deprecated 
+in this implementation, but
+can be recovered quickly if there is need.  To recover the ddpdd method, rename
+ice_shr_reprosums86.c.just_in_case to ice_shr_reprosum86.c and set the cpp
+SUPPORT_X86_REPROSUM_FIX.
+The ddpdd method was deprecated in part because ice_shr_reprosum86.c has a cpp
+called x86, and it's not entirely clear on which machines that cpp should be set.
 
 
 .. _addtimer:
