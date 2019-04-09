@@ -1349,16 +1349,11 @@ MODULE ice_reprosum
 
 !-----------------------------------------------------------------------
 
-#ifdef SUPPORT_X86_REPROSUM_FIX
-      call ice_shr_reprosumx86_fix_start (old_cw)
-#else
-! ---------------
-!     tcraig; Remove ice_shr_reprosum86 and add abort.
+#ifdef x86
+!     tcraig; Remove ice_shr_reprosum86 support for 80 bit extended precision.
 !     To revert, rename ice_shr_reprosumx86.c.just_in_case to ice_shr_reprosumx86.c,
-!     and set cpp SUPPORT_X86_REPROSUM_FIX
-! --------------
-      write(tmpstr,*) subname//' ERROR: deprecated to remove x86 FPU support'
-      call abort_ice(tmpstr,file=__FILE__,line=__LINE__)
+!     and turn on x86 cpp 
+      call ice_shr_reprosumx86_fix_start (old_cw)
 #endif
 
       if (first_time) then
@@ -1399,16 +1394,11 @@ MODULE ice_reprosum
          arr_gsum(ifld) = real(arr_gsum_dd(ifld))
       enddo
 
-#ifdef SUPPORT_X86_REPROSUM_FIX
-      call ice_shr_reprosumx86_fix_end (old_cw)
-#else
-! ---------------
-!     tcraig; Remove ice_shr_reprosum86 and add abort.
+#ifdef x86
+!     tcraig; Remove ice_shr_reprosum86 support for 80 bit extended precision.
 !     To revert, rename ice_shr_reprosumx86.c.just_in_case to ice_shr_reprosumx86.c,
-!     and set cpp SUPPORT_X86_REPROSUM_FIX
-! --------------
-      write(tmpstr,*) subname//' ERROR: deprecated to remove x86 FPU support'
-      call abort_ice(tmpstr,file=__FILE__,line=__LINE__)
+!     and turn on x86 cpp 
+      call ice_shr_reprosumx86_fix_end (old_cw)
 #endif
 
    end subroutine ice_reprosum_ddpdd

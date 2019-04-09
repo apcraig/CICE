@@ -13,14 +13,15 @@ Reproducible sums in the CICE diagnostics are set with the namelist `bfbflag`.
 CICE prognostics results do NOT depend on the global sum implementation.  The
 results are bit-for-bit identical with any `bfbflag`.  The `bfbflag` only impacts
 the results and performance of the global diagnostics written to the CICE
-log file.  For best performance, the off (or lsum8 which is equivalent) setting is recommended.
-This will probably not produce bit-for-bit results with different decompositions.
-For bit-for-bit results, the reprosum setting is recommended.  This should be
+log file.  For best performance, the `off` (or `lsum` which is equivalent) setting is recommended.
+This will probably not produce bit-for-bit results with different decompositions
+or processor counts.
+For bit-for-bit results, the `reprosum` setting is recommended.  This should be
 only slightly slower than the lsum8 implementation.
 
-Global sums of real types are not reproducible due to different order of operations of the
-sums of the individual data which introduced roundoff errors.  
-This is caused when the model data is laid out in different
+Global sums of real types are not reproducible when the sum is carried out in 
+different orders of operations, this introduces roundoff errors.
+Different order of operations is usually caused when the model data is laid out in different
 block decompositions or on different pe counts so the data is stored in memory
 in different orders.  Integer data should be bit-for-bit identical regardless of
 the order of operation of the sums.
@@ -29,19 +30,19 @@ The `bfbflag` namelist is a character string with several valid settings.
 The tradeoff in these settings is the likelihood for bit-for-bit results versus
 their cost.  The `bfbflag` settings are implemented as follows,
 
-off is the default and equivalent to lsum8.
+`off` is the default and equivalent to `lsum8`.
 
-lsum4 is a local sum computed with single precision (4 byte) data and a scalar mpi allreduce.
+`lsum4` is a local sum computed with single precision (4 byte) data and a scalar mpi allreduce.
 This is extremely unlikely to be bit-for-bit for different decompositions.
 This should generally not be used as the accuracy is very poor for a model
-implemented with double precision (8 byte) variables.
+implemented with double precision (8 byte) variables as CICE is.
 
-lsum8 is a local sum computed with double precision data and a scalar mpi allreduce.
+`lsum8` is a local sum computed with double precision data and a scalar mpi allreduce.
 This is extremely unlikely to be bit-for-bit for different decompositions
 but is fast.  For CICE implemented in double precision, the differences in global sums
 for different decompositions should be at the roundoff level.
 
-lsum16 is a local sum computed with quadruple precision (16 byte) data and a scalar mpi 
+`lsum16` is a local sum computed with quadruple precision (16 byte) data and a scalar mpi 
 allreduce.
 This is very likely to be bit-for-bit for different decompositions.  However,
 it should be noted that this implementation is not available or does not work
@@ -52,23 +53,24 @@ can be turned off with the cpp, NO_R16.  Otherwise, it is recommended that this
 option NOT be used or that results be carefully validated on any platform before
 it is used.
 
-reprosum is a fixed point method based on ordered double integer sums
+`reprosum` is a fixed point method based on ordered double integer sums
 that requires two scalar reductions per global sum.  This is extremely likely to be bfb,
 but will be slightly more expensive than the lsum algorithms.  See :cite:`Mirin12`.
 There is a reprosum
-mode where the algorithm with switch to the ddpdd method.  This happens if the 
-radix of real*8 and integer*8 is not the same.  If this happens with the ddpdd 
-code deprecated, the model will abort.  
+mode where the algorithm switches to the ddpdd method.  This happens if the 
+radix of real*8 and integer*8 is not the same because the reprosum algorithm is
+not valid in that case.
 
-ddpdd is a parallel double-double algorithm using single scalar reduction.
-This is very likely to be bfb, but is not as fast or accurate as the reprosum
-implementation.  See :cite:`He01`.  The ddpdd algorithm has been deprecated 
-in this implementation, but
-can be recovered quickly if there is need.  To recover the ddpdd method, rename
-ice_shr_reprosums86.c.just_in_case to ice_shr_reprosum86.c and set the cpp
-SUPPORT_X86_REPROSUM_FIX.
-The ddpdd method was deprecated in part because ice_shr_reprosum86.c has a cpp
-called x86, and it's not entirely clear on which machines that cpp should be set.
+`ddpdd` is a parallel double-double algorithm using single scalar reduction.
+This is very likely to be bfb, but is not as accurate as the reprosum
+implementation.  See :cite:`He01`.  The ddpdd algorithm depends on a 64 bit
+representation of doubles on the machine.  If extended 80 bit precision
+is implemented by the compiler, then the ddpdd results will be incorrect.  
+The ddpdd algorithm
+can be corrected in this case by setting the x86 cpp flag and renaming
+the ice_shr_reprosum86.c.just_in_case file to ice_shr_reprosum86.c.  In addition,
+if anyone finds hardware that requires the x86 flag to support 80 bit double
+arithmetic in the ddpdd algorithm, please alert the CICE-Consortium team.
 
 
 .. _addtimer:
