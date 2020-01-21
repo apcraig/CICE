@@ -30,7 +30,7 @@
       use ice_timers, only: ice_timer_start, ice_timer_stop, timer_readwrite, &
                             timer_bound
       use ice_arrays_column, only: oceanmixed_ice, restore_bgc
-      use ice_constants, only: c0, c1, c2, c3, c4, c5, c8, c10, c12, c15, c20, &
+      use ice_constants, only: c0, c1, c1p5, c2, c3, c4, c5, c8, c10, c12, c15, c20, &
                                c180, c360, c365, c1000, c3600
       use ice_constants, only: p001, p01, p1, p2, p25, p5, p6
       use ice_constants, only: cm_to_m
@@ -1629,7 +1629,7 @@
       ! atmo_boundary_layer, and are interpolated to the U grid later as 
       ! necessary.
       !-----------------------------------------------------------------
-           workx      = uatm(i,j) ! wind velocity, m/s
+           workx      = c1p5*uatm(i,j) ! wind velocity, m/s
            worky      = vatm(i,j)
            uatm (i,j) = workx*cos(ANGLET(i,j)) & ! convert to POP grid
                       + worky*sin(ANGLET(i,j))   ! note uatm, vatm, wind
