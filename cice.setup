@@ -1,6 +1,5 @@
 #!/bin/csh -f
 
-
 set ICE_SANDBOX = `pwd`
 set ICE_VERSION = unknown
 if (-e cicecore/version.txt) then
