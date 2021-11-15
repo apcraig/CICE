@@ -235,8 +235,8 @@
            f_snowfrac  = 'x', f_snowfracn  = 'x', &
            f_Tsfc      = 'm', f_aice       = 'm', &
            f_uvel      = 'm', f_vvel       = 'm', &
-           f_uvele     = 'x', f_vvele      = 'x', &
-           f_uveln     = 'x', f_vveln      = 'x', &
+           f_uvelE     = 'x', f_vvelE      = 'x', &
+           f_uvelN     = 'x', f_vvelN      = 'x', &
            f_uatm      = 'm', f_vatm       = 'm', &
            f_atmspd    = 'm', f_atmdir     = 'm', &
            f_fswup     = 'm', &
@@ -277,6 +277,18 @@
            f_strocnx   = 'm', f_strocny    = 'm', &
            f_strintx   = 'm', f_strinty    = 'm', &
            f_taubx     = 'm', f_tauby      = 'm', &
+           f_strairxN  = 'm', f_strairyN   = 'm', &
+           f_strtltxN  = 'm', f_strtltyN   = 'm', &
+           f_strcorxN  = 'm', f_strcoryN   = 'm', &
+           f_strocnxN  = 'm', f_strocnyN   = 'm', &
+           f_strintxN  = 'm', f_strintyN   = 'm', &
+           f_taubxN    = 'm', f_taubyN     = 'm', &
+           f_strairxE  = 'm', f_strairyE   = 'm', &
+           f_strtltxE  = 'm', f_strtltyE   = 'm', &
+           f_strcorxE  = 'm', f_strcoryE   = 'm', &
+           f_strocnxE  = 'm', f_strocnyE   = 'm', &
+           f_strintxE  = 'm', f_strintyE   = 'm', &
+           f_taubxE    = 'm', f_taubyE     = 'm', &
            f_strength  = 'm', &
            f_divu      = 'm', f_shear      = 'm', &
            f_sig1      = 'm', f_sig2       = 'm', &
@@ -386,8 +398,8 @@
            f_snowfrac,  f_snowfracn, &
            f_Tsfc,      f_aice     , &
            f_uvel,      f_vvel     , &
-!          f_uvele,     f_vvele    , &  ! for now, have this set from f_uvel, f_vvel
-!          f_uveln,     f_vveln    , &  ! for now, have this set from f_uvel, f_vvel
+           f_uvelE,     f_vvelE    , &
+           f_uvelN,     f_vvelN    , &
            f_uatm,      f_vatm     , &
            f_atmspd,    f_atmdir   , &
            f_fswup,     &
@@ -428,6 +440,18 @@
            f_strocnx,   f_strocny  , &
            f_strintx,   f_strinty  , &
            f_taubx,     f_tauby    , &
+           f_strairxN,  f_strairyN , &
+           f_strtltxN,  f_strtltyN , &
+           f_strcorxN,  f_strcoryN , &
+           f_strocnxN,  f_strocnyN , &
+           f_strintxN,  f_strintyN , &
+           f_taubxN,    f_taubyN   , &
+           f_strairxE,  f_strairyE , &
+           f_strtltxE,  f_strtltyE , &
+           f_strcorxE,  f_strcoryE , &
+           f_strocnxE,  f_strocnyE , &
+           f_strintxE,  f_strintyE , &
+           f_taubxE,    f_taubyE   , &
            f_strength,  &
            f_divu,      f_shear    , &
            f_sig1,      f_sig2     , &
@@ -561,8 +585,8 @@
            n_snowfrac   , n_snowfracn  , &
            n_Tsfc       , n_aice       , &
            n_uvel       , n_vvel       , &
-           n_uvele      , n_vvele      , &
-           n_uveln      , n_vveln      , &
+           n_uvelE      , n_vvelE      , &
+           n_uvelN      , n_vvelN      , &
            n_uatm       , n_vatm       , &
            n_atmspd     , n_atmdir     , &
            n_sice       , &
@@ -605,6 +629,18 @@
            n_strocnx    , n_strocny    , &
            n_strintx    , n_strinty    , &
            n_taubx      , n_tauby      , &
+           n_strairxN   , n_strairyN   , &
+           n_strtltxN   , n_strtltyN   , &
+           n_strcorxN   , n_strcoryN   , &
+           n_strocnxN   , n_strocnyN   , &
+           n_strintxN   , n_strintyN   , &
+           n_taubxN     , n_taubyN     , &
+           n_strairxE   , n_strairyE   , &
+           n_strtltxE   , n_strtltyE   , &
+           n_strcorxE   , n_strcoryE   , &
+           n_strocnxE   , n_strocnyE   , &
+           n_strintxE   , n_strintyE   , &
+           n_taubxE     , n_taubyE     , &
            n_strength   , &
            n_divu       , n_shear      , &
            n_sig1       , n_sig2       , &
