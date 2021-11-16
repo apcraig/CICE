@@ -134,7 +134,7 @@
           stressp_1, stressp_2, stressp_3, stressp_4, &
           stressm_1, stressm_2, stressm_3, stressm_4, &
           stress12_1, stress12_2, stress12_3, stress12_4
-      use ice_state, only: uvel, vvel, uvele, vvele, uveln, vveln, divu, shear
+      use ice_state, only: uvel, vvel, uvelE, vvelE, uvelN, vvelN, divu, shear
       use ice_grid, only: ULAT
 
       real (kind=dbl_kind), intent(in) :: &
@@ -167,10 +167,10 @@
          uvel(i,j,iblk) = c0    ! m/s
          vvel(i,j,iblk) = c0    ! m/s
          if (grid_system == 'CD') then ! extra velocity variables
-            uvele = c0
-            vvele = c0
-            uveln = c0
-            vveln = c0
+            uvelE = c0
+            vvelE = c0
+            uvelN = c0
+            vvelN = c0
          endif
 
          ! strain rates
@@ -1368,6 +1368,65 @@
 
       end subroutine strain_rates
 
+!=======================================================================
+
+! Compute strain rates at the T point
+!
+! author: JF Lemieux, ECCC
+! Nov 2021
+
+      subroutine strain_rates_T (nx_block,   ny_block, &
+                                 i,          j,        &
+                                 uvelE,      vvelE,    &
+                                 uvelN,      vvelN,    &
+                                 dxN,        dyE,      &
+                                 dxT,        dyT,      &
+                                 divT,       tensionT, &
+                                 shearT,     DeltaT    )
+
+      integer (kind=int_kind), intent(in) :: &
+         nx_block, ny_block    ! block dimensions
+         
+      integer (kind=int_kind) :: &
+         i, j                  ! indices
+         
+      real (kind=dbl_kind), dimension (nx_block,ny_block), intent(in) :: &
+         uvelE    , & ! x-component of velocity (m/s) at the E point
+         vvelE    , & ! y-component of velocity (m/s) at the N point
+         uvelN    , & ! x-component of velocity (m/s) at the E point
+         vvelN    , & ! y-component of velocity (m/s) at the N point
+         dxN      , & ! width of N-cell through the middle (m)
+         dyE      , & ! height of E-cell through the middle (m)
+         dxT      , & ! width of T-cell through the middle (m)
+         dyT          ! height of T-cell through the middle (m)
+         
+      real (kind=dbl_kind), intent(out):: &
+        divT, tensionT, shearT, DeltaT      ! strain rates at the T point
+         
+      character(len=*), parameter :: subname = '(strain_rates_T)'
+         
+      !-----------------------------------------------------------------
+      ! strain rates
+      ! NOTE these are actually strain rates * area  (m^2/s)
+      !-----------------------------------------------------------------
+
+      ! divergence  =  e_11 + e_22
+      divT     = dyE(i,j)*uvelE(i  ,j  ) - dyE(i-1,j)*uvelE(i-1,j  ) &
+               + dxN(i,j)*vvelN(i  ,j  ) - dxN(i,j-1)*vvelN(i  ,j-1)
+
+      ! tension strain rate  =  e_11 - e_22
+      tensionT = (dyT(i,j)**2)*(uvelE(i,j)/dyE(i,j) - uvelE(i-1,j)/dyE(i-1,j)) &
+               - (dxT(i,j)**2)*(vvelN(i,j)/dxN(i,j) - vvelN(i,j-1)/dxN(i,j-1))
+
+      ! shearing strain rate  =  2*e_12
+      shearT   = (dxT(i,j)**2)*(uvelN(i,j)/dxN(i,j) - uvelN(i,j-1)/dxN(i,j-1)) &
+               + (dyT(i,j)**2)*(vvelE(i,j)/dyE(i,j) - vvelE(i-1,j)/dyE(i-1,j))
+      
+      ! Delta (in the denominator of zeta, eta)
+      DeltaT = sqrt(divT**2 + e_factor*(tensionT**2 + shearT**2))
+
+    end subroutine strain_rates_T
+      
  !=======================================================================
  ! Computes viscous coefficients and replacement pressure for stress 
  ! calculations. Note that tensile strength is included here.
@@ -1448,6 +1507,63 @@
       
        end subroutine viscous_coeffs_and_rep_pressure
       
+
+ !=======================================================================
+ ! Computes viscous coefficients and replacement pressure for stress 
+ ! calculations. Note that tensile strength is included here.
+ !
+ ! Hibler, W. D. (1979). A dynamic thermodynamic sea ice model. J. Phys.
+ ! Oceanogr., 9, 817-846.
+ !
+ ! Konig Beatty, C. and Holland, D. M.  (2010). Modeling landfast ice by
+ ! adding tensile strength. J. Phys. Oceanogr. 40, 185-198.
+ !
+ ! Lemieux, J. F. et al. (2016). Improving the simulation of landfast ice
+ ! by combining tensile strength and a parameterization for grounded ridges.
+ ! J. Geophys. Res. Oceans, 121, 7354-7368.
+
+      subroutine viscous_coeffs_and_rep_pressure_T (strength, tinyarea, &
+                                                    Delta   , zetax2  , &
+                                                    etax2   , rep_prs , &
+                                                    capping)
+
+      real (kind=dbl_kind), intent(in)::  &
+        strength, tinyarea
+
+      real (kind=dbl_kind), intent(in)::  &
+        Delta
+
+      logical, intent(in):: capping
+
+      real (kind=dbl_kind), intent(out):: &
+        zetax2, etax2, rep_prs ! 2 x visous coeffs, replacement pressure
+
+      ! local variables
+      real (kind=dbl_kind) :: &
+        tmpcalc
+
+      character(len=*), parameter :: subname = '(viscous_coeffs_and_rep_pressure_T)'
+
+      ! NOTE: for comp. efficiency 2 x zeta and 2 x eta are used in the code
+
+!      if (trim(yield_curve) == 'ellipse') then
+
+      if (capping) then
+         tmpcalc = strength/max(Delta,tinyarea)
+      else
+         tmpcalc = strength/(Delta + tinyarea)
+      endif
+
+      zetax2 = (c1+Ktens)*tmpcalc
+      rep_prs = (c1-Ktens)*tmpcalc*Delta
+      etax2 = epp2i*zetax2
+
+!      else
+
+!      endif
+
+       end subroutine viscous_coeffs_and_rep_pressure_T
+
 !=======================================================================
 
 ! Load velocity components into array for boundary updates
