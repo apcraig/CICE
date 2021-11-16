@@ -5377,7 +5377,6 @@
 !=======================================================================
 !
       subroutine uniform_data(dir,spd)
-
 !     uniform wind fields in some direction
 
       use ice_domain, only: nblocks
@@ -5418,6 +5417,7 @@
          vatm = atm_val
       elseif (dir == 'E') then
          uatm = atm_val
+
          vatm = c0
       else
          call abort_ice (subname//'ERROR: dir unknown, dir = '//trim(dir), &
@@ -5490,7 +5490,6 @@
       endif
 
       end subroutine uniform_data_ocn
-
 !=======================================================================
 
       subroutine get_wave_spec
