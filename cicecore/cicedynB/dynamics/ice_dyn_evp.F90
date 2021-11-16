@@ -920,7 +920,8 @@
                              shear,      divu,       & 
                              rdg_conv,   rdg_shear   )
 
-        use ice_dyn_shared, only: strain_rates_T, viscous_coeffs_and_rep_pressure_T
+        use ice_dyn_shared, only: strain_rates_T, deformations_T, &
+                                  viscous_coeffs_and_rep_pressure_T
         
       integer (kind=int_kind), intent(in) :: & 
          nx_block, ny_block, & ! block dimensions
@@ -1019,32 +1020,23 @@
          stress12T(i,j) = (stress12T(i,j)*(c1-arlx1i*revp) + &
                             arlx1i*p5*etax2T*shearT) * denom1
 
-      !-----------------------------------------------------------------
-      ! for dF/dx (u momentum)
-      !-----------------------------------------------------------------
-
-
-      !-----------------------------------------------------------------
-      ! for dF/dy (v momentum)
-      !-----------------------------------------------------------------
-
       enddo                     ! ij
 
       !-----------------------------------------------------------------
       ! on last subcycle, save quantities for mechanical redistribution
       !-----------------------------------------------------------------
       if (ksub == ndte) then
-         ! TODO JFL
-!         call deformations (nx_block  , ny_block  , &
-!                            icellt    ,             &
-!                            indxti    , indxtj    , &
-!                            uvel      , vvel      , &
-!                            dxt       , dyt       , &
-!                            cxp       , cyp       , &
-!                            cxm       , cym       , &
-!                            tarear    ,             &
-!                            shear     , divu      , &
-!                            rdg_conv  , rdg_shear )
+
+         call deformations_T (nx_block  , ny_block  , &
+                              icellt    ,             &
+                              indxti    , indxtj    , &
+                              uvelE,      vvelE,      &
+                              uvelN,      vvelN,      &
+                              dxN,        dyE,        &
+                              dxT,        dyT,        &
+                              tarear    ,             &
+                              shear     , divu      , &
+                              rdg_conv  , rdg_shear )
 
       endif
 
