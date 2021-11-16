@@ -1299,7 +1299,7 @@
                                  shear,      divu,       &
                                  rdg_conv,   rdg_shear )
 
-      use ice_constants, only: p25, p5
+      use ice_constants, only: p5
 
       integer (kind=int_kind), intent(in) :: &
          nx_block, ny_block, & ! block dimensions
