@@ -26,8 +26,10 @@
       public :: init_dyn, set_evp_parameters, stepu, principal_stress, &
                 dyn_prep1, dyn_prep2, dyn_finish, &
                 seabed_stress_factor_LKD, seabed_stress_factor_prob, &
-                alloc_dyn_shared, deformations, strain_rates, &
+                alloc_dyn_shared, deformations, &
+                strain_rates, strain_rates_T, &
                 viscous_coeffs_and_rep_pressure, &
+                viscous_coeffs_and_rep_pressure_T, &
                 stack_velocity_field, unstack_velocity_field
 
       ! namelist parameters
@@ -1506,7 +1508,6 @@
 !      endif
       
        end subroutine viscous_coeffs_and_rep_pressure
-      
 
  !=======================================================================
  ! Computes viscous coefficients and replacement pressure for stress 
