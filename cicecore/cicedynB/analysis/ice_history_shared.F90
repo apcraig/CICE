@@ -277,18 +277,18 @@
            f_strocnx   = 'm', f_strocny    = 'm', &
            f_strintx   = 'm', f_strinty    = 'm', &
            f_taubx     = 'm', f_tauby      = 'm', &
-           f_strairxN  = 'm', f_strairyN   = 'm', &
-           f_strtltxN  = 'm', f_strtltyN   = 'm', &
-           f_strcorxN  = 'm', f_strcoryN   = 'm', &
-           f_strocnxN  = 'm', f_strocnyN   = 'm', &
-           f_strintxN  = 'm', f_strintyN   = 'm', &
-           f_taubxN    = 'm', f_taubyN     = 'm', &
-           f_strairxE  = 'm', f_strairyE   = 'm', &
-           f_strtltxE  = 'm', f_strtltyE   = 'm', &
-           f_strcorxE  = 'm', f_strcoryE   = 'm', &
-           f_strocnxE  = 'm', f_strocnyE   = 'm', &
-           f_strintxE  = 'm', f_strintyE   = 'm', &
-           f_taubxE    = 'm', f_taubyE     = 'm', &
+           f_strairxN  = 'x', f_strairyN   = 'x', &
+           f_strtltxN  = 'x', f_strtltyN   = 'x', &
+           f_strcorxN  = 'x', f_strcoryN   = 'x', &
+           f_strocnxN  = 'x', f_strocnyN   = 'x', &
+           f_strintxN  = 'x', f_strintyN   = 'x', &
+           f_taubxN    = 'x', f_taubyN     = 'x', &
+           f_strairxE  = 'x', f_strairyE   = 'x', &
+           f_strtltxE  = 'x', f_strtltyE   = 'x', &
+           f_strcorxE  = 'x', f_strcoryE   = 'x', &
+           f_strocnxE  = 'x', f_strocnyE   = 'x', &
+           f_strintxE  = 'x', f_strintyE   = 'x', &
+           f_taubxE    = 'x', f_taubyE     = 'x', &
            f_strength  = 'm', &
            f_divu      = 'm', f_shear      = 'm', &
            f_sig1      = 'm', f_sig2       = 'm', &
