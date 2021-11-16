@@ -920,7 +920,7 @@
                              shear,      divu,       & 
                              rdg_conv,   rdg_shear   )
 
-!        use ice_dyn_shared, only: strain_rates, deformations, viscous_coeffs_and_rep_pressure
+        use ice_dyn_shared, only: strain_rates_T, viscous_coeffs_and_rep_pressure_T
         
       integer (kind=int_kind), intent(in) :: & 
          nx_block, ny_block, & ! block dimensions
@@ -986,23 +986,23 @@
       ! NOTE these are actually strain rates * area  (m^2/s)
       !-----------------------------------------------------------------
 
-!         call strain_rates_T (nx_block,   ny_block,   &
-!                              i,          j,          &
-!                              uvelE,      vvelE,      &
-!                              uvelN,      vvelN,      &
-!                              dxN,        dyE,        &
-!                              dxT,        dyT,        &
-!                              divT,       tensionT,   &
-!                              shearT,     DeltaT      )
+         call strain_rates_T (nx_block,   ny_block,   &
+                              i,          j,          &
+                              uvelE,      vvelE,      &
+                              uvelN,      vvelN,      &
+                              dxN,        dyE,        &
+                              dxT,        dyT,        &
+                              divT,       tensionT,   &
+                              shearT,     DeltaT      )
 
       !-----------------------------------------------------------------
       ! viscous coefficients and replacement pressure at T point
       !-----------------------------------------------------------------
-         ! TODO JFL
-!         call viscous_coeffs_and_rep_pressure_T (strength(i,j),           &
-!                                                 tinyarea(i,j),           &
-!                                                 DeltaT, zetax2T, etax2T, &
-!                                                 rep_prsT, capping        )
+
+         call viscous_coeffs_and_rep_pressure_T (strength(i,j),           &
+                                                 tinyarea(i,j),           &
+                                                 DeltaT, zetax2T, etax2T, &
+                                                 rep_prsT, capping        )
          
       !-----------------------------------------------------------------
       ! the stresses                            ! kg/s^2
@@ -1027,7 +1027,6 @@
       !-----------------------------------------------------------------
       ! for dF/dy (v momentum)
       !-----------------------------------------------------------------
-
 
       enddo                     ! ij
 

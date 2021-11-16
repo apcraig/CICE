@@ -26,8 +26,10 @@
       public :: init_dyn, set_evp_parameters, stepu, principal_stress, &
                 dyn_prep1, dyn_prep2, dyn_finish, &
                 seabed_stress_factor_LKD, seabed_stress_factor_prob, &
-                alloc_dyn_shared, deformations, strain_rates, &
+                alloc_dyn_shared, deformations, &
+                strain_rates, strain_rates_T, &
                 viscous_coeffs_and_rep_pressure, &
+                viscous_coeffs_and_rep_pressure_T, &
                 stack_velocity_field, unstack_velocity_field
 
       ! namelist parameters
@@ -1506,6 +1508,62 @@
 !      endif
       
        end subroutine viscous_coeffs_and_rep_pressure
+
+    !=======================================================================
+ ! Computes viscous coefficients and replacement pressure for stress 
+ ! calculations. Note that tensile strength is included here.
+ !
+ ! Hibler, W. D. (1979). A dynamic thermodynamic sea ice model. J. Phys.
+ ! Oceanogr., 9, 817-846.
+ !
+ ! Konig Beatty, C. and Holland, D. M.  (2010). Modeling landfast ice by
+ ! adding tensile strength. J. Phys. Oceanogr. 40, 185-198.
+ !
+ ! Lemieux, J. F. et al. (2016). Improving the simulation of landfast ice
+ ! by combining tensile strength and a parameterization for grounded ridges.
+ ! J. Geophys. Res. Oceans, 121, 7354-7368.
+      
+       subroutine viscous_coeffs_and_rep_pressure_T (strength,            &
+                                                     tinyarea,            &
+                                                     Delta, zetax2, etax2,&
+                                                     rep_prs, capping)
+
+      real (kind=dbl_kind), intent(in)::  &
+        strength, tinyarea                  ! at T point
+        
+      real (kind=dbl_kind), intent(in)::  &  
+        Delta                               ! Delta deformation
+ 
+      logical , intent(in):: capping
+      
+      real (kind=dbl_kind), intent(out):: &
+        zetax2 , & ! 2 x zeta (visc coeff)
+        etax2  , & ! 2 x eta (visc coeff) 
+        rep_prs    ! replacement pressure at T point
+
+      ! local variables
+      real (kind=dbl_kind) :: &
+        tmpcalc
+
+      ! NOTE: for comp. efficiency 2 x zeta and 2 x eta are used in the code
+       
+!      if (trim(yield_curve) == 'ellipse') then
+
+      if (capping) then
+         tmpcalc = strength/max(Delta,tinyarea)
+      else
+         tmpcalc = strength/(Delta + tinyarea)
+      endif
+
+         zetax2 = (c1+Ktens)*tmpcalc
+         rep_prs = (c1-Ktens)*tmpcalc*Delta
+         etax2 = epp2i*zetax2
+         
+!      else
+
+!      endif
+      
+       end subroutine viscous_coeffs_and_rep_pressure_T
       
 !=======================================================================
 
