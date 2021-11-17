@@ -2577,13 +2577,6 @@
 
       if (trim(ice_ic) == 'default') then
 
-      !-----------------------------------------------------------------
-      ! Place ice where ocean surface is cold.
-      ! Note: If SST is not read from a file, then the ocean is assumed
-      !       to be at its freezing point everywhere, and ice will
-      !       extend to the prescribed edges.
-      !-----------------------------------------------------------------
-
          if (trim(ice_data_type) == 'box2001') then
 
             hbar = c2  ! initial ice thickness
@@ -2610,25 +2603,25 @@
          
          else
 
-      ! initial category areas in cells with ice
-         hbar = c3  ! initial ice thickness with greatest area
-                    ! Note: the resulting average ice thickness 
-                    ! tends to be less than hbar due to the
-                    ! nonlinear distribution of ice thicknesses 
-         sum = c0
-         do n = 1, ncat
-            if (n < ncat) then
-               hinit(n) = p5*(hin_max(n-1) + hin_max(n)) ! m
-            else                ! n=ncat
-               hinit(n) = (hin_max(n-1) + c1) ! m
-            endif
-            ! parabola, max at h=hbar, zero at h=0, 2*hbar
-            ainit(n) = max(c0, (c2*hbar*hinit(n) - hinit(n)**2))
-            sum = sum + ainit(n)
-         enddo
-         do n = 1, ncat
-            ainit(n) = ainit(n) / (sum + puny/ncat) ! normalize
-         enddo
+            ! initial category areas in cells with ice
+            hbar = c3  ! initial ice thickness with greatest area
+                       ! Note: the resulting average ice thickness 
+                       ! tends to be less than hbar due to the
+                       ! nonlinear distribution of ice thicknesses 
+            sum = c0
+            do n = 1, ncat
+               if (n < ncat) then
+                  hinit(n) = p5*(hin_max(n-1) + hin_max(n)) ! m
+               else                ! n=ncat
+                  hinit(n) = (hin_max(n-1) + c1) ! m
+               endif
+               ! parabola, max at h=hbar, zero at h=0, 2*hbar
+               ainit(n) = max(c0, (c2*hbar*hinit(n) - hinit(n)**2))
+               sum = sum + ainit(n)
+            enddo
+            do n = 1, ncat
+               ainit(n) = ainit(n) / (sum + puny/ncat) ! normalize
+            enddo
 
          endif ! ice_data_type
 
@@ -2664,7 +2657,13 @@
             
          else ! default behavior
 
-            ! place ice at high latitudes where ocean sfc is cold
+            !-----------------------------------------------------------------
+            ! Place ice where ocean surface is cold.
+            ! Note: If SST is not read from a file, then the ocean is assumed
+            !       to be at its freezing point everywhere, and ice will
+            !       extend to the prescribed edges.
+            !-----------------------------------------------------------------
+
             icells = 0
             do j = jlo, jhi
             do i = ilo, ihi
@@ -2672,7 +2671,7 @@
                   ! place ice in high latitudes where ocean sfc is cold
                   if ( (sst (i,j) <= Tf(i,j)+p2) .and. &
                        (TLAT(i,j) < edge_init_sh/rad_to_deg .or. &
-                       TLAT(i,j) > edge_init_nh/rad_to_deg) ) then
+                        TLAT(i,j) > edge_init_nh/rad_to_deg) ) then
                      icells = icells + 1
                      indxi(icells) = i
                      indxj(icells) = j
@@ -2725,9 +2724,10 @@
                   endif
                   vicen(i,j,n) = hinit(n) * aicen(i,j,n) ! m
 
-               else  ! default case. ice_data_type = uniform
+               else  ! default or uniform
 
                   vicen(i,j,n) = hinit(n) * ainit(n) ! m
+
                endif  ! ice_data_type
 
                vsnon(i,j,n) = min(aicen(i,j,n)*hsno_init,p2*vicen(i,j,n))

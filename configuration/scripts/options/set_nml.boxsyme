@@ -23,6 +23,7 @@ ktransport     = -1
 coriolis       = 'constant'
 atmbndy        = 'constant'
 atm_data_type  = 'uniform_east'
+ocn_data_type  = 'calm'
 ice_data_type  = 'uniform'
 calc_strair    = .false.
 rotate_wind    = .false.
