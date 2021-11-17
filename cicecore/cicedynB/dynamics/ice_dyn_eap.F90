@@ -134,9 +134,9 @@
           stressm_1, stressm_2, stressm_3, stressm_4, &
           stress12_1, stress12_2, stress12_3, stress12_4
       use ice_grid, only: tmask, umask, dxt, dyt, dxhy, dyhx, cxp, cyp, cxm, cym, &
-          tarear, uarear, grid_average_X2Y, grid_system
+          tarear, uarear, grid_average_X2Y!, grid_system commented out until implementation of cd-grid
       use ice_state, only: aice, vice, vsno, uvel, vvel, divu, shear, &
-          aice_init, aice0, aicen, vicen, strength, uvelE, vvelN
+          aice_init, aice0, aicen, vicen, strength !, uvelE, vvelN grid_system commented out until implementation of cd-grid
 !      use ice_timers, only: timer_dynamics, timer_bound, &
 !          ice_timer_start, ice_timer_stop, &
 !          timer_tmp1, timer_tmp2, timer_tmp3
