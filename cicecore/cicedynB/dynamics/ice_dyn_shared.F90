@@ -1018,15 +1018,19 @@
                                             icellt, indxti,   indxtj,    &
                                             icellu, indxui,   indxuj,    &
                                             aicen,  vicen,               &
-                                            hwater, Tbu)
+                                            hwater, Tbu,                 &
+                                            TbE,    TbN,                 &
+                                            icelle, indxei,   indxej,    &
+                                            icelln, indxni,   indxnj)
 ! use modules
         
       use ice_arrays_column, only: hin_max
       use ice_domain_size, only: ncat
+      use ice_grid, only: grid_neighbor_min, grid_neighbor_max
 
       integer (kind=int_kind), intent(in) :: &
            nx_block, ny_block, &  ! block dimensions
-           icellt, icellu         ! no. of cells where icetmask = 1
+           icellt, icellu         ! no. of cells where ice[tu]mask = 1
       
       integer (kind=int_kind), dimension (nx_block*ny_block), &
            intent(in) :: &
@@ -1043,7 +1047,21 @@
            vicen       ! partial volume for last thickness category in ITD (m)
       
       real (kind=dbl_kind), dimension (nx_block,ny_block), intent(inout) :: &
-           Tbu         ! seabed stress factor (N/m^2)
+           Tbu         ! seabed stress factor at U location (N/m^2)
+
+      real (kind=dbl_kind), dimension (nx_block,ny_block), intent(inout), optional :: &
+           TbE,      & ! seabed stress factor at E location (N/m^2)
+           TbN         ! seabed stress factor at N location (N/m^2)
+
+      integer (kind=int_kind), intent(in), optional :: &
+           icelle, icelln         ! no. of cells where ice[en]mask = 1
+
+      integer (kind=int_kind), dimension (nx_block*ny_block), &
+           intent(in), optional :: &
+           indxei  , & ! compressed index in i-direction
+           indxej  , & ! compressed index in j-direction
+           indxni  , & ! compressed index in i-direction
+           indxnj      ! compressed index in j-direction
 
 ! local variables 
 
@@ -1165,12 +1183,37 @@
          endif
       enddo
 
-      do ij = 1, icellu
-         i = indxui(ij)
-         j = indxuj(ij)
-         ! convert quantities to u-location            
-         Tbu(i,j)  = max(Tbt(i,j),Tbt(i+1,j),Tbt(i,j+1),Tbt(i+1,j+1))
-      enddo                     ! ij          
+      select case (trim(grid_system))
+         case('B')
+            do ij = 1, icellu
+               i = indxui(ij)
+               j = indxuj(ij)
+               ! convert quantities to U-location            
+               Tbu(i,j)  = grid_neighbor_max(Tbt, i, j, 'U')
+            enddo                     ! ij          
+         case('CD')
+            if(present(Tbe)    .and. present(TbN)    .and. &
+               present(icelle) .and. present(icelln) .and. &
+               present(indxei) .and. present(indxej) .and. &
+               present(indxni) .and. present(indxnj)) then
+
+                  do ij = 1, icelle
+                     i = indxei(ij)
+                     j = indxej(ij)
+                     ! convert quantities to E-location
+                     TbE(i,j)  = grid_neighbor_max(Tbt, i, j, 'E')
+                  enddo
+                  do ij = 1, icelln
+                     i = indxni(ij)
+                     j = indxnj(ij)
+                     ! convert quantities to N-location
+                     TbN(i,j)  = grid_neighbor_max(Tbt, i, j, 'N')
+                  enddo
+
+            else
+               call abort_ice(subname // ' insufficient number of arguments for grid_system:' // grid_system)
+            endif
+      end select
       
     end subroutine seabed_stress_factor_prob
       
