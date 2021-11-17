@@ -957,7 +957,7 @@
       integer (kind=int_kind) :: &
          i, j, ij
 
-      character(len=*), parameter :: subname = '(seabed1_stress_coeff)'
+      character(len=*), parameter :: subname = '(seabed_stress_factor_LKD)'
       
       do ij = 1, icellu
          i = indxui(ij)
