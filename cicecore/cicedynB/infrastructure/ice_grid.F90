@@ -107,6 +107,16 @@
          dxhy   , & ! 0.5*(HTE(i,j) - HTW(i,j)) = 0.5*(HTE(i,j) - HTE(i-1,j))
          dyhx       ! 0.5*(HTN(i,j) - HTS(i,j)) = 0.5*(HTN(i,j) - HTN(i,j-1)) 
 
+      real (kind=dbl_kind), dimension (:,:,:), allocatable, public :: &
+         bcue    , & ! dxe(i,j) / dxe(i+1,j)
+         bcun    , & ! dxn(i,j) / dxn(i+1,j)
+         bcve    , & ! dye(i,j) / dye(i,j+1)
+         bcvn    , & ! dyn(i,j) / dyn(i,j+1)
+         bcuer   , & !  1 / bcue
+         bcunr   , & !  1 / bcun
+         bcver   , & !  1 / bcve
+         bcvnr       !  1 / bcvn
+
       ! grid dimensions for rectangular grid
       real (kind=dbl_kind), public ::  &
          dxrect, & !  user_specified spacing (cm) in x-direction (uniform HTN)
@@ -254,6 +264,20 @@
          msw  (2,2,nx_block,ny_block,max_blocks), &
          stat=ierr)
       if (ierr/=0) call abort_ice(subname//'ERROR: Out of memory')
+
+      if (grid_system = 'CD') then
+         allocate( &
+            bcue (nx_block,ny_block,max_blocks), &
+            bcun (nx_block,ny_block,max_blocks), &
+            bcve (nx_block,ny_block,max_blocks), &
+            bcvn (nx_block,ny_block,max_blocks), &
+            bcuer(nx_block,ny_block,max_blocks), &
+            bcunr(nx_block,ny_block,max_blocks), &
+            bcver(nx_block,ny_block,max_blocks), &
+            bcvnr(nx_block,ny_block,max_blocks), &
+            stat=ierr)
+         if (ierr/=0) call abort_ice(subname//'ERROR: Out of memory')
+      endif
 
       if (pgl_global_ext) then
          allocate( &
@@ -501,6 +525,21 @@
             cxm(i,j,iblk) = -(c1p5*HTN(i,j-1,iblk) - p5*HTN(i,j,iblk)) 
          enddo
          enddo
+
+         if (grid_system = 'CD') then
+            do j = jlo, jhi
+            do i = ilo, ihi
+               bcue(i,j,iblk)  = dxe(i,j,iblk) / dxe(i+1,j,iblk)
+               bcun(i,j,iblk)  = dxn(i,j,iblk) / dxn(i+1,j,iblk)
+               bcve(i,j,iblk)  = dye(i,j,iblk) / dye(i,j+1,iblk)
+               bcvn(i,j,iblk)  = dyn(i,j,iblk) / dyn(i,j+1,iblk)
+               bcuer(i,j,iblk) = c1 / bcue(i,j,iblk)
+               bcunr(i,j,iblk) = c1 / bcun(i,j,iblk)
+               bcver(i,j,iblk) = c1 / bcve(i,j,iblk)
+               bcvnr(i,j,iblk) = c1 / bcvn(i,j,iblk)
+            enddo
+            enddo
+         endif
 
       enddo                     ! iblk
       !$OMP END PARALLEL DO
