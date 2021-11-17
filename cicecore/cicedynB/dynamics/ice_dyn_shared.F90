@@ -930,11 +930,12 @@
                                            icellu,                     &
                                            indxui,   indxuj,           &
                                            vice,     aice,             &
-                                           hwater,   Tbu)
+                                           hwater,   Tbu,              &
+                                           grid_location)
 
       integer (kind=int_kind), intent(in) :: &
          nx_block, ny_block, &  ! block dimensions
-         icellu                 ! no. of cells where icetmask = 1
+         icellu                 ! no. of cells where ice[uen]mask = 1
 
       integer (kind=int_kind), dimension (nx_block*ny_block), intent(in) :: &
          indxui   , & ! compressed index in i-direction
@@ -946,19 +947,32 @@
          hwater      ! water depth at tracer location (m)
 
       real (kind=dbl_kind), dimension (nx_block,ny_block), intent(inout) :: &
-         Tbu         ! seabed stress factor (N/m^2)
+         Tbu         ! seabed stress factor at 'grid_location' (N/m^2)
+
+      character(len=*), optional, intent(inout) :: &
+         grid_location    ! grid location (U, E, N), U assumed if not present
 
       real (kind=dbl_kind) :: &
-         au,  & ! concentration of ice at u location
-         hu,  & ! volume per unit area of ice at u location (mean thickness, m)
-         hwu, & ! water depth at u location (m)
-         hcu    ! critical thickness at u location (m)
+         au,  & ! concentration of ice at 'grid_location' 
+         hu,  & ! volume per unit area of ice at 'grid_location' (mean thickness, m)
+         hwu, & ! water depth at 'grid_location' (m)
+         hcu    ! critical thickness at 'grid_location' (m)
 
       integer (kind=int_kind) :: &
          i, j, ij
 
+      character(len=char_len) :: &
+         l_grid_location    ! local version of 'grid_location'
+
       character(len=*), parameter :: subname = '(seabed_stress_factor_LKD)'
       
+      ! Assume U location (NE corner) if grid_location not present
+      if (.not. (present(grid_location))) then
+         l_grid_location = 'U'
+      else
+         l_grid_location = grid_location
+      endif
+
       do ij = 1, icellu
          i = indxui(ij)
          j = indxuj(ij)
