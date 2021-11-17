@@ -134,9 +134,9 @@
           stressm_1, stressm_2, stressm_3, stressm_4, &
           stress12_1, stress12_2, stress12_3, stress12_4
       use ice_grid, only: tmask, umask, dxt, dyt, dxhy, dyhx, cxp, cyp, cxm, cym, &
-          tarear, uarear, grid_average_X2Y
+          tarear, uarear, grid_average_X2Y, grid_system
       use ice_state, only: aice, vice, vsno, uvel, vvel, divu, shear, &
-          aice_init, aice0, aicen, vicen, strength
+          aice_init, aice0, aicen, vicen, strength, uvelE, vvelN
 !      use ice_timers, only: timer_dynamics, timer_bound, &
 !          ice_timer_start, ice_timer_stop, &
 !          timer_tmp1, timer_tmp2, timer_tmp3
@@ -558,6 +558,10 @@
                            field_loc_NEcorner, field_type_vector)
       call grid_average_X2Y('U2TF',strocnxT)    ! shift
       call grid_average_X2Y('U2TF',strocnyT)
+      if (grid_system == 'CD') then
+          call grid_average_X2Y('E2UF',uvelE,uvel)
+          call grid_average_X2Y('N2UF',vvelN,vvel)
+      endif
 
       call ice_timer_stop(timer_dynamics)    ! dynamics
 
