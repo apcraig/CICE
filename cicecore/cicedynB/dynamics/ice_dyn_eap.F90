@@ -558,11 +558,14 @@
                            field_loc_NEcorner, field_type_vector)
       call grid_average_X2Y('U2TF',strocnxT)    ! shift
       call grid_average_X2Y('U2TF',strocnyT)
-      if (grid_system == 'CD') then
-          call grid_average_X2Y('E2UF',uvelE,uvel)
-          call grid_average_X2Y('N2UF',vvelN,vvel)
-      endif
-
+! shift velocity components from CD grid locations (N, E) to B grid location (U) for transport
+! commented out in order to focus on EVP for now within the cdgrid
+! should be used when routine is ready
+!      if (grid_system == 'CD') then
+!          call grid_average_X2Y('E2US',uvelE,uvel)
+!          call grid_average_X2Y('N2US',vvelN,vvel)
+!      endif
+!end comment out
       call ice_timer_stop(timer_dynamics)    ! dynamics
 
       end subroutine eap
