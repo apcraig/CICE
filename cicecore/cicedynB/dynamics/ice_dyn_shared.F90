@@ -1084,7 +1084,7 @@
       real (kind=dbl_kind) :: atot, x_kmax
       real (kind=dbl_kind) :: cut, rhoi, rhow, gravit, pi, puny
 
-      character(len=*), parameter :: subname = '(seabed2_stress_coeff)'
+      character(len=*), parameter :: subname = '(seabed_stress_factor_prob)'
 
       call icepack_query_parameters(rhow_out=rhow, rhoi_out=rhoi)
       call icepack_query_parameters(gravit_out=gravit)
