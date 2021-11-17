@@ -1220,7 +1220,7 @@
                               stressp,   stressm,     & 
                               stress12, &
                               F1, F2,               &
-                              grid_position)
+                              grid_location)
 
         use ice_dyn_shared, only: strain_rates_T, deformations_T, &
                                   viscous_coeffs_and_rep_pressure_T
@@ -1246,7 +1246,7 @@
          stress12     ! sigma12
 
       character(len=*), intent(in) :: &
-         grid_position ! E (East) or N (North) ! TO BE IMPROVED!!!!
+         grid_location ! E (East) or N (North) ! TO BE IMPROVED!!!!
       
       real (kind=dbl_kind), dimension (nx_block,ny_block), intent(out) :: &
          F1      , & ! div of stress tensor for u component
