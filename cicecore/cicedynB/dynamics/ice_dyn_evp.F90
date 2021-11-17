@@ -1270,8 +1270,9 @@
       ! F1,F2 : div of stress tensor for u,v components
       !-----------------------------------------------------------------
 
-         if (grid_location == 'E') then
-
+         select case (trim(grid_location))
+         case('E')
+            
             F1(i,j) = arear(i,j) * &
                  ( p5 * dyE_N(i,j) * ( stressp(i+1,j)-stressp(i,j) )       &
                  + (p5/dyE_N(i,j)) * ( (dyT_U(i+1,j)**2) * stressm(i+1,j)  &
@@ -1286,7 +1287,7 @@
                  + (c1/dyE_N(i,j)) * ( (dyT_U(i+1,j)**2) * stress12(i+1,j) &
                                       -(dyT_U(i,j)**2)*stress12(i,j) ) )
 
-         elseif (grid_location == 'N') then
+         case('N')
 
             F1(i,j) = arear(i,j) * &
                  ( p5 * dyE_N(i,j) * ( stressp(i,j)-stressp(i-1,j) )       &
@@ -1301,8 +1302,10 @@
                                       -(dxT_U(i,j)**2)*stressm(i,j) )      &
                  + (c1/dyE_N(i,j)) * ( (dyT_U(i,j)**2) * stress12(i,j)     &
                                       -(dyT_U(i-1,j)**2)*stress12(i-1,j) ) )
-            
-         endif
+         case default
+            call abort_ice(subname // ' unkwown grid_location: ' // grid_location)
+         end select
+         
 
       enddo                     ! ij
 
