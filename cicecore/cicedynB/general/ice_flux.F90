@@ -619,6 +619,10 @@
          strintxE    (nx_block,ny_block,max_blocks), & ! divergence of internal ice stress, x at E points (N/m^2)
          strintyE    (nx_block,ny_block,max_blocks), & ! divergence of internal ice stress, y at E points (N/m^2)
          iceemask   (nx_block,ny_block,max_blocks), & ! ice extent mask (E-cell)
+         fmE        (nx_block,ny_block,max_blocks), & ! Coriolis param. * mass in U-cell (kg/s)
+         TbE        (nx_block,ny_block,max_blocks), & ! factor for seabed stress (landfast ice)
+         fmN        (nx_block,ny_block,max_blocks), & ! Coriolis param. * mass in U-cell (kg/s)
+         TbN        (nx_block,ny_block,max_blocks), & ! factor for seabed stress (landfast ice)
          stat=ierr)
       if (ierr/=0) call abort_ice('(alloc_flux): Out of memory')
 
