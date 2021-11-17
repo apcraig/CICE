@@ -933,6 +933,8 @@
                                            hwater,   Tbu,              &
                                            grid_location)
 
+      use ice_grid, only: grid_neighbor_min, grid_neighbor_max
+
       integer (kind=int_kind), intent(in) :: &
          nx_block, ny_block, &  ! block dimensions
          icellu                 ! no. of cells where ice[uen]mask = 1
@@ -977,14 +979,14 @@
          i = indxui(ij)
          j = indxuj(ij)
 
-         ! convert quantities to u-location
+         ! convert quantities to grid_location
          
-         hwu = min(hwater(i,j),hwater(i+1,j),hwater(i,j+1),hwater(i+1,j+1))
+         hwu = grid_neighbor_min(hwater, i, j, l_grid_location)
 
          if (hwu < threshold_hw) then
          
-            au  = max(aice(i,j),aice(i+1,j),aice(i,j+1),aice(i+1,j+1))
-            hu  = max(vice(i,j),vice(i+1,j),vice(i,j+1),vice(i+1,j+1))
+            au  = grid_neighbor_max(aice, i, j, l_grid_location)
+            hu  = grid_neighbor_max(vice, i, j, l_grid_location)
 
             ! 1- calculate critical thickness
             hcu = au * hwu / k1
