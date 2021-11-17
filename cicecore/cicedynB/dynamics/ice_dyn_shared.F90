@@ -1563,7 +1563,100 @@
       DeltaT = sqrt(divT**2 + e_factor*(tensionT**2 + shearT**2))
 
     end subroutine strain_rates_T
+
+    subroutine strain_rates_U (nx_block,   ny_block, &
+                               i,          j,        &
+                               uvelE,      vvelE,    &
+                               uvelN,      vvelN,    &
+                               dxE,        dyN,      &
+                               dxU,        dyU,      &
+                               divU,       tensionU, &
+                               shearU,     DeltaU    )
+
+      integer (kind=int_kind), intent(in) :: &
+         nx_block, ny_block    ! block dimensions
+         
+      integer (kind=int_kind) :: &
+         i, j                  ! indices
+         
+      real (kind=dbl_kind), dimension (nx_block,ny_block), intent(in) :: &
+         uvelE    , & ! x-component of velocity (m/s) at the E point
+         vvelE    , & ! y-component of velocity (m/s) at the N point
+         uvelN    , & ! x-component of velocity (m/s) at the E point
+         vvelN    , & ! y-component of velocity (m/s) at the N point
+         dxN      , & ! width of N-cell through the middle (m)
+         dyE      , & ! height of E-cell through the middle (m)
+         dxT      , & ! width of T-cell through the middle (m)
+         dyT          ! height of T-cell through the middle (m)
+         
+      real (kind=dbl_kind), intent(out):: &
+         divU, tensionU, shearU, DeltaU      ! strain rates at the U point
+
+      ! local variables
+
+      real (kind=dbl_kind) :: &
+        uvelE_U   , & ! uvelE interpolated to U point
+        uvelN_U   , & ! uvelN interpolated to U point
+        uvelN_U   , & ! uvelN interpolated to U point
+        vvelN_U   , & ! vvelN interpolated to U point
+        bcuNip1j  , & ! see C-grid mom and stress design doc for details
+        bcuNij    , &
+        bcvEijp1  , &
+        bcvEij    , &
+        bcuEijp1  , &
+        bcuEij    , &
+        bcvNip1j  , &
+        bcuNij    , &
+        fact1     , &
+        fact2     , &
+        fact3     , &
+        fact4       &
+        
+        
+        ! TODO JFL
       
+      character(len=*), parameter :: subname = '(strain_rates_U)'
+         
+      !-----------------------------------------------------------------
+      ! strain rates
+      ! NOTE these are actually strain rates * area  (m^2/s)
+      !-----------------------------------------------------------------
+
+! fact1 = (npm(i,j) + npm(i+1,j))*npm(i,j)*bcunip1j      
+      
+      ! divergence  =  e_11 + e_22
+      divU = dyU(i,j) * ( uvelN(i+1,j)*npm(i+1,j) + fact1*uvelN(i,j) ) &
+           - dyU(i,j) * ( uvelN(i,j)*npm(i,j)   + fact2*uvelN(i+1,j) ) &
+           + uvelN_U  * uvm(i,j) * ( dyN(i+1,j) - dyN(i,j) )           &
+           + dxU(i,j) * (vvelE(i,j+1)*epm(i,j+1) + fact3*vvelE(i,j) )  &
+           - dxU(i,j) * (vvelE(i,j)*epm(i,j) + fact4*vvelE(i,j+1) )    &
+           + vvelE_U  * uvm(i,j) * ( dxE(i,j+1) - dxE(i,j) )
+
+! REUSE CALC FROM divU for tensionU
+      
+      ! tension strain rate  =  e_11 - e_22
+      tensionU = dyU(i,j) * ( uvelN(i+1,j)*npm(i+1,j) + fact1*uvelN(i,j) ) &
+               - dyU(i,j) * ( uvelN(i,j)*npm(i,j)   + fact2*uvelN(i+1,j) ) &
+               - uvelN_U  * uvm(i,j) * ( dyN(i+1,j) - dyN(i,j) )           &
+               - dxU(i,j) * (vvelE(i,j+1)*epm(i,j+1) + fact3*vvelE(i,j) )  &
+               + dxU(i,j) * (vvelE(i,j)*epm(i,j) + fact4*vvelE(i,j+1) )    &
+               + vvelE_U  * uvm(i,j) * ( dxE(i,j+1) - dxE(i,j) )
+
+! RECALC fact1 to fact4
+      
+      ! shearing strain rate  =  2*e_12
+      shearU = dxU(i,j) * ( uvelE(i,j+1)*epm(i,j+1) + fact1*uvelE(i,j) ) &
+             - dxU(i,j) * ( uvelE(i,j)*epm(i,j)   + fact2*uvelE(i,j+1) ) &
+             - uvelE_U  * uvm(i,j) * ( dxE(i,j+1) - dxE(i,j) )           &
+             + dyU(i,j) * (vvelN(i+1,j)*npm(i+1,j) + fact3*vvelN(i,j) )  &
+             - dyU(i,j) * (vvelN(i,j)*epm(i,j) + fact4*vvelN(i+1,j) )    &
+             + vvelN_U  * uvm(i,j) * ( dyN(i+1,j) - dyN(i,j) )
+            
+      ! Delta (in the denominator of zeta, eta)
+      DeltaU = sqrt(divU**2 + e_factor*(tensionU**2 + shearU**2))
+
+    end subroutine strain_rates_U
+    
  !=======================================================================
  ! Computes viscous coefficients and replacement pressure for stress 
  ! calculations. Note that tensile strength is included here.
