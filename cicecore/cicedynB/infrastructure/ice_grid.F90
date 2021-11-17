@@ -265,7 +265,7 @@
          stat=ierr)
       if (ierr/=0) call abort_ice(subname//'ERROR: Out of memory')
 
-      if (grid_system = 'CD') then
+      if (grid_system == 'CD') then
          allocate( &
             bcue (nx_block,ny_block,max_blocks), &
             bcun (nx_block,ny_block,max_blocks), &
@@ -526,7 +526,7 @@
          enddo
          enddo
 
-         if (grid_system = 'CD') then
+         if (grid_system == 'CD') then
             do j = jlo, jhi
             do i = ilo, ihi
                bcue(i,j,iblk)  = dxe(i,j,iblk) / dxe(i+1,j,iblk)
