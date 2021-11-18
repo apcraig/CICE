@@ -649,16 +649,11 @@
          call oned_data
       elseif (trim(atm_data_type) == 'box2001') then
          call box2001_data_atm
-      elseif (trim(atm_data_type) == 'uniform_northeast') then
-      ! dah: uniformm options included here to allow call to prepare_forcing
-      ! is prepare_forcing required? zlvl0 and precip options are set in prepare_forcing. 
-      !   call uniform_data_atm('NE')
-      elseif (trim(atm_data_type) == 'uniform_east') then
-      !   call uniform_data_atm('E')
-      elseif (trim(atm_data_type) == 'uniform_north') then
-      !   call uniform_data_atm('N')
       elseif (trim(atm_data_type) == 'hycom') then
          call hycom_atm_data
+      !elseif (trim(atm_data_type) == 'uniform_northeast') then
+      !elseif (trim(atm_data_type) == 'uniform_east') then
+      !elseif (trim(atm_data_type) == 'uniform_north') then
       else    ! default values set in init_flux
          return
       endif
@@ -5479,7 +5474,6 @@
          vatm = atm_val
       elseif (dir == 'E') then
          uatm = atm_val
-
          vatm = c0
       else
          call abort_ice (subname//'ERROR: dir unknown, dir = '//trim(dir), &

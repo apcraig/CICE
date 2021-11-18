@@ -2365,7 +2365,6 @@
                              vicen(:,:,  :,iblk), vsnon(:,:,  :,iblk), &
                              uvel (:,:,    iblk), vvel (:,:,    iblk))
 
-
       enddo                     ! iblk
       !$OMP END PARALLEL DO
 
@@ -2377,8 +2376,6 @@
                         vicen, vsnon, &
                         ntrcr, trcrn)
 
-      ! set_state_var defines uvel/vel on U-Grid
-      ! check for grid_system = 'CD' to generate CD-Grid and update halos
       if (trim(grid_system) == 'CD') then
 
          ! move from B-grid to CD-grid for boxslotcyl test 
@@ -2473,7 +2470,7 @@
 
       use ice_arrays_column, only: hin_max
       use ice_domain_size, only: nilyr, nslyr, nx_global, ny_global, ncat
-      use ice_grid, only: grid_type, grid_system, grid_average_X2Y
+      use ice_grid, only: grid_type
       use ice_forcing, only: ice_data_type
 
       integer (kind=int_kind), intent(in) :: &
@@ -2901,7 +2898,7 @@
       use ice_constants, only: c2, c12, p5, cm_to_m
       use ice_domain_size, only: nx_global, ny_global
       use ice_grid, only: dxrect
-      
+
       integer (kind=int_kind), intent(in) :: &
          i, j,               & ! local indices
          nx_block, ny_block, & ! block dimensions
@@ -2912,7 +2909,6 @@
          uvel, vvel            ! ice velocity
 
       ! local variables
-
       real (kind=dbl_kind) :: &
          pi             , & ! pi
          secday         , & ! seconds per day
