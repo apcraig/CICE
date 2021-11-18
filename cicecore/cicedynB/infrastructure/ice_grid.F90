@@ -108,14 +108,10 @@
          dyhx       ! 0.5*(HTN(i,j) - HTS(i,j)) = 0.5*(HTN(i,j) - HTN(i,j-1)) 
 
       real (kind=dbl_kind), dimension (:,:,:), allocatable, public :: &
-         bcue    , & ! dxe(i,j) / dxe(i+1,j)
-         bcun    , & ! dxn(i,j) / dxn(i+1,j)
-         bcve    , & ! dye(i,j) / dye(i,j+1)
-         bcvn    , & ! dyn(i,j) / dyn(i,j+1)
-         bcuer   , & !  1 / bcue
-         bcunr   , & !  1 / bcun
-         bcver   , & !  1 / bcve
-         bcvnr       !  1 / bcvn
+         ratiodye    , & ! dye(i,j) / dye(i,j+1)
+         ratiodxn    , & ! dxn(i,j) / dxn(i+1,j)
+         ratiodyer   , & !  1 / ratiodye
+         ratiodxnr       !  1 / ratiodxn
 
       ! grid dimensions for rectangular grid
       real (kind=dbl_kind), public ::  &
@@ -267,14 +263,10 @@
 
       if (grid_system == 'CD') then
          allocate( &
-            bcue (nx_block,ny_block,max_blocks), &
-            bcun (nx_block,ny_block,max_blocks), &
-            bcve (nx_block,ny_block,max_blocks), &
-            bcvn (nx_block,ny_block,max_blocks), &
-            bcuer(nx_block,ny_block,max_blocks), &
-            bcunr(nx_block,ny_block,max_blocks), &
-            bcver(nx_block,ny_block,max_blocks), &
-            bcvnr(nx_block,ny_block,max_blocks), &
+            ratiodxn (nx_block,ny_block,max_blocks), &
+            ratiodye (nx_block,ny_block,max_blocks), &
+            ratiodxnr(nx_block,ny_block,max_blocks), &
+            ratiodyer(nx_block,ny_block,max_blocks), &
             stat=ierr)
          if (ierr/=0) call abort_ice(subname//'ERROR: Out of memory')
       endif
@@ -529,14 +521,10 @@
          if (grid_system == 'CD') then
             do j = jlo, jhi
             do i = ilo, ihi
-               bcue(i,j,iblk)  = dxe(i,j,iblk) / dxe(i+1,j,iblk)
-               bcun(i,j,iblk)  = dxn(i,j,iblk) / dxn(i+1,j,iblk)
-               bcve(i,j,iblk)  = dye(i,j,iblk) / dye(i,j+1,iblk)
-               bcvn(i,j,iblk)  = dyn(i,j,iblk) / dyn(i,j+1,iblk)
-               bcuer(i,j,iblk) = c1 / bcue(i,j,iblk)
-               bcunr(i,j,iblk) = c1 / bcun(i,j,iblk)
-               bcver(i,j,iblk) = c1 / bcve(i,j,iblk)
-               bcvnr(i,j,iblk) = c1 / bcvn(i,j,iblk)
+               ratiodxn(i,j,iblk)  = dxn(i,j,iblk) / dxn(i+1,j,iblk)
+               ratiodye(i,j,iblk)  = dye(i,j,iblk) / dye(i,j+1,iblk)
+               ratiodxnr(i,j,iblk) = c1 / ratiodxn(i,j,iblk)
+               ratiodyer(i,j,iblk) = c1 / ratiodye(i,j,iblk)
             enddo
             enddo
          endif
