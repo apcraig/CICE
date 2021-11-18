@@ -738,19 +738,19 @@
       ! fluxes received from ocean
       !-----------------------------------------------------------------
 
-      ss_tltx(:,:,:) = c0              ! sea surface tilt (m/m)
-      ss_tlty(:,:,:) = c0
-      uocn   (:,:,:) = c0              ! surface ocean currents (m/s)
-      vocn   (:,:,:) = c0
-      ss_tltxN(:,:,:)= c0              ! sea surface tilt (m/m)
-      ss_tltyN(:,:,:)= c0
-      uocnN  (:,:,:) = c0              ! surface ocean currents (m/s)
-      vocnN  (:,:,:) = c0
-      frzmlt (:,:,:) = c0              ! freezing/melting potential (W/m^2)
-      ss_tltxE(:,:,:)= c0              ! sea surface tilt (m/m)
-      ss_tltyE(:,:,:)= c0
-      uocnE  (:,:,:) = c0              ! surface ocean currents (m/s)
-      vocnE  (:,:,:) = c0
+      ss_tltx (:,:,:) = c0              ! sea surface tilt (m/m)
+      ss_tlty (:,:,:) = c0
+      ss_tltxN(:,:,:) = c0              ! sea surface tilt (m/m)
+      ss_tltyN(:,:,:) = c0
+      ss_tltxE(:,:,:) = c0              ! sea surface tilt (m/m)
+      ss_tltyE(:,:,:) = c0
+      uocn    (:,:,:) = c0              ! surface ocean currents (m/s)
+      vocn    (:,:,:) = c0
+      uocnN   (:,:,:) = c0              ! surface ocean currents (m/s)
+      vocnN   (:,:,:) = c0
+      uocnE   (:,:,:) = c0              ! surface ocean currents (m/s)
+      vocnE   (:,:,:) = c0
+      frzml t (:,:,:) = c0              ! freezing/melting potential (W/m^2)
       frzmlt_init(:,:,:) = c0         ! freezing/melting potential (W/m^2)
       sss   (:,:,:) = 34.0_dbl_kind   ! sea surface salinity (ppt)
 
