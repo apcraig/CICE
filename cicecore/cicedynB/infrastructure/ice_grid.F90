@@ -108,8 +108,8 @@
          dyhx       ! 0.5*(HTN(i,j) - HTS(i,j)) = 0.5*(HTN(i,j) - HTN(i,j-1)) 
 
       real (kind=dbl_kind), dimension (:,:,:), allocatable, public :: &
-         ratiodye    , & ! dye(i,j) / dye(i,j+1)
-         ratiodxn    , & ! dxn(i,j) / dxn(i+1,j)
+         ratiodye    , & ! - dye(i,j) / dye(i,j+1)
+         ratiodxn    , & ! - dxn(i,j) / dxn(i+1,j)
          ratiodyer   , & !  1 / ratiodye
          ratiodxnr       !  1 / ratiodxn
 
@@ -521,10 +521,10 @@
          if (grid_system == 'CD') then
             do j = jlo, jhi
             do i = ilo, ihi
-               ratiodxn(i,j,iblk)  = dxn(i,j,iblk) / dxn(i+1,j,iblk)
-               ratiodye(i,j,iblk)  = dye(i,j,iblk) / dye(i,j+1,iblk)
-               ratiodxnr(i,j,iblk) = c1 / ratiodxn(i,j,iblk)
-               ratiodyer(i,j,iblk) = c1 / ratiodye(i,j,iblk)
+               ratiodxn (i,j,iblk) = - dxn(i,j,iblk) / dxn(i+1,j  ,iblk)
+               ratiodye (i,j,iblk) = - dye(i,j,iblk) / dye(i  ,j+1,iblk)
+               ratiodxnr(i,j,iblk) =   c1 / ratiodxn(i,j,iblk)
+               ratiodyer(i,j,iblk) =   c1 / ratiodye(i,j,iblk)
             enddo
             enddo
          endif
