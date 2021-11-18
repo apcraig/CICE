@@ -108,10 +108,10 @@
          dyhx       ! 0.5*(HTN(i,j) - HTS(i,j)) = 0.5*(HTN(i,j) - HTN(i,j-1)) 
 
       real (kind=dbl_kind), dimension (:,:,:), allocatable, public :: &
-         ratiodye    , & ! - dye(i,j) / dye(i,j+1)
-         ratiodxn    , & ! - dxn(i,j) / dxn(i+1,j)
-         ratiodyer   , & !  1 / ratiodye
-         ratiodxnr       !  1 / ratiodxn
+         ratiodxN    , & ! - dxn(i+1,j)   / dxn(i,j)
+         ratiodyE    , & ! - dye(i  ,j+1) / dye(i,j)
+         ratiodxNr   , & !   1 / ratiodxN
+         ratiodyEr       !   1 / ratiodyE
 
       ! grid dimensions for rectangular grid
       real (kind=dbl_kind), public ::  &
@@ -263,10 +263,10 @@
 
       if (grid_system == 'CD') then
          allocate( &
-            ratiodxn (nx_block,ny_block,max_blocks), &
-            ratiodye (nx_block,ny_block,max_blocks), &
-            ratiodxnr(nx_block,ny_block,max_blocks), &
-            ratiodyer(nx_block,ny_block,max_blocks), &
+            ratiodxN (nx_block,ny_block,max_blocks), &
+            ratiodyE (nx_block,ny_block,max_blocks), &
+            ratiodxNr(nx_block,ny_block,max_blocks), &
+            ratiodyEr(nx_block,ny_block,max_blocks), &
             stat=ierr)
          if (ierr/=0) call abort_ice(subname//'ERROR: Out of memory')
       endif
@@ -521,10 +521,10 @@
          if (grid_system == 'CD') then
             do j = jlo, jhi
             do i = ilo, ihi
-               ratiodxn (i,j,iblk) = - dxn(i,j,iblk) / dxn(i+1,j  ,iblk)
-               ratiodye (i,j,iblk) = - dye(i,j,iblk) / dye(i  ,j+1,iblk)
-               ratiodxnr(i,j,iblk) =   c1 / ratiodxn(i,j,iblk)
-               ratiodyer(i,j,iblk) =   c1 / ratiodye(i,j,iblk)
+               ratiodxN (i,j,iblk) = - dxn(i+1,j  ,iblk) / dxn(i,j,iblk)
+               ratiodyE (i,j,iblk) = - dye(i  ,j+1,iblk) / dye(i,j,iblk)
+               ratiodxNr(i,j,iblk) =   c1 / ratiodxn(i,j,iblk)
+               ratiodyEr(i,j,iblk) =   c1 / ratiodye(i,j,iblk)
             enddo
             enddo
          endif
