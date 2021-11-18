@@ -1572,14 +1572,18 @@
 ! author: JF Lemieux, ECCC
 ! Nov 2021
 
-      subroutine strain_rates_U (nx_block,   ny_block, &
-                                 i,          j,        &
-                                 uvelE,      vvelE,    &
-                                 uvelN,      vvelN,    &
-                                 dxN,        dyE,      &
-                                 dxT,        dyT,      &
-                                 divT,       tensionT, &
-                                 shearT,     DeltaT    )
+      subroutine strain_rates_U (nx_block,   ny_block,  &
+                                 i,          j,         &
+                                 uvelE,      vvelE,     &
+                                 uvelN,      vvelN,     &
+                                 uvelU,      vvelU,     &
+                                 dxE,        dyN,       &
+                                 dxU,        dyU,       &
+                                 ratiodxN,   ratiodxNr, &
+                                 ratiodyE,   ratiodyEr, &
+                                 epm,  npm,  uvm,       &
+                                 divU,       tensionU,  &
+                                 shearU,     DeltaU     )
 
       integer (kind=int_kind), intent(in) :: &
          nx_block, ny_block    ! block dimensions
@@ -1592,10 +1596,20 @@
          vvelE    , & ! y-component of velocity (m/s) at the N point
          uvelN    , & ! x-component of velocity (m/s) at the E point
          vvelN    , & ! y-component of velocity (m/s) at the N point
-         dxN      , & ! width of N-cell through the middle (m)
-         dyE      , & ! height of E-cell through the middle (m)
-         dxT      , & ! width of T-cell through the middle (m)
-         dyT          ! height of T-cell through the middle (m)
+         uvelU    , & ! x-component of velocity (m/s) interp. at U point
+         vvelU    , & ! y-component of velocity (m/s) interp. at U point
+         dxE      , & ! width of E-cell through the middle (m)
+         dyN      , & ! height of N-cell through the middle (m)
+         dxU      , & ! width of U-cell through the middle (m)
+         dyU      , & ! height of U-cell through the middle (m)
+         ratiodxN , & ! -dxN(i+1,j)/dxN(i,j) for BCs
+         ratiodxNr, & ! -dxN(i,j)/dxN(i+1,j) for BCs
+         ratiodyE , & ! -dyE(i,j+1)/dyE(i,j) for BCs
+         ratiodyEr, & ! -dyE(i,j)/dyE(i,j+1) for BCs
+         epm      , & ! E-cell mask
+         npm      , & ! E-cell mask
+         uvm          ! U-cell mask
+         
          
       real (kind=dbl_kind), intent(out):: &
         divU, tensionU, shearU, DeltaU      ! strain rates at the T point
