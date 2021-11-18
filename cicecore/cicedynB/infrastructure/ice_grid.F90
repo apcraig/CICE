@@ -1348,7 +1348,7 @@
 
             if (trim(kmt_type) == 'boxislands') then
 
-               call get_box_kmt(work_g1)
+               call grid_boxislands_kmt(work_g1)
 
             else ! default
 
@@ -1364,7 +1364,7 @@
 
             if (trim(kmt_type) == 'boxislands') then
 
-               call get_box_kmt(work_g1)
+               call grid_boxislands_kmt(work_g1)
 
             else ! default
 
@@ -1425,7 +1425,7 @@
       ! Assumes work array has been initialized to 1 (ocean) and north and
       ! south land boundaries have been applied (ew_boundary_type='cyclic')
 
-      subroutine get_box_kmt (work)
+      subroutine grid_boxislands_kmt (work)
 
       use ice_constants, only: c0, c1, c20
 
@@ -1435,7 +1435,7 @@
          i, j, k, & ! indices
          nxb, nyb   ! convenient cell-block sizes for building the mask
 
-      character(len=*), parameter :: subname = '(get_box_kmt)'
+      character(len=*), parameter :: subname = '(grid_boxislands_kmt)'
 
       ! number of cells in 5% of global grid x and y lengths
       nxb = int(real(nx_global, dbl_kind) / c20, int_kind)
@@ -1544,7 +1544,7 @@
          enddo
       enddo
 
-      end subroutine get_box_kmt
+      end subroutine grid_boxislands_kmt
 
 !=======================================================================
 

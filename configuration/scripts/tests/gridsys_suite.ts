@@ -9,9 +9,9 @@ smoke	       gbox80  1x1        boxsymne
 smoke	       gbox80  1x1        boxsymn,kmtislands
 smoke	       gbox80  1x1        boxsyme,kmtislands
 smoke	       gbox80  1x1        boxsymne,kmtislands
-smoke	       gbox80  1x1        boxislands_n
-smoke	       gbox80  1x1        boxislands_e
-smoke	       gbox80  1x1        boxislands_ne
+smoke	       gbox80  1x1        boxislandsn
+smoke	       gbox80  1x1        boxislandse
+smoke	       gbox80  1x1        boxislandsne
 smoke	       gbox80  1x1        boxadv
 
 
@@ -25,7 +25,7 @@ smoke	       gbox80  1x1        boxsymne,gridcd
 smoke	       gbox80  1x1        boxsymn,kmtislands,gridcd
 smoke	       gbox80  1x1        boxsyme,kmtislands,gridcd
 smoke	       gbox80  1x1        boxsymne,kmtislands,gridcd
-smoke	       gbox80  1x1        boxislands_n,gridcd
-smoke	       gbox80  1x1        boxislands_e,gridcd
-smoke	       gbox80  1x1        boxislands_ne,gridcd
+smoke	       gbox80  1x1        boxislandsn,gridcd
+smoke	       gbox80  1x1        boxislandse,gridcd
+smoke	       gbox80  1x1        boxislandsne,gridcd
 smoke	       gbox80  1x1        boxadv,gridcd
