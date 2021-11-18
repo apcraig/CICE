@@ -2134,13 +2134,16 @@
       subroutine init_state
 
       use ice_blocks, only: block, get_block, nx_block, ny_block
-      use ice_domain, only: nblocks, blocks_ice
+      use ice_domain, only: nblocks, blocks_ice, halo_info
       use ice_domain_size, only: ncat, nilyr, nslyr, n_iso, n_aero, nfsd
       use ice_flux, only: sst, Tf, Tair, salinz, Tmltz
-      use ice_grid, only: tmask, ULON, TLAT
+      use ice_grid, only: tmask, ULON, TLAT, grid_system, grid_average_X2Y
+      use ice_boundary, only: ice_HaloUpdate
+      use ice_constants, only: field_loc_Nface, field_loc_Eface, field_type_scalar
       use ice_state, only: trcr_depend, aicen, trcrn, vicen, vsnon, &
           aice0, aice, vice, vsno, trcr, aice_init, bound_state, &
-          n_trcr_strata, nt_strata, trcr_base, uvel, vvel
+          n_trcr_strata, nt_strata, trcr_base, uvel, vvel, &
+          uvelN, vvelN, uvelE, vvelE
 
       integer (kind=int_kind) :: &
          ilo, ihi    , & ! physical domain indices
@@ -2359,7 +2362,9 @@
                              salinz(:,:,:, iblk), Tmltz(:,:,:,  iblk), &
                              aicen(:,:,  :,iblk), trcrn(:,:,:,:,iblk), &
                              vicen(:,:,  :,iblk), vsnon(:,:,  :,iblk), &
-                             uvel (:,:,    iblk), vvel (:,:,    iblk))
+                             uvel (:,:,    iblk), vvel (:,:,    iblk), &
+                             uvelN(:,:,    iblk), vvelN(:,:,    iblk), &
+                             uvelE(:,:,    iblk), vvelE(:,:,    iblk))
 
       enddo                     ! iblk
       !$OMP END PARALLEL DO
@@ -2371,6 +2376,20 @@
       call bound_state (aicen,        &
                         vicen, vsnon, &
                         ntrcr, trcrn)
+
+      if (grid_system == 'CD') then
+         call ice_HaloUpdate(uvelN, halo_info, &
+                             field_loc_Nface, field_type_scalar)
+         call ice_HaloUpdate(vvelN, halo_info, &
+                             field_loc_Nface, field_type_scalar)
+         
+         call ice_HaloUpdate(uvelE, halo_info, &
+                             field_loc_Eface, field_type_scalar)
+         call ice_HaloUpdate(vvelE, halo_info, &
+                             field_loc_Eface, field_type_scalar)
+
+      endif
+
 
       !-----------------------------------------------------------------
       ! compute aggregate ice state and open water area
@@ -2437,11 +2456,13 @@
                                 salinz,   Tmltz, &
                                 aicen,    trcrn, &
                                 vicen,    vsnon, &
-                                uvel,     vvel)
+                                uvel,     vvel,  &
+                                uvelN,    vvelN, &
+                                uvelE,    vvelE)
 
       use ice_arrays_column, only: hin_max
       use ice_domain_size, only: nilyr, nslyr, nx_global, ny_global, ncat
-      use ice_grid, only: grid_type
+      use ice_grid, only: grid_type, grid_system, grid_average_X2Y
       use ice_forcing, only: ice_data_type
 
       integer (kind=int_kind), intent(in) :: &
@@ -2480,8 +2501,12 @@
                    ! 1: surface temperature of ice/snow (C)
 
       real (kind=dbl_kind), dimension (nx_block,ny_block), intent(out) :: &
-         uvel    , & ! ice velocity
-         vvel        ! 
+         uvel    , & ! ice velocity B grid
+         vvel    , & ! 
+         uvelN   , & ! ice velocity N grid
+         vvelN   , & ! 
+         uvelE   , & ! ice velocity E grid
+         vvelE       ! 
 
       ! local variables
 
@@ -2757,7 +2782,8 @@
             enddo               ! ij
          enddo                  ! ncat
          
-         ! velocity initialization for special tests
+         ! velocity initialization for special tests.
+         ! these velocites are defined on B-grid
          if (trim(ice_data_type) == 'boxslotcyl') then
             do j = 1, ny_block
             do i = 1, nx_block
@@ -2767,6 +2793,14 @@
                                         uvel,     vvel)
             enddo               ! j
             enddo               ! i
+
+            ! move from B-grid to CD-grid for testing
+            if (grid_system == 'CD') then
+               call grid_average_X2Y('U2NS',uvel,uvelN)
+               call grid_average_X2Y('U2NS',vvel,vvelN)
+               call grid_average_X2Y('U2ES',uvel,uvelE)
+               call grid_average_X2Y('U2ES',vvel,vvelE)
+            endif
          endif
       endif                     ! ice_ic
 
@@ -2869,7 +2903,7 @@
       use ice_constants, only: c2, c12, p5, cm_to_m
       use ice_domain_size, only: nx_global, ny_global
       use ice_grid, only: dxrect
-
+      
       integer (kind=int_kind), intent(in) :: &
          i, j,               & ! local indices
          nx_block, ny_block, & ! block dimensions
