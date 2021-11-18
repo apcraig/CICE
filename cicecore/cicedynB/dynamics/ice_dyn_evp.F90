@@ -266,7 +266,7 @@
          call grid_average_X2Y('T2EF',tmass,emass)
          call grid_average_X2Y('T2EF',aice_init, aie)
          call grid_average_X2Y('T2NF',tmass,nmass)
-         call grid_average_X2Y('T2NF',aice_init, aie)
+         call grid_average_X2Y('T2NF',aice_init, ain)
       endif
       !----------------------------------------------------------------
       ! Set wind stress to values supplied via NEMO or other forcing
