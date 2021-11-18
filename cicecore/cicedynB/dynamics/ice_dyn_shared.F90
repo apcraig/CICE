@@ -1612,7 +1612,7 @@
          
          
       real (kind=dbl_kind), intent(out):: &
-        divU, tensionU, shearU, DeltaU      ! strain rates at the T point
+        divU, tensionU, shearU, DeltaU      ! strain rates at the U point
 
       ! local variables
 
@@ -1627,11 +1627,11 @@
       !-----------------------------------------------------------------
 
       uNip1j = uvelN(i+1,j) * npm(i+1,j) &
-             +(npm(i,j)-npm(i+1,j)) * npm(i,j) * ratiodxN(i,j) * uvelN(i,j)
+             +(npm(i,j)-npm(i+1,j)) * npm(i,j)   * ratiodxN(i,j)  * uvelN(i,j)
       uNij   = uvelN(i,j) * npm(i,j) &
              +(npm(i+1,j)-npm(i,j)) * npm(i+1,j) * ratiodxNr(i,j) * uvelN(i+1,j)
       vEijp1 = vvelE(i,j+1) * epm(i,j+1) &
-             +(epm(i,j)-epm(i,j+1)) * epm(i,j) * ratiodyE(i,j) * vvelE(i,j)
+             +(epm(i,j)-epm(i,j+1)) * epm(i,j)   * ratiodyE(i,j)  * vvelE(i,j)
       vEij   = vvelE(i,j) * epm(i,j) &
              +(epm(i,j+1)-epm(i,j)) * epm(i,j+1) * ratiodyEr(i,j) * vvelE(i,j+1)
 
@@ -1650,11 +1650,11 @@
                + vvelU(i,j) * uvm(i,j) * ( dxE(i,j+1) - dxE(i,j) )
 
       uEijp1 = uvelE(i,j+1) * epm(i,j+1) &
-             +(epm(i,j)-epm(i,j+1)) * epm(i,j) * ratiodyE(i,j) * uvelE(i,j)
+             +(epm(i,j)-epm(i,j+1)) * epm(i,j)   * ratiodyE(i,j)  * uvelE(i,j)
       uEij   = uvelE(i,j) * epm(i,j) &
              +(epm(i,j+1)-epm(i,j)) * epm(i,j+1) * ratiodyEr(i,j) * uvelE(i,j+1)
       vNip1j = vvelN(i+1,j) * npm(i+1,j) &
-             +(npm(i,j)-npm(i+1,j)) * npm(i,j) * ratiodxN(i,j) * vvelN(i,j)
+             +(npm(i,j)-npm(i+1,j)) * npm(i,j)   * ratiodxN(i,j)  * vvelN(i,j)
       vNij   = vvelN(i,j) * npm(i,j) &
              +(npm(i+1,j)-npm(i,j)) * npm(i+1,j) * ratiodxNr(i,j) * vvelN(i+1,j)
                
