@@ -168,6 +168,10 @@
 
       real (kind=dbl_kind), allocatable :: fld2(:,:,:,:)
 
+      real (kind=dbl_kind), allocatable :: &
+         zetax2T  , & ! zetax2 = 2*zeta (bulk viscous coeff)
+         etax2T   , & ! etax2  = 2*eta  (shear viscous coeff)
+      
       real (kind=dbl_kind), dimension(nx_block,ny_block,8):: &
          strtmp       ! stress combinations for momentum equation
 
@@ -195,6 +199,13 @@
 
       allocate(fld2(nx_block,ny_block,2,max_blocks))
 
+      if (grid_system == 'CD') then
+
+         allocate(zetax2T(nx_block,ny_block,max_blocks))
+         allocate(etax2T(nx_block,ny_block,max_blocks))
+         
+      endif
+      
        ! This call is needed only if dt changes during runtime.
 !      call set_evp_parameters (dt)
 
@@ -724,6 +735,10 @@
       call ice_timer_stop(timer_evp_2d)
 
       deallocate(fld2)
+      if (grid_system == 'CD') then
+         deallocate(zetax2T, etax2T)
+      endif
+      
       if (maskhalo_dyn) call ice_HaloDestroy(halo_info_mask)
 
       ! Force symmetry across the tripole seam
@@ -1173,7 +1188,8 @@
                              dxN,        dyE,        &
                              dxT,        dyT,        &
                              tarear,     tinyarea,   & 
-                             strength,               & 
+                             strength,               &
+                             zetax2T,    etax2T,     &
                              stresspT,   stressmT,   & 
                              stress12T,              & 
                              shear,      divu,       & 
@@ -1206,6 +1222,8 @@
          tinyarea     ! puny*tarea
 
       real (kind=dbl_kind), dimension (nx_block,ny_block), intent(inout) :: &
+         zetax2T  , & ! zetax2 = 2*zeta (bulk viscous coeff)
+         etax2T   , & ! etax2  = 2*eta  (shear viscous coeff)
          stresspT , & ! sigma11+sigma22
          stressmT , & ! sigma11-sigma22
          stress12T   ! sigma12
@@ -1223,8 +1241,6 @@
 
       real (kind=dbl_kind) :: &
         divT, tensionT, shearT, DeltaT, & ! strain rates at T point
-        zetax2T ,                       & ! 2 x zeta (visc coeff) at T point
-        etax2T  ,                       & ! 2 x eta (visc coeff) at T point
         rep_prsT                          ! replacement pressure at T point
 
       logical :: capping ! of the viscous coef
@@ -1261,7 +1277,8 @@
 
          call viscous_coeffs_and_rep_pressure_T (strength(i,j),           &
                                                  tinyarea(i,j),           &
-                                                 DeltaT, zetax2T, etax2T, &
+                                                 DeltaT,                  &
+                                                 zetax2T(i,j),etax2T(i,j),&
                                                  rep_prsT, capping        )
          
       !-----------------------------------------------------------------
@@ -1319,6 +1336,7 @@
                              ratiodxN,   ratiodxNr, &
                              ratiodyE,   ratiodyEr, &
                              epm,  npm,  uvm,       &
+                             zetax2T,    etax2T,    &
                              stresspU,   stressmU,  & 
                              stress12U,             )
 
@@ -1351,7 +1369,9 @@
          ratiodyEr, & ! -dyE(i,j)/dyE(i,j+1) for BCs
          epm      , & ! E-cell mask
          npm      , & ! E-cell mask
-         uvm          ! U-cell mask
+         uvm      , & ! U-cell mask
+         zetax2T  , & ! 2*zeta at the T point
+         etax2T       ! 2*eta at the T point
       
       real (kind=dbl_kind), dimension (nx_block,ny_block), intent(inout) :: &
          stresspU , & ! sigma11+sigma22
@@ -1365,8 +1385,6 @@
 
       real (kind=dbl_kind) :: &
         divU, tensionU, shearU, DeltaU, & ! strain rates at U point
-!        zetax2T ,                       & ! 2 x zeta (visc coeff) at T point
-!        etax2T  ,                       & ! 2 x eta (visc coeff) at T point
         rep_prsU                          ! replacement pressure at U point
 
       character(len=*), parameter :: subname = '(stress_U)'
@@ -1397,15 +1415,17 @@
       ! viscous coefficients and replacement pressure at T point
       !-----------------------------------------------------------------
 
-         call viscous_coeffs_and_rep_pressure_U (zetax2T(i,j),    zetax2T(i,j+1), &
-                                                 zetax2T(i+1,j+1),zetax2T(i+1,j), &
-                                                 etax2T(i,j),     etax2T(i,j+1),  &
-                                                 etax2T(i+1,j+1), etax2T(i+1,j),  &
-                                                 hm(i,j),         hm(i,j+1),      &
-                                                 hm(i+1,j+1),     hm(i+1,j),      &
-                                                 tarea(i,j),      tarea(i,j+1),   &
-                                                 tarea(i+1,j+1),  tarea(i+1,j),   &
-                                                 DeltaU                          )
+! COMING SOON!!!
+         
+!         call viscous_coeffs_and_rep_pressure_U (zetax2T(i,j),    zetax2T(i,j+1), &
+!                                                 zetax2T(i+1,j+1),zetax2T(i+1,j), &
+!                                                 etax2T(i,j),     etax2T(i,j+1),  &
+!                                                 etax2T(i+1,j+1), etax2T(i+1,j),  &
+!                                                 hm(i,j),         hm(i,j+1),      &
+!                                                 hm(i+1,j+1),     hm(i+1,j),      &
+!                                                 tarea(i,j),      tarea(i,j+1),   &
+!                                                 tarea(i+1,j+1),  tarea(i+1,j),   &
+!                                                 DeltaU                          )
 
       !-----------------------------------------------------------------
       ! the stresses                            ! kg/s^2
