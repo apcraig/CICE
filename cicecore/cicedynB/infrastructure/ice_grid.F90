@@ -1444,6 +1444,10 @@
       if (nxb < 1 .or. nyb < 1) &
          call abort_ice(subname//'ERROR: requires larger grid size')
       
+      ! initialize work area as all ocean (c1). 
+      work(:,:) = c1
+
+      ! now add land points (c0)
       ! northeast triangle
       k = 0
       do j = ny_global, ny_global-3*nyb, -1
