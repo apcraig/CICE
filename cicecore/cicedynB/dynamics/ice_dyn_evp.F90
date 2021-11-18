@@ -1161,7 +1161,6 @@
 !=======================================================================
 
 ! Computes the strain rates and internal stress components for T points
-! Computes stress terms for the momentum equation
       
 ! author: JF Lemieux, ECCC
 ! Nov 2021      
@@ -1302,7 +1301,132 @@
 
     end subroutine stress_T
 
-    !=======================================================================
+!=======================================================================
+
+! Computes the strain rates and internal stress components for U points
+      
+! author: JF Lemieux, ECCC
+! Nov 2021      
+
+      subroutine stress_U   (nx_block,   ny_block,  & 
+                             ksub,       icellu,    & !!!!new 
+                             indxui,     indxuj,    &
+                             uvelE,      vvelE,     &
+                             uvelN,      vvelN,     &
+                             uvelU,      vvelU,     &
+                             dxE,        dyN,       &
+                             dxU,        dyU,       &
+                             ratiodxN,   ratiodxNr, &
+                             ratiodyE,   ratiodyEr, &
+                             epm,  npm,  uvm,       &
+                             stresspU,   stressmU,  & 
+                             stress12U,             )
+
+        use ice_dyn_shared, only: strain_rates_U, &
+                                  viscous_coeffs_and_rep_pressure_U
+        
+      integer (kind=int_kind), intent(in) :: & 
+         nx_block, ny_block, & ! block dimensions
+         ksub              , & ! subcycling step
+         icellu                ! no. of cells where iceumask = 1
+
+      integer (kind=int_kind), dimension (nx_block*ny_block), intent(in) :: &
+         indxui   , & ! compressed index in i-direction
+         indxuj       ! compressed index in j-direction
+
+      real (kind=dbl_kind), dimension (nx_block,ny_block), intent(in) :: &
+         uvelE    , & ! x-component of velocity (m/s) at the E point
+         vvelE    , & ! y-component of velocity (m/s) at the N point
+         uvelN    , & ! x-component of velocity (m/s) at the E point
+         vvelN    , & ! y-component of velocity (m/s) at the N point
+         uvelU    , & ! x-component of velocity (m/s) at the U point
+         vvelU    , & ! y-component of velocity (m/s) at the U point
+         dxE      , & ! width of E-cell through the middle (m)
+         dyN      , & ! height of N-cell through the middle (m)
+         dxU      , & ! width of U-cell through the middle (m)
+         dyU      , & ! height of U-cell through the middle (m)
+         ratiodxN , & ! -dxN(i+1,j)/dxN(i,j) for BCs
+         ratiodxNr, & ! -dxN(i,j)/dxN(i+1,j) for BCs
+         ratiodyE , & ! -dyE(i,j+1)/dyE(i,j) for BCs
+         ratiodyEr, & ! -dyE(i,j)/dyE(i,j+1) for BCs
+         epm      , & ! E-cell mask
+         npm      , & ! E-cell mask
+         uvm          ! U-cell mask
+      
+      real (kind=dbl_kind), dimension (nx_block,ny_block), intent(inout) :: &
+         stresspU , & ! sigma11+sigma22
+         stressmU , & ! sigma11-sigma22
+         stress12U    ! sigma12
+
+      ! local variables
+
+      integer (kind=int_kind) :: &
+         i, j, ij
+
+      real (kind=dbl_kind) :: &
+        divU, tensionU, shearU, DeltaU, & ! strain rates at U point
+!        zetax2T ,                       & ! 2 x zeta (visc coeff) at T point
+!        etax2T  ,                       & ! 2 x eta (visc coeff) at T point
+        rep_prsU                          ! replacement pressure at U point
+
+      character(len=*), parameter :: subname = '(stress_U)'
+
+      do ij = 1, icellunew !!!!!!!
+         i = indxti(ij)
+         j = indxtj(ij)
+
+      !-----------------------------------------------------------------
+      ! strain rates at T point
+      ! NOTE these are actually strain rates * area  (m^2/s)
+      !-----------------------------------------------------------------
+
+         call strain_rates_U (nx_block,   ny_block,   &
+                              i,          j,          &
+                              uvelE,      vvelE,     &
+                              uvelN,      vvelN,     &
+                              uvelU,      vvelU,     &
+                              dxE,        dyN,       &
+                              dxU,        dyU,       &
+                              ratiodxN,   ratiodxNr, &
+                              ratiodyE,   ratiodyEr, &
+                              epm,  npm,  uvm,       &
+                              divU,       tensionU,  &
+                              shearU,     DeltaU     )
+         
+      !-----------------------------------------------------------------
+      ! viscous coefficients and replacement pressure at T point
+      !-----------------------------------------------------------------
+
+         call viscous_coeffs_and_rep_pressure_U (zetax2T(i,j),    zetax2T(i,j+1), &
+                                                 zetax2T(i+1,j+1),zetax2T(i+1,j), &
+                                                 etax2T(i,j),     etax2T(i,j+1),  &
+                                                 etax2T(i+1,j+1), etax2T(i+1,j),  &
+                                                 hm(i,j),         hm(i,j+1),      &
+                                                 hm(i+1,j+1),     hm(i+1,j),      &
+                                                 tarea(i,j),      tarea(i,j+1),   &
+                                                 tarea(i+1,j+1),  tarea(i+1,j),   &
+                                                 DeltaU                          )
+
+      !-----------------------------------------------------------------
+      ! the stresses                            ! kg/s^2
+      !-----------------------------------------------------------------
+
+      ! NOTE: for comp. efficiency 2 x zeta and 2 x eta are used in the code 
+         
+         stresspU(i,j)  = (stresspU(i,j)*(c1-arlx1i*revp) + &
+                           arlx1i*(zetax2U*divU - rep_prsU)) * denom1
+
+         stressmU(i,j)  = (stressmU(i,j)*(c1-arlx1i*revp) + &
+                           arlx1i*etax2U*tensionU) * denom1
+
+         stress12U(i,j) = (stress12U(i,j)*(c1-arlx1i*revp) + &
+                            arlx1i*p5*etax2U*shearU) * denom1
+
+      enddo                     ! ij
+
+    end subroutine stress_U
+    
+!=======================================================================
 
 ! Computes divergence of stress tensor at the E or N point for the mom equation
       
