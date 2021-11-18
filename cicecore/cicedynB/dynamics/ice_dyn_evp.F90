@@ -420,21 +420,9 @@
                          uvelN      (:,:,iblk), vvelN      (:,:,iblk), &
                          TbN       (:,:,iblk))
 
-      enddo  ! iblk
-      !$TCXOMP END PARALLEL DO
-
-      !$TCXOMP PARALLEL DO PRIVATE(iblk,ilo,ihi,jlo,jhi,this_block)
-      do iblk = 1, nblocks
-
       !-----------------------------------------------------------------
       ! more preparation for dynamics on E grid
       !-----------------------------------------------------------------
-
-         this_block = get_block(blocks_ice(iblk),iblk)         
-         ilo = this_block%ilo
-         ihi = this_block%ihi
-         jlo = this_block%jlo
-         jhi = this_block%jhi
 
          call dyn_prep2 (nx_block,             ny_block,             & 
                          ilo, ihi,             jlo, jhi,             &
