@@ -38,6 +38,7 @@
       use ice_kinds_mod
       use ice_communicate, only: my_task, master_task
       use ice_constants, only: field_loc_center, field_loc_NEcorner, &
+          field_loc_Nface, field_loc_Eface, &
           field_type_scalar, field_type_vector
       use ice_constants, only: c0, p027, p055, p111, p166, &
           p222, p25, p333, p5, c1
