@@ -2139,6 +2139,7 @@
       use ice_flux, only: sst, Tf, Tair, salinz, Tmltz
       use ice_grid, only: tmask, ULON, TLAT, grid_system, grid_average_X2Y
       use ice_boundary, only: ice_HaloUpdate
+      use ice_forcing, only: ice_data_type
       use ice_constants, only: field_loc_Nface, field_loc_Eface, field_type_scalar
       use ice_state, only: trcr_depend, aicen, trcrn, vicen, vsnon, &
           aice0, aice, vice, vsno, trcr, aice_init, bound_state, &
@@ -2362,9 +2363,8 @@
                              salinz(:,:,:, iblk), Tmltz(:,:,:,  iblk), &
                              aicen(:,:,  :,iblk), trcrn(:,:,:,:,iblk), &
                              vicen(:,:,  :,iblk), vsnon(:,:,  :,iblk), &
-                             uvel (:,:,    iblk), vvel (:,:,    iblk), &
-                             uvelN(:,:,    iblk), vvelN(:,:,    iblk), &
-                             uvelE(:,:,    iblk), vvelE(:,:,    iblk))
+                             uvel (:,:,    iblk), vvel (:,:,    iblk))
+
 
       enddo                     ! iblk
       !$OMP END PARALLEL DO
@@ -2377,7 +2377,19 @@
                         vicen, vsnon, &
                         ntrcr, trcrn)
 
-      if (grid_system == 'CD') then
+      ! set_state_var defines uvel/vel on U-Grid
+      ! check for grid_system = 'CD' to generate CD-Grid and update halos
+      if (trim(grid_system) == 'CD') then
+
+         ! move from B-grid to CD-grid for boxslotcyl test 
+         if (trim(ice_data_type) == 'boxslotcyl') then 
+            call grid_average_X2Y('U2NS',uvel,uvelN)
+            call grid_average_X2Y('U2NS',vvel,vvelN)
+            call grid_average_X2Y('U2ES',uvel,uvelE)
+            call grid_average_X2Y('U2ES',vvel,vvelE)
+         endif
+         
+         ! Halo update on North, East faces
          call ice_HaloUpdate(uvelN, halo_info, &
                              field_loc_Nface, field_type_scalar)
          call ice_HaloUpdate(vvelN, halo_info, &
@@ -2456,9 +2468,8 @@
                                 salinz,   Tmltz, &
                                 aicen,    trcrn, &
                                 vicen,    vsnon, &
-                                uvel,     vvel,  &
-                                uvelN,    vvelN, &
-                                uvelE,    vvelE)
+                                uvel,     vvel)
+
 
       use ice_arrays_column, only: hin_max
       use ice_domain_size, only: nilyr, nslyr, nx_global, ny_global, ncat
@@ -2502,14 +2513,9 @@
 
       real (kind=dbl_kind), dimension (nx_block,ny_block), intent(out) :: &
          uvel    , & ! ice velocity B grid
-         vvel    , & ! 
-         uvelN   , & ! ice velocity N grid
-         vvelN   , & ! 
-         uvelE   , & ! ice velocity E grid
-         vvelE       ! 
+         vvel        ! 
 
       ! local variables
-
       integer (kind=int_kind) :: &
          i, j        , & ! horizontal indices
          ij          , & ! horizontal index, combines i and j loops
@@ -2793,14 +2799,6 @@
                                         uvel,     vvel)
             enddo               ! j
             enddo               ! i
-
-            ! move from B-grid to CD-grid for testing
-            if (grid_system == 'CD') then
-               call grid_average_X2Y('U2NS',uvel,uvelN)
-               call grid_average_X2Y('U2NS',vvel,vvelN)
-               call grid_average_X2Y('U2ES',uvel,uvelE)
-               call grid_average_X2Y('U2ES',vvel,vvelE)
-            endif
          endif
       endif                     ! ice_ic
 

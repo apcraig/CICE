@@ -2290,10 +2290,10 @@
          X2Y
 
       real (kind=dbl_kind), intent(inout) :: &
-         work1(nx_block,ny_block,max_blocks)
+         work1(:,:,:)
 
       real (kind=dbl_kind), intent(out), optional :: &
-         work2(nx_block,ny_block,max_blocks)
+         work2(:,:,:)
 
       ! local variables
 
@@ -2384,12 +2384,12 @@
          dir
 
       real (kind=dbl_kind), intent(in) :: &
-         work1(nx_block,ny_block,max_blocks), &
-         area1(nx_block,ny_block,max_blocks), &
-         mask1(nx_block,ny_block,max_blocks)
+         work1(:,:,:), &
+         area1(:,:,:), &
+         mask1(:,:,:)
 
       real (kind=dbl_kind), intent(out) :: &
-         work2(nx_block,ny_block,max_blocks)
+         work2(:,:,:)
 
       ! local variables
 
@@ -2615,12 +2615,12 @@
          dir
 
       real (kind=dbl_kind), intent(in) :: &
-         work1(nx_block,ny_block,max_blocks), &
-         area1(nx_block,ny_block,max_blocks), &
-         area2(nx_block,ny_block,max_blocks)
+         work1(:,:,:), &
+         area1(:,:,:), &
+         area2(:,:,:)
 
       real (kind=dbl_kind), intent(out) :: &
-         work2(nx_block,ny_block,max_blocks)
+         work2(:,:,:)
 
       ! local variables
 
