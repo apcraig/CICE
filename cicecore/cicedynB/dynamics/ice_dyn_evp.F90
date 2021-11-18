@@ -169,8 +169,8 @@
       real (kind=dbl_kind), allocatable :: fld2(:,:,:,:)
 
       real (kind=dbl_kind), allocatable :: &
-         zetax2T  , & ! zetax2 = 2*zeta (bulk viscous coeff)
-         etax2T   , & ! etax2  = 2*eta  (shear viscous coeff)
+         zetax2T(:,:,:), & ! zetax2 = 2*zeta (bulk viscous coeff)
+         etax2T(:,:,:)     ! etax2  = 2*eta  (shear viscous coeff)
       
       real (kind=dbl_kind), dimension(nx_block,ny_block,8):: &
          strtmp       ! stress combinations for momentum equation
@@ -1288,13 +1288,13 @@
       ! NOTE: for comp. efficiency 2 x zeta and 2 x eta are used in the code 
          
          stresspT(i,j)  = (stresspT(i,j)*(c1-arlx1i*revp) + &
-                           arlx1i*(zetax2T*divT - rep_prsT)) * denom1
+                           arlx1i*(zetax2T(i,j)*divT - rep_prsT)) * denom1
 
          stressmT(i,j)  = (stressmT(i,j)*(c1-arlx1i*revp) + &
-                           arlx1i*etax2T*tensionT) * denom1
+                           arlx1i*etax2T(i,j)*tensionT) * denom1
 
          stress12T(i,j) = (stress12T(i,j)*(c1-arlx1i*revp) + &
-                            arlx1i*p5*etax2T*shearT) * denom1
+                            arlx1i*p5*etax2T(i,j)*shearT) * denom1
 
       enddo                     ! ij
 
@@ -1338,10 +1338,10 @@
                              epm,  npm,  uvm,       &
                              zetax2T,    etax2T,    &
                              stresspU,   stressmU,  & 
-                             stress12U,             )
+                             stress12U             )
 
-        use ice_dyn_shared, only: strain_rates_U, &
-                                  viscous_coeffs_and_rep_pressure_U
+        use ice_dyn_shared, only: strain_rates_U!, &
+                             !     viscous_coeffs_and_rep_pressure_U
         
       integer (kind=int_kind), intent(in) :: & 
          nx_block, ny_block, & ! block dimensions
@@ -1385,13 +1385,13 @@
 
       real (kind=dbl_kind) :: &
         divU, tensionU, shearU, DeltaU, & ! strain rates at U point
-        rep_prsU                          ! replacement pressure at U point
+        zetax2U, etax2U, rep_prsU         ! replacement pressure at U point
 
       character(len=*), parameter :: subname = '(stress_U)'
 
-      do ij = 1, icellunew !!!!!!!
-         i = indxti(ij)
-         j = indxtj(ij)
+      do ij = 1, icellu !!!!WATCHOUT!!!!
+         i = indxui(ij)
+         j = indxuj(ij)
 
       !-----------------------------------------------------------------
       ! strain rates at T point
