@@ -1254,7 +1254,7 @@
          etax2T   , & ! etax2  = 2*eta  (shear viscous coeff)
          stresspT , & ! sigma11+sigma22
          stressmT , & ! sigma11-sigma22
-         stress12T   ! sigma12
+         stress12T    ! sigma12
 
       real (kind=dbl_kind), dimension (nx_block,ny_block), intent(inout) :: &
          shear    , & ! strain rate II component (1/s)
@@ -1340,7 +1340,7 @@
                               dxT,        dyT,        &
                               tarear    ,             &
                               shear     , divu      , &
-                              rdg_conv  , rdg_shear )
+                              rdg_conv  , rdg_shear   )
 
       endif
 
@@ -1354,7 +1354,7 @@
 ! Nov 2021      
 
       subroutine stress_U   (nx_block,   ny_block,  & 
-                             ksub,       icellu,    & !!!!new 
+                             ksub,       icellu,    &  
                              indxui,     indxuj,    &
                              uvelE,      vvelE,     &
                              uvelN,      vvelN,     &
@@ -1417,7 +1417,7 @@
 
       character(len=*), parameter :: subname = '(stress_U)'
 
-      do ij = 1, icellu !!!!WATCHOUT!!!!
+      do ij = 1, icellu
          i = indxui(ij)
          j = indxuj(ij)
 
