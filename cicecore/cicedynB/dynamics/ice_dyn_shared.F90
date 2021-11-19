@@ -968,7 +968,7 @@
          strocnx , & ! ice-ocean stress, x-direction
          strocny     ! ice-ocean stress, y-direction
 
-      real (kind=dbl_kind), dimension (nx_block,ny_block), intent(out) :: &
+      real (kind=dbl_kind), dimension (nx_block,ny_block), intent(out), optional :: &
          strocnxT, & ! ice-ocean stress, x-direction
          strocnyT    ! ice-ocean stress, y-direction
 
@@ -988,12 +988,16 @@
       if (icepack_warnings_aborted()) call abort_ice(error_message=subname, &
          file=__FILE__, line=__LINE__)
 
-      do j = 1, ny_block
-      do i = 1, nx_block
-         strocnxT(i,j) = c0
-         strocnyT(i,j) = c0
-      enddo
-      enddo
+      if (present(strocnxT)) then
+
+         do j = 1, ny_block
+         do i = 1, nx_block
+            strocnxT(i,j) = c0
+            strocnyT(i,j) = c0
+         enddo
+         enddo
+
+      endif
 
       ! ocean-ice stress for coupling
       do ij =1, icellu
@@ -1020,10 +1024,14 @@
 !         strocnx(i,j) = -(strairx(i,j) + strintx(i,j))
 !         strocny(i,j) = -(strairy(i,j) + strinty(i,j))
 
-         ! Prepare to convert to T grid
-         ! divide by aice for coupling
-         strocnxT(i,j) = strocnx(i,j) / aiu(i,j)
-         strocnyT(i,j) = strocny(i,j) / aiu(i,j)
+         if (present(strocnxT)) then
+
+            ! Prepare to convert to T grid
+            ! divide by aice for coupling
+            strocnxT(i,j) = strocnx(i,j) / aiu(i,j)
+            strocnyT(i,j) = strocny(i,j) / aiu(i,j)
+
+         endif
       enddo
 
       end subroutine dyn_finish
