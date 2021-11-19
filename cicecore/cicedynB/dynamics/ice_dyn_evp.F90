@@ -619,7 +619,8 @@
             !$TCXOMP PARALLEL DO PRIVATE(iblk,strtmp)
             do iblk = 1, nblocks
 
-!               if (trim(yield_curve) == 'ellipse') then
+               select case (grid_system)
+               case('B')
                   call stress (nx_block,             ny_block,             &
                                ksub,                 icellt(iblk),         &
                                indxti      (:,iblk), indxtj      (:,iblk), &
@@ -639,14 +640,10 @@
                                shear     (:,:,iblk), divu      (:,:,iblk), &
                                rdg_conv  (:,:,iblk), rdg_shear (:,:,iblk), &
                                strtmp    (:,:,:) )
-!               endif               ! yield_curve
 
          !-----------------------------------------------------------------
          ! momentum equation
          !-----------------------------------------------------------------
-
-               select case (grid_system)
-               case('B')
 
                   call stepu (nx_block,            ny_block,           &
                               icellu       (iblk), Cdn_ocn (:,:,iblk), &
@@ -666,7 +663,38 @@
 
                case('CD')
 
-                  call step_vel (nx_block,             ny_block,             &
+                  call stress_T (nx_block,             ny_block,             &
+                                 ksub,                 icellt(iblk),         &
+                                 indxti      (:,iblk), indxtj      (:,iblk), &
+                                 uvelE     (:,:,iblk), vvelE     (:,:,iblk), &
+                                 uvelN     (:,:,iblk), vvelN     (:,:,iblk), &
+                                 dxN       (:,:,iblk), dyE       (:,:,iblk), &
+                                 dxT       (:,:,iblk), dyT       (:,:,iblk), &
+                                 tarear    (:,:,iblk), tinyarea  (:,:,iblk), &
+                                 strength  (:,:,iblk),                       &                                 
+                                 zetax2T   (:,:,iblk), etax2T    (:,:,iblk), &
+                                 stresspT  (:,:,iblk), stressmT  (:,:,iblk), &
+                                 stress12T (:,:,iblk),                       &
+                                 shear     (:,:,iblk), divu      (:,:,iblk), &
+                                 rdg_conv  (:,:,iblk), rdg_shear (:,:,iblk)  )
+
+                  call stress_U (nx_block,             ny_block,             &
+                                 ksub,                 icellu(iblk),         &
+                                 indxui      (:,iblk), indxuj      (:,iblk), &
+                                 uvelE     (:,:,iblk), vvelE     (:,:,iblk), &
+                                 uvelN     (:,:,iblk), vvelN     (:,:,iblk), &
+                                 uvel      (:,:,iblk), vvel      (:,:,iblk), &
+                                 dxE       (:,:,iblk), dyN       (:,:,iblk), &
+                                 dxU       (:,:,iblk), dyU       (:,:,iblk), &
+                                 ratiodxN  (:,:,iblk), ratiodxNr (:,:,iblk), &
+                                 ratiodyE  (:,:,iblk), ratiodyEr (:,:,iblk), &
+                                 epm       (:,:,iblk), npm       (:,:,iblk), &
+                                 uvm       (:,:,iblk),                       &                                 
+                                 zetax2T   (:,:,iblk), etax2T    (:,:,iblk), &
+                                 stresspU  (:,:,iblk), stressmU  (:,:,iblk), &
+                                 stress12U (:,:,iblk))                       
+                  
+                  call step_vel (nx_block,             ny_block,             & ! E point
                                  icelle        (iblk), Cdn_ocn   (:,:,iblk), &
                                  indxei      (:,iblk), indxej      (:,iblk), &
                                  ksub,                 aiE       (:,:,iblk), &
@@ -680,7 +708,7 @@
                                  uvelE     (:,:,iblk), vvelE     (:,:,iblk), &
                                  TbE       (:,:,iblk))
 
-                  call step_vel (nx_block,             ny_block,             &
+                  call step_vel (nx_block,             ny_block,             & ! N point
                                  icelln        (iblk), Cdn_ocn   (:,:,iblk), &
                                  indxni      (:,iblk), indxnj      (:,iblk), &
                                  ksub,                 aiN       (:,:,iblk), &
@@ -693,7 +721,6 @@
                                  uvelN_init(:,:,iblk), vvelN_init(:,:,iblk), &
                                  uvelN     (:,:,iblk), vvelN     (:,:,iblk), &
                                  TbN       (:,:,iblk))
-
 
                end select
 
@@ -1338,7 +1365,7 @@
                              epm,  npm,  uvm,       &
                              zetax2T,    etax2T,    &
                              stresspU,   stressmU,  & 
-                             stress12U             )
+                             stress12U              )
 
         use ice_dyn_shared, only: strain_rates_U!, &
                              !     viscous_coeffs_and_rep_pressure_U
@@ -1398,8 +1425,8 @@
       ! NOTE these are actually strain rates * area  (m^2/s)
       !-----------------------------------------------------------------
 
-         call strain_rates_U (nx_block,   ny_block,   &
-                              i,          j,          &
+         call strain_rates_U (nx_block,   ny_block,  &
+                              i,          j,         &
                               uvelE,      vvelE,     &
                               uvelN,      vvelN,     &
                               uvelU,      vvelU,     &
