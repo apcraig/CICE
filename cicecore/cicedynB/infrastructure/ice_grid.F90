@@ -2859,7 +2859,7 @@
          case('N')
             mini = min(field(i,j), field(i,j+1))
          case default
-            call abort_ice(subname // ' unkwown grid_location: ' // grid_location)
+            call abort_ice(subname // ' unknown grid_location: ' // grid_location)
       end select
 
       end function grid_neighbor_min
@@ -2891,7 +2891,7 @@
          case('N')
             maxi = max(field(i,j), field(i,j+1))
          case default
-            call abort_ice(subname // ' unkwown grid_location: ' // grid_location)
+            call abort_ice(subname // ' unknown grid_location: ' // grid_location)
       end select
 
       end function grid_neighbor_max

@@ -1621,7 +1621,7 @@
                  + (c1/dyE_N(i,j)) * ( (dyT_U(i,j)**2) * stress12(i,j)     &
                                       -(dyT_U(i-1,j)**2)*stress12(i-1,j) ) )
          case default
-            call abort_ice(subname // ' unkwown grid_location: ' // grid_location)
+            call abort_ice(subname // ' unknown grid_location: ' // grid_location)
          end select
          
 
