@@ -99,7 +99,8 @@
           stresspT, stressmT, stress12T, &
           stresspU, stressmU, stress12U
       use ice_grid, only: tmask, umask, nmask, emask, uvm, epm, npm, &
-          dxe, dxn, dxt, dye, dyn, dyt, &
+          dxe, dxn, dxt, dxu, dye, dyn, dyt, dyu, &
+          ratiodxN, ratiodxNr, ratiodyE, ratiodyEr, & 
           dxhy, dyhx, cxp, cyp, cxm, cym, &
           tarear, uarear, tinyarea, grid_average_X2Y, &
           grid_type, grid_system
