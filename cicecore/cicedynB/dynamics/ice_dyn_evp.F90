@@ -98,7 +98,8 @@
           stress12_1, stress12_2, stress12_3, stress12_4, &
           stresspT, stressmT, stress12T, &
           stresspU, stressmU, stress12U
-      use ice_grid, only: tmask, umask, nmask, emask, dxt, dyt, &
+      use ice_grid, only: tmask, umask, nmask, emask, uvm, epm, npm, &
+          dxe, dxn, dxt, dye, dyn, dyt, &
           dxhy, dyhx, cxp, cyp, cxm, cym, &
           tarear, uarear, tinyarea, grid_average_X2Y, &
           grid_type, grid_system
@@ -671,7 +672,7 @@
                                  dxN       (:,:,iblk), dyE       (:,:,iblk), &
                                  dxT       (:,:,iblk), dyT       (:,:,iblk), &
                                  tarear    (:,:,iblk), tinyarea  (:,:,iblk), &
-                                 strength  (:,:,iblk),                       &                                 
+                                 strength  (:,:,iblk),                       &
                                  zetax2T   (:,:,iblk), etax2T    (:,:,iblk), &
                                  stresspT  (:,:,iblk), stressmT  (:,:,iblk), &
                                  stress12T (:,:,iblk),                       &
