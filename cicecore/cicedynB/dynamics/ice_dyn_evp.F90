@@ -695,6 +695,32 @@
                                  zetax2T   (:,:,iblk), etax2T    (:,:,iblk), &
                                  stresspU  (:,:,iblk), stressmU  (:,:,iblk), &
                                  stress12U (:,:,iblk))                       
+
+                  call div_stress (nx_block,             ny_block,             & ! E point
+                                   ksub,                 icelle(iblk),         &
+                                   indxei      (:,iblk), indxej      (:,iblk), &
+                                   dxE       (:,:,iblk), dyE       (:,:,iblk), &
+                                   dxU       (:,:,iblk), dyT       (:,:,iblk), &
+                                   earear    (:,:,iblk),                       &
+                                   stresspT  (:,:,iblk), stressmT  (:,:,iblk), &
+                                   stress12U (:,:,iblk),                       &
+                                   stresspU  (:,:,iblk), stressmU  (:,:,iblk), &
+                                   stress12T (:,:,iblk),                       &
+                                   strintxE  (:,:,iblk), strintyE  (:,:,iblk), &
+                                   'E')
+
+                   call div_stress (nx_block,             ny_block,            & ! N point
+                                   ksub,                 icelln(iblk),         &
+                                   indxni      (:,iblk), indxnj      (:,iblk), &
+                                   dxN       (:,:,iblk), dyN       (:,:,iblk), &
+                                   dxT       (:,:,iblk), dyU       (:,:,iblk), &
+                                   narear    (:,:,iblk),                       &
+                                   stresspU  (:,:,iblk), stressmU  (:,:,iblk), &
+                                   stress12T (:,:,iblk),                       &
+                                   stresspT  (:,:,iblk), stressmT  (:,:,iblk), &
+                                   stress12U (:,:,iblk),                       &
+                                   strintxN  (:,:,iblk), strintyN  (:,:,iblk), &
+                                   'N')
                   
                   call step_vel (nx_block,             ny_block,             & ! E point
                                  icelle        (iblk), Cdn_ocn   (:,:,iblk), &
