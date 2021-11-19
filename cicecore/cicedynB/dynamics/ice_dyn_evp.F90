@@ -690,7 +690,7 @@
                                  ratiodxN  (:,:,iblk), ratiodxNr (:,:,iblk), &
                                  ratiodyE  (:,:,iblk), ratiodyEr (:,:,iblk), &
                                  epm       (:,:,iblk), npm       (:,:,iblk), &
-                                 uvm       (:,:,iblk),                       &                                 
+                                 uvm       (:,:,iblk),                       &
                                  zetax2T   (:,:,iblk), etax2T    (:,:,iblk), &
                                  stresspU  (:,:,iblk), stressmU  (:,:,iblk), &
                                  stress12U (:,:,iblk))                       
