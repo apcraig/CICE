@@ -1585,12 +1585,12 @@
          dxT_U , & ! width of T or U-cell through the middle (m)
          dyT_U , & ! height of T or U-cell through the middle (m)
          area    , & ! earea or narea
-         stresspF1  , & ! sigma11+sigma22
-         stressmF1  , & ! sigma11-sigma22
-         stress12F1 , & ! sigma12
-         stresspF2  , & ! sigma11+sigma22
-         stressmF2  , & ! sigma11-sigma22
-         stress12F2     ! sigma12
+         stresspF1  , & ! stressp  (U or T) used for F1 calculation
+         stressmF1  , & ! stressm  (U or T) used for F1 calculation 
+         stress12F1 , & ! stress12 (U or T) used for F1 calculation 
+         stresspF2  , & ! stressp  (U or T) used for F2 calculation 
+         stressmF2  , & ! stressm  (U or T) used for F2 calculation 
+         stress12F2     ! stress12 (U or T) used for F2 calculation 
 
       character(len=*), intent(in) :: &
          grid_location ! E (East) or N (North) ! TO BE IMPROVED!!!!
