@@ -1949,13 +1949,13 @@
        
 !      if (trim(yield_curve) == 'ellipse') then
          tmpcalcne = capping*(strength/max(Deltane,  tinyarea))+ &
-                     (1-capping)*strength/(Deltane + tinyarea)   
+                     (c1-capping)*strength/(Deltane + tinyarea)   
          tmpcalcnw = capping*(strength/max(Deltanw,  tinyarea))+ &
-                     (1-capping)*strength/(Deltanw + tinyarea)   
+                     (c1-capping)*strength/(Deltanw + tinyarea)   
          tmpcalcsw = capping*(strength/max(Deltasw,  tinyarea))+ &
-                     (1-capping)*strength/(Deltasw + tinyarea)  
+                     (c1-capping)*strength/(Deltasw + tinyarea)  
          tmpcalcse = capping*(strength/max(Deltase,tinyarea))  + &
-                     (1-capping)*strength/(Deltase + tinyarea)
+                     (c1-capping)*strength/(Deltase + tinyarea)
 
          zetax2ne = (c1+Ktens)*tmpcalcne ! northeast 
          rep_prsne = (c1-Ktens)*tmpcalcne*Deltane

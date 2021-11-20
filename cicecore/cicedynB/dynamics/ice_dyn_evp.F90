@@ -694,7 +694,7 @@
                                  hm        (:,:,iblk), uvm       (:,:,iblk), &
                                  zetax2T   (:,:,iblk), etax2T    (:,:,iblk), &
                                  stresspU  (:,:,iblk), stressmU  (:,:,iblk), &
-                                 stress12U (:,:,iblk))                       
+                                 stress12U (:,:,iblk), tarea     (:,:,iblk))                       
                   
                   call step_vel (nx_block,             ny_block,             & ! E point
                                  icelle        (iblk), Cdn_ocn   (:,:,iblk), &
@@ -951,7 +951,7 @@
                          rdg_conv,   rdg_shear,  & 
                          str )
 
-        use ice_dyn_shared, only: strain_rates, deformations, viscous_coeffs_and_rep_pressure
+        use ice_dyn_shared, only: strain_rates, deformations, viscous_coeffs_and_rep_pressure, viscous_coeffs_and_rep_pressure_T
         
       integer (kind=int_kind), intent(in) :: & 
          nx_block, ny_block, & ! block dimensions
@@ -1433,10 +1433,10 @@
                              epm,  npm, hm, uvm,    &
                              zetax2T,    etax2T,    &
                              stresspU,   stressmU,  & 
-                             stress12U              )
+                             stress12U, Tarea         )
 
-        use ice_dyn_shared, only: strain_rates_U!, &
-                             !     viscous_coeffs_and_rep_pressure_U
+        use ice_dyn_shared, only: strain_rates_U, &
+            viscous_coeffs_and_rep_pressure_T2U
         
       integer (kind=int_kind), intent(in) :: & 
          nx_block, ny_block, & ! block dimensions
@@ -1465,6 +1465,7 @@
          epm      , & ! E-cell mask
          npm      , & ! E-cell mask
          hm       , & ! T-cell mask
+         Tarea    , & ! area of T-cell
          uvm      , & ! U-cell mask
          zetax2T  , & ! 2*zeta at the T point
          etax2T       ! 2*eta at the T point
@@ -1512,15 +1513,16 @@
       !-----------------------------------------------------------------
 
          
-         call viscous_coeffs_and_rep_pressure_T2U (zetax2T(i,j),    zetax2T(i,j+1), &
-                                                 zetax2T(i+1,j+1),zetax2T(i+1,j), &
-                                                 etax2T(i,j),     etax2T(i,j+1),  &
-                                                 etax2T(i+1,j+1), etax2T(i+1,j),  &
-                                                 hm(i,j),         hm(i,j+1),      &
-                                                 hm(i+1,j+1),     hm(i+1,j),      &
-                                                 tarea(i,j),      tarea(i,j+1),   &
-                                                 tarea(i+1,j+1),  tarea(i+1,j),   &
-                                                 DeltaU,zetax2U, etax2U, rep_prsU)
+        call viscous_coeffs_and_rep_pressure_T2U (zetax2T(i  ,j  ), zetax2T(i  ,j+1), &
+                                                  zetax2T(i+1,j+1), zetax2T(i+1,j  ), &
+                                                  etax2T (i  ,j  ), etax2T (i  ,j+1), &
+                                                  etax2T (i+1,j+1), etax2T (i+1,j  ), &
+                                                  hm     (i  ,j  ), hm     (i  ,j+1), &
+                                                  hm     (i+1,j+1), hm     (i+1,j  ), &
+                                                  tarea  (i  ,j  ), tarea  (i,j+1),   &
+                                                  tarea  (i+1,j+1), tarea  (i+1,j),   &
+                                                  DeltaU,           zetax2U,          &
+                                                  etax2U, rep_prsU)
 
       !-----------------------------------------------------------------
       ! the stresses                            ! kg/s^2
