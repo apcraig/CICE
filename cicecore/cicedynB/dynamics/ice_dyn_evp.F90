@@ -102,7 +102,7 @@
           dxe, dxn, dxt, dxu, dye, dyn, dyt, dyu, &
           ratiodxN, ratiodxNr, ratiodyE, ratiodyEr, & 
           dxhy, dyhx, cxp, cyp, cxm, cym, &
-          tarear, uarear, tinyarea, grid_average_X2Y, tarea, &
+          tarear, uarear, earea, narea, tinyarea, grid_average_X2Y, tarea, &
           grid_type, grid_system
       use ice_state, only: aice, vice, vsno, uvel, vvel, uvelN, vvelN, &
           uvelE, vvelE, divu, shear, &
@@ -643,9 +643,9 @@
                                rdg_conv  (:,:,iblk), rdg_shear (:,:,iblk), &
                                strtmp    (:,:,:) )
 
-         !-----------------------------------------------------------------
-         ! momentum equation
-         !-----------------------------------------------------------------
+            !-----------------------------------------------------------------
+            ! momentum equation
+            !-----------------------------------------------------------------
 
                   call stepu (nx_block,            ny_block,           &
                               icellu       (iblk), Cdn_ocn (:,:,iblk), &
@@ -1016,7 +1016,7 @@
         strp_tmp, strm_tmp, tmp
 
       real(kind=dbl_kind),parameter :: capping = c1 ! of the viscous coef
-      
+
       character(len=*), parameter :: subname = '(stress)'
 
       !-----------------------------------------------------------------
@@ -1052,17 +1052,6 @@
       !-----------------------------------------------------------------
       ! viscous coefficients and replacement pressure
       !-----------------------------------------------------------------
-         
-!         call viscous_coeffs_and_rep_pressure (strength(i,j), tinyarea(i,j),&
-!                                               Deltane,       Deltanw,      &
-!                                               Deltasw,       Deltase,      &
-!                                               zetax2ne,      zetax2nw,     &
-!                                               zetax2sw,      zetax2se,     &
-!                                               etax2ne,       etax2nw,      &
-!                                               etax2sw,       etax2se,      &
-!                                               rep_prsne,     rep_prsnw,    &
-!                                               rep_prssw,     rep_prsse,    &
-!                                               capping)
 
          call viscous_coeffs_and_rep_pressure_T (strength(i,j), tinyarea(i,j),&
                                                  Deltane,       zetax2ne,     &
@@ -1339,8 +1328,8 @@
         divT, tensionT, shearT, DeltaT, & ! strain rates at T point
         rep_prsT                          ! replacement pressure at T point
 
-        real(kind=dbl_kind),parameter :: capping = c1 ! of the viscous coef
- 
+      real(kind=dbl_kind), parameter :: capping = c1 ! of the viscous coef
+
       character(len=*), parameter :: subname = '(stress_T)'
 
       !-----------------------------------------------------------------
@@ -1435,8 +1424,8 @@
                              stresspU,   stressmU,  & 
                              stress12U, Tarea         )
 
-        use ice_dyn_shared, only: strain_rates_U, &
-            viscous_coeffs_and_rep_pressure_T2U
+      use ice_dyn_shared, only: strain_rates_U, &
+                                viscous_coeffs_and_rep_pressure_T2U
         
       integer (kind=int_kind), intent(in) :: & 
          nx_block, ny_block, & ! block dimensions
@@ -1449,14 +1438,14 @@
 
       real (kind=dbl_kind), dimension (nx_block,ny_block), intent(in) :: &
          uvelE    , & ! x-component of velocity (m/s) at the E point
-         vvelE    , & ! y-component of velocity (m/s) at the N point
-         uvelN    , & ! x-component of velocity (m/s) at the E point
+         vvelE    , & ! y-component of velocity (m/s) at the E point
+         uvelN    , & ! x-component of velocity (m/s) at the N point
          vvelN    , & ! y-component of velocity (m/s) at the N point
          uvelU    , & ! x-component of velocity (m/s) at the U point
          vvelU    , & ! y-component of velocity (m/s) at the U point
-         dxE      , & ! width of E-cell through the middle (m)
+         dxE      , & ! width  of E-cell through the middle (m)
          dyN      , & ! height of N-cell through the middle (m)
-         dxU      , & ! width of U-cell through the middle (m)
+         dxU      , & ! width  of U-cell through the middle (m)
          dyU      , & ! height of U-cell through the middle (m)
          ratiodxN , & ! -dxN(i+1,j)/dxN(i,j) for BCs
          ratiodxNr, & ! -dxN(i,j)/dxN(i+1,j) for BCs
@@ -1512,17 +1501,15 @@
       ! viscous coefficients and replacement pressure at T point
       !-----------------------------------------------------------------
 
-         
-        call viscous_coeffs_and_rep_pressure_T2U (zetax2T(i  ,j  ), zetax2T(i  ,j+1), &
-                                                  zetax2T(i+1,j+1), zetax2T(i+1,j  ), &
-                                                  etax2T (i  ,j  ), etax2T (i  ,j+1), &
-                                                  etax2T (i+1,j+1), etax2T (i+1,j  ), &
-                                                  hm     (i  ,j  ), hm     (i  ,j+1), &
-                                                  hm     (i+1,j+1), hm     (i+1,j  ), &
-                                                  tarea  (i  ,j  ), tarea  (i,j+1),   &
-                                                  tarea  (i+1,j+1), tarea  (i+1,j),   &
-                                                  DeltaU,           zetax2U,          &
-                                                  etax2U, rep_prsU)
+         call viscous_coeffs_and_rep_pressure_T2U (zetax2T(i  ,j  ), zetax2T(i  ,j+1), &
+                                                   zetax2T(i+1,j+1), zetax2T(i+1,j  ), &
+                                                   etax2T (i  ,j  ), etax2T (i  ,j+1), &
+                                                   etax2T (i+1,j+1), etax2T (i+1,j  ), &
+                                                   hm     (i  ,j  ), hm     (i  ,j+1), &
+                                                   hm     (i+1,j+1), hm     (i+1,j  ), &
+                                                   tarea  (i  ,j  ), tarea  (i  ,j+1), &
+                                                   tarea  (i+1,j+1), tarea  (i+1,j  ), &
+                                                   DeltaU,zetax2U, etax2U, rep_prsU)
 
       !-----------------------------------------------------------------
       ! the stresses                            ! kg/s^2

@@ -1034,7 +1034,7 @@
       if (icepack_warnings_aborted()) call abort_ice(error_message=subname, &
          file=__FILE__, line=__LINE__)
 
-      if (present(strocnxT)) then
+      if (present(strocnxT) .and. present(strocnyT)) then
 
          do j = 1, ny_block
          do i = 1, nx_block
@@ -1070,7 +1070,7 @@
 !         strocnx(i,j) = -(strairx(i,j) + strintx(i,j))
 !         strocny(i,j) = -(strairy(i,j) + strinty(i,j))
 
-         if (present(strocnxT)) then
+         if (present(strocnxT) .and. present(strocnyT)) then
 
             ! Prepare to convert to T grid
             ! divide by aice for coupling
@@ -1947,35 +1947,30 @@
 
       ! NOTE: for comp. efficiency 2 x zeta and 2 x eta are used in the code
        
-!      if (trim(yield_curve) == 'ellipse') then
-         tmpcalcne = capping*(strength/max(Deltane,  tinyarea))+ &
-                     (c1-capping)*strength/(Deltane + tinyarea)   
-         tmpcalcnw = capping*(strength/max(Deltanw,  tinyarea))+ &
-                     (c1-capping)*strength/(Deltanw + tinyarea)   
-         tmpcalcsw = capping*(strength/max(Deltasw,  tinyarea))+ &
-                     (c1-capping)*strength/(Deltasw + tinyarea)  
-         tmpcalcse = capping*(strength/max(Deltase,tinyarea))  + &
-                     (c1-capping)*strength/(Deltase + tinyarea)
+        tmpcalcne = capping     *(strength/max(Deltane, tinyarea))+ &
+                    (c1-capping)* strength/   (Deltane+ tinyarea)   
+        tmpcalcnw = capping     *(strength/max(Deltanw, tinyarea))+ &
+                    (c1-capping)* strength/   (Deltanw+ tinyarea)   
+        tmpcalcsw = capping     *(strength/max(Deltasw, tinyarea))+ &
+                    (c1-capping)* strength/   (Deltasw+ tinyarea)  
+        tmpcalcse = capping     *(strength/max(Deltase, tinyarea))+ &
+                    (c1-capping)* strength/   (Deltase+ tinyarea)
 
-         zetax2ne = (c1+Ktens)*tmpcalcne ! northeast 
-         rep_prsne = (c1-Ktens)*tmpcalcne*Deltane
-         etax2ne = epp2i*zetax2ne
+        zetax2ne  = (c1+Ktens)*tmpcalcne ! northeast 
+        rep_prsne = (c1-Ktens)*tmpcalcne*Deltane
+        etax2ne   = epp2i*zetax2ne
          
-         zetax2nw = (c1+Ktens)*tmpcalcnw ! northwest 
-         rep_prsnw = (c1-Ktens)*tmpcalcnw*Deltanw
-         etax2nw = epp2i*zetax2nw
+        zetax2nw  = (c1+Ktens)*tmpcalcnw ! northwest 
+        rep_prsnw = (c1-Ktens)*tmpcalcnw*Deltanw
+        etax2nw   = epp2i*zetax2nw
 
-         zetax2sw = (c1+Ktens)*tmpcalcsw ! southwest  
-         rep_prssw = (c1-Ktens)*tmpcalcsw*Deltasw
-         etax2sw = epp2i*zetax2sw
+        zetax2sw  = (c1+Ktens)*tmpcalcsw ! southwest  
+        rep_prssw = (c1-Ktens)*tmpcalcsw*Deltasw
+        etax2sw   = epp2i*zetax2sw
          
-         zetax2se = (c1+Ktens)*tmpcalcse ! southeast
-         rep_prsse = (c1-Ktens)*tmpcalcse*Deltase
-         etax2se = epp2i*zetax2se
-
-!      else
-
-!      endif
+        zetax2se  = (c1+Ktens)*tmpcalcse ! southeast
+        rep_prsse = (c1-Ktens)*tmpcalcse*Deltase
+        etax2se   = epp2i*zetax2se
       
        end subroutine viscous_coeffs_and_rep_pressure
 
@@ -2031,8 +2026,8 @@
                                                        etax2T_11,  etax2T_10, & 
                                                         maskT_00,  maskT_01, &
                                                         maskT_11,  maskT_10, &
-                                                        Tarea_00,   Tarea_01, &
-                                                        Tarea_11,   Tarea_10, &
+                                                        tarea_00,   tarea_01, &
+                                                        tarea_11,   tarea_10, &
                                                         deltaU,               &
                                                         zetax2U, etax2U,      &
                                                         rep_prsU)
@@ -2042,7 +2037,7 @@
         zetax2T_00,zetax2T_10,zetax2T_11,zetax2T_01, &
          etax2T_00, etax2T_10, etax2T_11, etax2T_01,  & ! 2 x visous coeffs, replacement pressure
          maskT_00, maskT_10, maskT_11, maskT_01, &
-         Tarea_00, Tarea_10, Tarea_11, Tarea_01, &
+         tarea_00, tarea_10, tarea_11, tarea_01, &
          deltaU
 
       real (kind=dbl_kind), intent(out):: zetax2U, etax2U, rep_prsU
