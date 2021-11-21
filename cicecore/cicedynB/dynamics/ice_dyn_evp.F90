@@ -690,11 +690,12 @@
                                  dxU       (:,:,iblk), dyU       (:,:,iblk), &
                                  ratiodxN  (:,:,iblk), ratiodxNr (:,:,iblk), &
                                  ratiodyE  (:,:,iblk), ratiodyEr (:,:,iblk), &
+                                 tarea     (:,:,iblk),                       &
                                  epm       (:,:,iblk), npm       (:,:,iblk), &
                                  hm        (:,:,iblk), uvm       (:,:,iblk), &
                                  zetax2T   (:,:,iblk), etax2T    (:,:,iblk), &
                                  stresspU  (:,:,iblk), stressmU  (:,:,iblk), &
-                                 stress12U (:,:,iblk), tarea     (:,:,iblk))                       
+                                 stress12U (:,:,iblk))
                   
                   call step_vel (nx_block,             ny_block,             & ! E point
                                  icelle        (iblk), Cdn_ocn   (:,:,iblk), &
@@ -951,7 +952,7 @@
                          rdg_conv,   rdg_shear,  & 
                          str )
 
-        use ice_dyn_shared, only: strain_rates, deformations, viscous_coeffs_and_rep_pressure, viscous_coeffs_and_rep_pressure_T
+      use ice_dyn_shared, only: strain_rates, deformations, viscous_coeffs_and_rep_pressure_T
         
       integer (kind=int_kind), intent(in) :: & 
          nx_block, ny_block, & ! block dimensions
@@ -1417,12 +1418,13 @@
                              uvelU,      vvelU,     &
                              dxE,        dyN,       &
                              dxU,        dyU,       &
+                             tarea,                 &
                              ratiodxN,   ratiodxNr, &
                              ratiodyE,   ratiodyEr, &
                              epm,  npm, hm, uvm,    &
                              zetax2T,    etax2T,    &
                              stresspU,   stressmU,  & 
-                             stress12U, Tarea         )
+                             stress12U            )
 
       use ice_dyn_shared, only: strain_rates_U, &
                                 viscous_coeffs_and_rep_pressure_T2U
@@ -1447,14 +1449,14 @@
          dyN      , & ! height of N-cell through the middle (m)
          dxU      , & ! width  of U-cell through the middle (m)
          dyU      , & ! height of U-cell through the middle (m)
-         ratiodxN , & ! -dxN(i+1,j)/dxN(i,j) for BCs
-         ratiodxNr, & ! -dxN(i,j)/dxN(i+1,j) for BCs
-         ratiodyE , & ! -dyE(i,j+1)/dyE(i,j) for BCs
-         ratiodyEr, & ! -dyE(i,j)/dyE(i,j+1) for BCs
+         tarea    , & ! area of T-cell (m^2)
+         ratiodxN , & ! -dxN(i+1,j)/dxN(i,j) factor for BCs across coastline
+         ratiodxNr, & ! -dxN(i,j)/dxN(i+1,j) factor for BCs across coastline
+         ratiodyE , & ! -dyE(i,j+1)/dyE(i,j) factor for BCs across coastline
+         ratiodyEr, & ! -dyE(i,j)/dyE(i,j+1) factor for BCs across coastline
          epm      , & ! E-cell mask
          npm      , & ! E-cell mask
          hm       , & ! T-cell mask
-         Tarea    , & ! area of T-cell
          uvm      , & ! U-cell mask
          zetax2T  , & ! 2*zeta at the T point
          etax2T       ! 2*eta at the T point
@@ -1629,7 +1631,7 @@
                  + (c1/dyE_N(i,j)) * ( (dyT_U(i,j)**2) * stress12(i,j)     &
                                       -(dyT_U(i-1,j)**2)*stress12(i-1,j) ) )
          case default
-            call abort_ice(subname // ' unkwown grid_location: ' // grid_location)
+            call abort_ice(subname // ' unknown grid_location: ' // grid_location)
          end select
          
 
