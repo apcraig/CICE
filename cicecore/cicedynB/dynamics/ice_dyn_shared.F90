@@ -453,7 +453,7 @@
                             indxui,     indxuj,     & 
                             aiu,        umass,      & 
                             umassdti,   fcor,       & 
-                            umask,      umaskCD,    & 
+                            umask,                  & 
                             uocn,       vocn,       & 
                             strairx,    strairy,    & 
                             ss_tltx,    ss_tlty,    &  
@@ -490,7 +490,7 @@
          indxuj       ! compressed index in j-direction
 
       logical (kind=log_kind), dimension (nx_block,ny_block), intent(in) :: &
-         umask, umaskCD       ! land/boundary mask, thickness (U-cell)
+         umask       ! land/boundary mask, thickness (U-cell)
 
       integer (kind=int_kind), dimension (nx_block,ny_block), intent(in) :: &
          icetmask    ! ice extent mask (T-cell)
@@ -606,48 +606,18 @@
       !-----------------------------------------------------------------
 
       icellu = 0
-      if (grid_system == 'B') then
+         
       do j = jlo, jhi
       do i = ilo, ihi
-
-         ! ice extent mask (U-cells)
          iceumask_old(i,j) = iceumask(i,j) ! save
-         iceumask(i,j) = (umask(i,j)) .and. (aiu  (i,j) > a_min) & 
-                                      .and. (umass(i,j) > m_min)
-
-         if (iceumask(i,j)) then
-            icellu = icellu + 1
-            indxui(icellu) = i
-            indxuj(icellu) = j
-
-            ! initialize velocity for new ice points to ocean sfc current
-            if (.not. iceumask_old(i,j)) then
-               uvel(i,j) = uocn(i,j)
-               vvel(i,j) = vocn(i,j)
-            endif
-         else
-            ! set velocity and stresses to zero for masked-out points
-            uvel(i,j)    = c0
-            vvel(i,j)    = c0
-            strintx(i,j) = c0
-            strinty(i,j) = c0
-            strocnx(i,j) = c0
-            strocny(i,j) = c0
-         endif
-
-         uvel_init(i,j) = uvel(i,j)
-         vvel_init(i,j) = vvel(i,j)
-      enddo
-      enddo
-    else
-      do j = jlo, jhi
-      do i = ilo, ihi
-
+         if (grid_system == 'B') then ! include ice mask.
          ! ice extent mask (U-cells)
-!         iceumask_old(i,j) = iceumask(i,j) ! save
-!         iceumask(i,j) = (umaskCD(i,j)) .and. (aiu  (i,j) > a_min) & 
-!                                      .and. (umass(i,j) > m_min)
-         iceumask(i,j) = umaskCD(i,j) ! SHOULD BE EXTENDED TO CHECK FOR ICE
+            iceumask(i,j) = (umask(i,j)) .and. (aiu  (i,j) > a_min) & 
+                                         .and. (umass(i,j) > m_min)
+         else  ! ice mask shpuld be applied to cd grid. For now it is not implemented.
+            iceumask(i,j) = umask(i,j)                              
+         endif
+
          if (iceumask(i,j)) then
             icellu = icellu + 1
             indxui(icellu) = i
@@ -672,7 +642,6 @@
          vvel_init(i,j) = vvel(i,j)
       enddo
       enddo
-    endif
       !-----------------------------------------------------------------
       ! Define variables for momentum equation
       !-----------------------------------------------------------------

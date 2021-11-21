@@ -341,35 +341,66 @@
          ihi = this_block%ihi
          jlo = this_block%jlo
          jhi = this_block%jhi
-
-         call dyn_prep2 (nx_block,             ny_block,             & 
-                         ilo, ihi,             jlo, jhi,             &
-                         icellt(iblk),         icellu(iblk),         & 
-                         indxti      (:,iblk), indxtj      (:,iblk), & 
-                         indxui      (:,iblk), indxuj      (:,iblk), & 
-                         aiu       (:,:,iblk), umass     (:,:,iblk), & 
-                         umassdti  (:,:,iblk), fcor_blk  (:,:,iblk), & 
-                         umask     (:,:,iblk), umaskCD   (:,:,iblk), & 
-                         uocn      (:,:,iblk), vocn      (:,:,iblk), & 
-                         strairx   (:,:,iblk), strairy   (:,:,iblk), & 
-                         ss_tltx   (:,:,iblk), ss_tlty   (:,:,iblk), &  
-                         icetmask  (:,:,iblk), iceumask  (:,:,iblk), & 
-                         fm        (:,:,iblk), dt,                   & 
-                         strtltx   (:,:,iblk), strtlty   (:,:,iblk), & 
-                         strocnx   (:,:,iblk), strocny   (:,:,iblk), & 
-                         strintx   (:,:,iblk), strinty   (:,:,iblk), & 
-                         taubx     (:,:,iblk), tauby     (:,:,iblk), & 
-                         waterx    (:,:,iblk), watery    (:,:,iblk), & 
-                         forcex    (:,:,iblk), forcey    (:,:,iblk), & 
-                         stressp_1 (:,:,iblk), stressp_2 (:,:,iblk), & 
-                         stressp_3 (:,:,iblk), stressp_4 (:,:,iblk), & 
-                         stressm_1 (:,:,iblk), stressm_2 (:,:,iblk), & 
-                         stressm_3 (:,:,iblk), stressm_4 (:,:,iblk), & 
-                         stress12_1(:,:,iblk), stress12_2(:,:,iblk), & 
-                         stress12_3(:,:,iblk), stress12_4(:,:,iblk), & 
-                         uvel_init (:,:,iblk), vvel_init (:,:,iblk), &
-                         uvel      (:,:,iblk), vvel      (:,:,iblk), &
-                         Tbu       (:,:,iblk))
+         
+            if (grid_system == trim('B')) then
+            call dyn_prep2 (nx_block,             ny_block,             & 
+                            ilo, ihi,             jlo, jhi,             &
+                            icellt(iblk),         icellu(iblk),         & 
+                            indxti      (:,iblk), indxtj      (:,iblk), & 
+                            indxui      (:,iblk), indxuj      (:,iblk), & 
+                            aiu       (:,:,iblk), umass     (:,:,iblk), & 
+                            umassdti  (:,:,iblk), fcor_blk  (:,:,iblk), & 
+                            umask     (:,:,iblk),                       & 
+                            uocn      (:,:,iblk), vocn      (:,:,iblk), & 
+                            strairx   (:,:,iblk), strairy   (:,:,iblk), & 
+                            ss_tltx   (:,:,iblk), ss_tlty   (:,:,iblk), &  
+                            icetmask  (:,:,iblk), iceumask  (:,:,iblk), & 
+                            fm        (:,:,iblk), dt,                   & 
+                            strtltx   (:,:,iblk), strtlty   (:,:,iblk), & 
+                            strocnx   (:,:,iblk), strocny   (:,:,iblk), & 
+                            strintx   (:,:,iblk), strinty   (:,:,iblk), & 
+                            taubx     (:,:,iblk), tauby     (:,:,iblk), & 
+                            waterx    (:,:,iblk), watery    (:,:,iblk), & 
+                            forcex    (:,:,iblk), forcey    (:,:,iblk), & 
+                            stressp_1 (:,:,iblk), stressp_2 (:,:,iblk), & 
+                            stressp_3 (:,:,iblk), stressp_4 (:,:,iblk), & 
+                            stressm_1 (:,:,iblk), stressm_2 (:,:,iblk), & 
+                            stressm_3 (:,:,iblk), stressm_4 (:,:,iblk), & 
+                            stress12_1(:,:,iblk), stress12_2(:,:,iblk), & 
+                            stress12_3(:,:,iblk), stress12_4(:,:,iblk), & 
+                            uvel_init (:,:,iblk), vvel_init (:,:,iblk), &
+                            uvel      (:,:,iblk), vvel      (:,:,iblk), &
+                            Tbu       (:,:,iblk))
+            else  
+            call dyn_prep2 (nx_block,             ny_block,             &
+                            ilo, ihi,             jlo, jhi,             &
+                            icellt(iblk),         icellu(iblk),         &
+                            indxti      (:,iblk), indxtj      (:,iblk), &
+                            indxui      (:,iblk), indxuj      (:,iblk), &
+                            aiu       (:,:,iblk), umass     (:,:,iblk), &
+                            umassdti  (:,:,iblk), fcor_blk  (:,:,iblk), &
+                            umaskCD   (:,:,iblk),                       &
+                            uocn      (:,:,iblk), vocn      (:,:,iblk), &
+                            strairx   (:,:,iblk), strairy   (:,:,iblk), &
+                            ss_tltx   (:,:,iblk), ss_tlty   (:,:,iblk), &
+                            icetmask  (:,:,iblk), iceumask  (:,:,iblk), &
+                            fm        (:,:,iblk), dt,                   &
+                            strtltx   (:,:,iblk), strtlty   (:,:,iblk), &
+                            strocnx   (:,:,iblk), strocny   (:,:,iblk), &
+                            strintx   (:,:,iblk), strinty   (:,:,iblk), &
+                            taubx     (:,:,iblk), tauby     (:,:,iblk), &
+                            waterx    (:,:,iblk), watery    (:,:,iblk), &
+                            forcex    (:,:,iblk), forcey    (:,:,iblk), &
+                            stressp_1 (:,:,iblk), stressp_2 (:,:,iblk), &
+                            stressp_3 (:,:,iblk), stressp_4 (:,:,iblk), &
+                            stressm_1 (:,:,iblk), stressm_2 (:,:,iblk), &
+                            stressm_3 (:,:,iblk), stressm_4 (:,:,iblk), &
+                            stress12_1(:,:,iblk), stress12_2(:,:,iblk), &
+                            stress12_3(:,:,iblk), stress12_4(:,:,iblk), &
+                            uvel_init (:,:,iblk), vvel_init (:,:,iblk), &
+                            uvel      (:,:,iblk), vvel      (:,:,iblk), &
+                            Tbu       (:,:,iblk))
+              endif
 
       !-----------------------------------------------------------------
       ! ice strength
@@ -413,7 +444,7 @@
                          indxni      (:,iblk), indxnj      (:,iblk), & 
                          aiN       (:,:,iblk), nmass     (:,:,iblk), & 
                          nmassdti  (:,:,iblk), fcorN_blk  (:,:,iblk),& 
-                         nmask     (:,:,iblk), nmask     (:,:,iblk), &                       
+                         nmask     (:,:,iblk),                       &                      
                          uocnN     (:,:,iblk), vocnN     (:,:,iblk), & 
                          strairxN  (:,:,iblk), strairyN  (:,:,iblk), & 
                          ss_tltxN  (:,:,iblk), ss_tltyN  (:,:,iblk), &  
@@ -446,7 +477,7 @@
                          indxei      (:,iblk), indxej      (:,iblk), & 
                          aiE       (:,:,iblk), emass     (:,:,iblk), & 
                          emassdti  (:,:,iblk), fcorE_blk  (:,:,iblk),& 
-                         emask     (:,:,iblk),  emask     (:,:,iblk),& 
+                         emask     (:,:,iblk),                       & 
                          uocnE     (:,:,iblk), vocnE     (:,:,iblk), & 
                          strairxE  (:,:,iblk), strairyE  (:,:,iblk), & 
                          ss_tltxE  (:,:,iblk), ss_tltyE  (:,:,iblk), &  
