@@ -104,8 +104,8 @@ cat >> ${jobfile} << EOFB
 ###PBS -m be
 EOFB
 
-else if (${ICE_MACHINE} =~ NRLSSC*) then
-# NRLSSC queue system has nodes with different task per node
+else if (${ICE_MACHINE} =~ nrlssc*) then
+# nrlssc queue system has nodes with different task per node
 if (${taskpernode} <= 12) set tpnstr = 'twelve'
 if (${taskpernode} == 20) set tpnstr = 'twenty'
 if (${taskpernode} == 24) set tpnstr = 'twentyfour'
