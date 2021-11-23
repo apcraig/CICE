@@ -610,13 +610,13 @@
       do j = jlo, jhi
       do i = ilo, ihi
          iceumask_old(i,j) = iceumask(i,j) ! save
-         if (grid_system == 'B') then ! include ice mask.
+!         if (grid_system == 'B') then ! include ice mask.
          ! ice extent mask (U-cells)
-            iceumask(i,j) = (umask(i,j)) .and. (aiu  (i,j) > a_min) & 
+         iceumask(i,j) = (umask(i,j)) .and. (aiu  (i,j) > a_min) & 
                                          .and. (umass(i,j) > m_min)
-         else  ! ice mask shpuld be applied to cd grid. For now it is not implemented.
-            iceumask(i,j) = umask(i,j)                              
-         endif
+!         else  ! ice mask shpuld be applied to cd grid. For now it is not implemented.
+!            iceumask(i,j) = umask(i,j)                              
+!         endif
 
          if (iceumask(i,j)) then
             icellu = icellu + 1
@@ -920,17 +920,15 @@
 
          ccb = fm(i,j) + sign(c1,fm(i,j)) * vrel * sinw ! kg/m^2 s
 
-         ab2 = cca**2 + ccb**2
+         ab2 = cca**2 + ccb**2 
 
          ! compute the velocity components
          cc1 = strintx(i,j) + forcex(i,j) + taux &
              + massdti(i,j)*(brlx*uold + revp*uvel_init(i,j))
          cc2 = strinty(i,j) + forcey(i,j) + tauy &
              + massdti(i,j)*(brlx*vold + revp*vvel_init(i,j))
-
          uvel(i,j) = (cca*cc1 + ccb*cc2) / ab2 ! m/s
          vvel(i,j) = (cca*cc2 - ccb*cc1) / ab2
-
          ! calculate seabed stress component for outputs
          if (ksub == ndte .and. seabed_stress) then ! on last subcycling iteration
             taubx(i,j) = -uvel(i,j)*Tb(i,j) / ccc
@@ -2023,7 +2021,6 @@
                 maskT_10*Tarea_10   + &
                 maskT_11*Tarea_11   + &
                 maskT_01*Tarea_01
-              
       zetax2U = (maskT_00*Tarea_00 *zetax2T_00  + &
                  maskT_10*Tarea_10 *zetax2T_10  + &
                  maskT_11*Tarea_11 *zetax2T_11  + &

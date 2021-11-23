@@ -342,7 +342,7 @@
          jlo = this_block%jlo
          jhi = this_block%jhi
          
-            if (trim(grid_system) == 'B') then
+         if (trim(grid_system) == 'B') then
             call dyn_prep2 (nx_block,             ny_block,             & 
                             ilo, ihi,             jlo, jhi,             &
                             icellt(iblk),         icellu(iblk),         & 
@@ -371,7 +371,8 @@
                             uvel_init (:,:,iblk), vvel_init (:,:,iblk), &
                             uvel      (:,:,iblk), vvel      (:,:,iblk), &
                             Tbu       (:,:,iblk))
-            else  
+
+         elseif (trim(grid_system) == 'CD') then
             call dyn_prep2 (nx_block,             ny_block,             &
                             ilo, ihi,             jlo, jhi,             &
                             icellt(iblk),         icellu(iblk),         &
@@ -400,7 +401,7 @@
                             uvel_init (:,:,iblk), vvel_init (:,:,iblk), &
                             uvel      (:,:,iblk), vvel      (:,:,iblk), &
                             Tbu       (:,:,iblk))
-              endif
+         endif
 
       !-----------------------------------------------------------------
       ! ice strength
@@ -444,7 +445,7 @@
                          indxni      (:,iblk), indxnj      (:,iblk), & 
                          aiN       (:,:,iblk), nmass     (:,:,iblk), & 
                          nmassdti  (:,:,iblk), fcorN_blk  (:,:,iblk),& 
-                         nmask     (:,:,iblk),                       &                      
+                         nmask     (:,:,iblk),                       &
                          uocnN     (:,:,iblk), vocnN     (:,:,iblk), & 
                          strairxN  (:,:,iblk), strairyN  (:,:,iblk), & 
                          ss_tltxN  (:,:,iblk), ss_tltyN  (:,:,iblk), &  
@@ -677,7 +678,6 @@
             !-----------------------------------------------------------------
             ! momentum equation
             !-----------------------------------------------------------------
-
                   call stepu (nx_block,            ny_block,           &
                               icellu       (iblk), Cdn_ocn (:,:,iblk), &
                               indxui     (:,iblk), indxuj    (:,iblk), &
@@ -719,15 +719,15 @@
                                  uvel      (:,:,iblk), vvel      (:,:,iblk), &
                                  dxE       (:,:,iblk), dyN       (:,:,iblk), &
                                  dxU       (:,:,iblk), dyU       (:,:,iblk), &
+                                 tarea     (:,:,iblk),                       &
                                  ratiodxN  (:,:,iblk), ratiodxNr (:,:,iblk), &
                                  ratiodyE  (:,:,iblk), ratiodyEr (:,:,iblk), &
-                                 tarea     (:,:,iblk),                       &
                                  epm       (:,:,iblk), npm       (:,:,iblk), &
                                  hm        (:,:,iblk), uvm       (:,:,iblk), &
                                  zetax2T   (:,:,iblk), etax2T    (:,:,iblk), &
                                  stresspU  (:,:,iblk), stressmU  (:,:,iblk), &
                                  stress12U (:,:,iblk))
-                  
+
                   call step_vel (nx_block,             ny_block,             & ! E point
                                  icelle        (iblk), Cdn_ocn   (:,:,iblk), &
                                  indxei      (:,iblk), indxej      (:,iblk), &
