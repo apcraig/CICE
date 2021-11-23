@@ -342,7 +342,7 @@
          jlo = this_block%jlo
          jhi = this_block%jhi
          
-            if (grid_system == trim('B')) then
+            if (trim(grid_system) == 'B') then
             call dyn_prep2 (nx_block,             ny_block,             & 
                             ilo, ihi,             jlo, jhi,             &
                             icellt(iblk),         icellu(iblk),         & 
