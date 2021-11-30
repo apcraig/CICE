@@ -2031,7 +2031,7 @@
                  maskT_11*Tarea_11 *etax2T_11   + &
                  maskT_01*Tarea_01 *etax2T_01)/Totarea
  
-      rep_prsU = (c1-ktens)/(1+Ktens)*zetax2U*deltaU
+      rep_prsU = (c1-Ktens)/(c1+Ktens)*zetax2U*deltaU
 
        end subroutine viscous_coeffs_and_rep_pressure_T2U
 
