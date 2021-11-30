@@ -102,7 +102,7 @@
           dxe, dxn, dxt, dxu, dye, dyn, dyt, dyu, &
           ratiodxN, ratiodxNr, ratiodyE, ratiodyEr, & 
           dxhy, dyhx, cxp, cyp, cxm, cym, &
-          tarear, uarear, earea, narea, tinyarea, grid_average_X2Y, tarea, &
+          tarear, uarear, earear, narear, tinyarea, grid_average_X2Y, tarea, &
           grid_type, grid_system
       use ice_state, only: aice, vice, vsno, uvel, vvel, uvelN, vvelN, &
           uvelE, vvelE, divu, shear, &
