@@ -1863,7 +1863,7 @@
       shearU = dxU(i,j) * ( uEijp1 - uEij ) &
                - uvelU(i,j) * uvm(i,j) * ( dxE(i,j+1) - dxE(i,j) ) &
                + dyU(i,j) * ( vNip1j - vNij ) &
-               + vvelU(i,j) * uvm(i,j) * ( dyN(i+1,j) - dyN(i,j) )
+               - vvelU(i,j) * uvm(i,j) * ( dyN(i+1,j) - dyN(i,j) )
       
       ! Delta (in the denominator of zeta, eta)
       DeltaU = sqrt(divU**2 + e_factor*(tensionU**2 + shearU**2))
