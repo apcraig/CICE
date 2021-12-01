@@ -715,6 +715,10 @@
 
                case('CD')
 
+                  print 'before stress_T uvel,vvel',ksub,iblk,maxval(uvel),maxval(vvel),maxloc(uvel),maxloc(vvel)
+                  print 'before stress_T uvelN,vvelN',ksub,iblk,maxval(uvelN),maxval(vvelN),maxloc(uvelN),maxloc(vvelN)
+                  print 'before stress_T uvelE,vvelE',ksub,iblk,maxval(uvelE),maxval(vvelE),maxloc(uvelE),maxloc(vvelE)
+
                   call stress_T (nx_block,             ny_block,             &
                                  ksub,                 icellt(iblk),         &
                                  indxti      (:,iblk), indxtj      (:,iblk), &
@@ -729,6 +733,10 @@
                                  stress12T (:,:,iblk),                       &
                                  shear     (:,:,iblk), divu      (:,:,iblk), &
                                  rdg_conv  (:,:,iblk), rdg_shear (:,:,iblk)  )
+
+                  print 'before stress_U uvel,vvel',ksub,iblk,maxval(uvel),maxval(vvel),maxloc(uvel),maxloc(vvel)
+                  print 'before stress_U uvelN,vvelN',ksub,iblk,maxval(uvelN),maxval(vvelN),maxloc(uvelN),maxloc(vvelN)
+                  print 'before stress_U uvelE,vvelE',ksub,iblk,maxval(uvelE),maxval(vvelE),maxloc(uvelE),maxloc(vvelE)
 
                   call stress_U (nx_block,             ny_block,             &
                                  ksub,                 icellu(iblk),         &
@@ -747,6 +755,10 @@
                                  stresspU  (:,:,iblk), stressmU  (:,:,iblk), &
                                  stress12U (:,:,iblk))                   
 
+                  print 'before div_stress E uvel,vvel',ksub,iblk,maxval(uvel),maxval(vvel),maxloc(uvel),maxloc(vvel)
+                  print 'before div_stress E uvelN,vvelN',ksub,iblk,maxval(uvelN),maxval(vvelN),maxloc(uvelN),maxloc(vvelN)
+                  print 'before div_stress E uvelE,vvelE',ksub,iblk,maxval(uvelE),maxval(vvelE),maxloc(uvelE),maxloc(vvelE)
+
                   call div_stress (nx_block,             ny_block,             & ! E point
                                    ksub,                 icelle(iblk),         &
                                    indxei      (:,iblk), indxej      (:,iblk), &
@@ -759,6 +771,10 @@
                                    stress12T (:,:,iblk),                       &
                                    strintxE  (:,:,iblk), strintyE  (:,:,iblk), &
                                    'E')
+
+                  print 'before div_stress N uvel,vvel',ksub,iblk,maxval(uvel),maxval(vvel),maxloc(uvel),maxloc(vvel)
+                  print 'before div_stress N uvelN,vvelN',ksub,iblk,maxval(uvelN),maxval(vvelN),maxloc(uvelN),maxloc(vvelN)
+                  print 'before div_stress N uvelE,vvelE',ksub,iblk,maxval(uvelE),maxval(vvelE),maxloc(uvelE),maxloc(vvelE)
 
                    call div_stress (nx_block,             ny_block,            & ! N point
                                    ksub,                 icelln(iblk),         &
@@ -773,6 +789,10 @@
                                    strintxN  (:,:,iblk), strintyN  (:,:,iblk), &
                                    'N')
                   
+                  print 'before step_vel E uvel,vvel',ksub,iblk,maxval(uvel),maxval(vvel),maxloc(uvel),maxloc(vvel)
+                  print 'before step_vel E uvelN,vvelN',ksub,iblk,maxval(uvelN),maxval(vvelN),maxloc(uvelN),maxloc(vvelN)
+                  print 'before step_vel E uvelE,vvelE',ksub,iblk,maxval(uvelE),maxval(vvelE),maxloc(uvelE),maxloc(vvelE)
+
                   call step_vel (nx_block,             ny_block,             & ! E point
                                  icelle        (iblk), Cdn_ocn   (:,:,iblk), &
                                  indxei      (:,iblk), indxej      (:,iblk), &
@@ -787,6 +807,10 @@
                                  uvelE     (:,:,iblk), vvelE     (:,:,iblk), &
                                  TbE       (:,:,iblk))
 
+                  print 'before step_vel N uvel,vvel',ksub,iblk,maxval(uvel),maxval(vvel),maxloc(uvel),maxloc(vvel)
+                  print 'before step_vel N uvelN,vvelN',ksub,iblk,maxval(uvelN),maxval(vvelN),maxloc(uvelN),maxloc(vvelN)
+                  print 'before step_vel N uvelE,vvelE',ksub,iblk,maxval(uvelE),maxval(vvelE),maxloc(uvelE),maxloc(vvelE)
+
                   call step_vel (nx_block,             ny_block,             & ! N point
                                  icelln        (iblk), Cdn_ocn   (:,:,iblk), &
                                  indxni      (:,iblk), indxnj      (:,iblk), &
@@ -800,6 +824,10 @@
                                  uvelN_init(:,:,iblk), vvelN_init(:,:,iblk), &
                                  uvelN     (:,:,iblk), vvelN     (:,:,iblk), &
                                  TbN       (:,:,iblk))
+
+                  print 'after step_vel N uvel,vvel',ksub,iblk,maxval(uvel),maxval(vvel),maxloc(uvel),maxloc(vvel)
+                  print 'after step_vel N uvelN,vvelN',ksub,iblk,maxval(uvelN),maxval(vvelN),maxloc(uvelN),maxloc(vvelN)
+                  print 'after step_vel N uvelE,vvelE',ksub,iblk,maxval(uvelE),maxval(vvelE),maxloc(uvelE),maxloc(vvelE)
 
                end select
 
