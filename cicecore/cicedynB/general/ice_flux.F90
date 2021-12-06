@@ -39,19 +39,15 @@
 
        ! in from atmos (if .not.calc_strair)  
          strax   , & ! wind stress components (N/m^2)
-         stray   , & ! 
-         straxE  , & ! wind stress components (N/m^2)
-         strayE  , & ! 
-         straxN  , & ! wind stress components (N/m^2)
-         strayN  , & ! 
+         stray   , &
 
        ! in from ocean
-         uocn    , & ! ocean current, x-direction (m/s)
-         vocn    , & ! ocean current, y-direction (m/s)
-         uocnE   , & ! ocean current, x-direction (m/s)
-         vocnE   , & ! ocean current, y-direction (m/s)
-         uocnN   , & ! ocean current, x-direction (m/s)
-         vocnN   , & ! ocean current, y-direction (m/s)
+         uocn    , & ! ocean current, x-direction (m/s) on T grid from forcing, should it be on U??
+         vocn    , & ! ocean current, y-direction (m/s) on T grid from forcing
+         uocnE   , & ! ocean current, x-direction (m/s) on ??
+         vocnE   , & ! ocean current, y-direction (m/s) on ??
+         uocnN   , & ! ocean current, x-direction (m/s) on ??
+         vocnN   , & ! ocean current, y-direction (m/s) on ??
          ss_tltx , & ! sea surface slope, x-direction (m/m)
          ss_tlty , & ! sea surface slope, y-direction
          ss_tltxE, & ! sea surface slope, x-direction (m/m)
@@ -61,13 +57,13 @@
          hwater  , & ! water depth for seabed stress calc (landfast ice) 
 
        ! out to atmosphere
-         strairxT, & ! stress on ice by air, x-direction
-         strairyT, & ! stress on ice by air, y-direction
+         strairxT, & ! stress on ice by air, x-direction at T points, computed in icepack
+         strairyT, & ! stress on ice by air, y-direction at T points, computed in icepack
 
        ! out to ocean          T-cell (kg/m s^2)
        ! Note, CICE_IN_NEMO uses strocnx and strocny for coupling
-         strocnxT, & ! ice-ocean stress, x-direction
-         strocnyT    ! ice-ocean stress, y-direction
+         strocnxT, & ! ice-ocean stress at T points, x-direction at T points, mapped from strocnx, per ice fraction
+         strocnyT    ! ice-ocean stress at T points, y-direction at T points, mapped from strocny, per ice fraction
 
        ! diagnostic
 
@@ -77,30 +73,30 @@
          sigP    , & ! internal ice pressure (N/m)
          taubx   , & ! seabed stress (x) (N/m^2)
          tauby   , & ! seabed stress (y) (N/m^2)
-         strairx , & ! stress on ice by air, x-direction
-         strairy , & ! stress on ice by air, y-direction
-         strocnx , & ! ice-ocean stress, x-direction
-         strocny , & ! ice-ocean stress, y-direction
+         strairx , & ! stress on ice by air, x-direction at U points, mapped from strairxT
+         strairy , & ! stress on ice by air, y-direction at U points, mapped from strairyT
+         strocnx , & ! ice-ocean stress, x-direction at U points, computed in dyn_finish
+         strocny , & ! ice-ocean stress, y-direction at U points, computed in dyn_finish
          strtltx , & ! stress due to sea surface slope, x-direction
          strtlty , & ! stress due to sea surface slope, y-direction
          strintx , & ! divergence of internal ice stress, x (N/m^2)
          strinty , & ! divergence of internal ice stress, y (N/m^2)
          taubxN  , & ! seabed stress (x) at N points (N/m^2)
          taubyN  , & ! seabed stress (y) at N points (N/m^2)
-         strairxN, & ! stress on ice by air, x-direction at N points
-         strairyN, & ! stress on ice by air, y-direction at N points
-         strocnxN, & ! ice-ocean stress, x-direction at N points
-         strocnyN, & ! ice-ocean stress, y-direction at N points
+         strairxN, & ! stress on ice by air, x-direction at N points, mapped from strairxT
+         strairyN, & ! stress on ice by air, y-direction at N points, mapped from strairyT
+         strocnxN, & ! ice-ocean stress, x-direction at N points, computed in dyn_finish
+         strocnyN, & ! ice-ocean stress, y-direction at N points, computed in dyn_finish
          strtltxN, & ! stress due to sea surface slope, x-direction at N points
          strtltyN, & ! stress due to sea surface slope, y-direction at N points
          strintxN, & ! divergence of internal ice stress, x at N points (N/m^2)
          strintyN, & ! divergence of internal ice stress, y at N points (N/m^2)
          taubxE  , & ! seabed stress (x) at E points (N/m^2)
          taubyE  , & ! seabed stress (y) at E points (N/m^2)
-         strairxE, & ! stress on ice by air, x-direction at E points
-         strairyE, & ! stress on ice by air, y-direction at E points
-         strocnxE, & ! ice-ocean stress, x-direction at E points
-         strocnyE, & ! ice-ocean stress, y-direction at E points
+         strairxE, & ! stress on ice by air, x-direction at E points, mapped from strairxT
+         strairyE, & ! stress on ice by air, y-direction at E points, mapped from strairyT
+         strocnxE, & ! ice-ocean stress, x-direction at E points, computed in dyn_finish
+         strocnyE, & ! ice-ocean stress, y-direction at E points, computed in dyn_finish
          strtltxE, & ! stress due to sea surface slope, x-direction at E points
          strtltyE, & ! stress due to sea surface slope, y-direction at E points
          strintxE, & ! divergence of internal ice stress, x at E points (N/m^2)
@@ -588,8 +584,6 @@
 
       if (grid_system == "CD") &
          allocate( &
-         straxN     (nx_block,ny_block,max_blocks), & ! wind stress components (N/m^2)
-         strayN     (nx_block,ny_block,max_blocks), & ! 
          uocnN      (nx_block,ny_block,max_blocks), & ! ocean current, x-direction (m/s)
          vocnN      (nx_block,ny_block,max_blocks), & ! ocean current, y-direction (m/s)
          ss_tltxN   (nx_block,ny_block,max_blocks), & ! sea surface slope, x-direction (m/m)
@@ -607,8 +601,6 @@
          icenmask   (nx_block,ny_block,max_blocks), & ! ice extent mask (N-cell)
          fmN        (nx_block,ny_block,max_blocks), & ! Coriolis param. * mass in N-cell (kg/s)
          TbN        (nx_block,ny_block,max_blocks), & ! factor for seabed stress (landfast ice)
-         straxE     (nx_block,ny_block,max_blocks), & ! wind stress components (N/m^2)
-         strayE     (nx_block,ny_block,max_blocks), & ! 
          uocnE      (nx_block,ny_block,max_blocks), & ! ocean current, x-direction (m/s)
          vocnE      (nx_block,ny_block,max_blocks), & ! ocean current, y-direction (m/s)
          ss_tltxE   (nx_block,ny_block,max_blocks), & ! sea surface slope, x-direction (m/m)

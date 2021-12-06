@@ -191,6 +191,10 @@
       type (block) :: &
          this_block           ! block information for current block
       
+      real (kind=dbl_kind), dimension (nx_block,ny_block,max_blocks) :: &
+         work1, &      ! temporary
+         work2         ! temporary
+
       character(len=*), parameter :: subname = '(eap)'
 
       call ice_timer_start(timer_dynamics) ! dynamics
@@ -238,8 +242,6 @@
                          ilo, ihi,           jlo, jhi,           &
                          aice    (:,:,iblk), vice    (:,:,iblk), & 
                          vsno    (:,:,iblk), tmask   (:,:,iblk), & 
-                         strairxT(:,:,iblk), strairyT(:,:,iblk), & 
-                         strairx (:,:,iblk), strairy (:,:,iblk), & 
                          tmass   (:,:,iblk), icetmask(:,:,iblk))
 
       enddo                     ! iblk
@@ -270,12 +272,12 @@
          strairx(:,:,:) = strax(:,:,:)
          strairy(:,:,:) = stray(:,:,:)
       else
-         call ice_HaloUpdate (strairx,          halo_info, &
+         call ice_HaloUpdate (strairxT,         halo_info, &
                               field_loc_center, field_type_vector)
-         call ice_HaloUpdate (strairy,          halo_info, &
+         call ice_HaloUpdate (strairyT,         halo_info, &
                               field_loc_center, field_type_vector)
-         call grid_average_X2Y('T2UF',strairx)
-         call grid_average_X2Y('T2UF',strairy)
+         call grid_average_X2Y('T2UF',strairxT,strairx)
+         call grid_average_X2Y('T2UF',strairyT,strairy)
       endif
 
 ! tcraig, tcx, turned off this threaded region, in evp, this block and 
@@ -547,18 +549,32 @@
                aiu     (:,:,iblk), fm      (:,:,iblk), &
                strintx (:,:,iblk), strinty (:,:,iblk), &
                strairx (:,:,iblk), strairy (:,:,iblk), & 
-               strocnx (:,:,iblk), strocny (:,:,iblk), & 
-               strocnxT(:,:,iblk), strocnyT(:,:,iblk))
+               strocnx (:,:,iblk), strocny (:,:,iblk))
 
       enddo
       !$OMP END PARALLEL DO
 
-      call ice_HaloUpdate (strocnxT,           halo_info, &
+      ! strocn computed on U, N, E as needed. Map strocn U divided by aiu to T
+      ! TODO: This should be done elsewhere as part of generalization?
+      ! conservation requires aiu be divided before averaging
+      work1 = c0
+      work2 = c0
+      !$OMP PARALLEL DO PRIVATE(iblk,ij,i,j)
+      do iblk = 1, nblocks
+      do ij = 1, icellu(iblk)
+         i = indxui(ij,iblk)
+         j = indxuj(ij,iblk)
+         work1(i,j,iblk) = strocnx(i,j,iblk)/aiu(i,j,iblk)
+         work2(i,j,iblk) = strocny(i,j,iblk)/aiu(i,j,iblk)
+      enddo
+      enddo
+      call ice_HaloUpdate (work1,              halo_info, &
                            field_loc_NEcorner, field_type_vector)
-      call ice_HaloUpdate (strocnyT,           halo_info, &
+      call ice_HaloUpdate (work2,              halo_info, &
                            field_loc_NEcorner, field_type_vector)
-      call grid_average_X2Y('U2TF',strocnxT)    ! shift
-      call grid_average_X2Y('U2TF',strocnyT)
+      call grid_average_X2Y('U2TF',work1,strocnxT)    ! shift
+      call grid_average_X2Y('U2TF',work2,strocnyT)
+
 ! shift velocity components from CD grid locations (N, E) to B grid location (U) for transport
 ! commented out in order to focus on EVP for now within the cdgrid
 ! should be used when routine is ready

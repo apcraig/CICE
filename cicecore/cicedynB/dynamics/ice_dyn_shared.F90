@@ -339,8 +339,6 @@
                             ilo, ihi,  jlo, jhi, &
                             aice,      vice,     & 
                             vsno,      tmask,    & 
-                            strairxT,  strairyT, & 
-                            strairx,   strairy,  & 
                             tmass,     icetmask)
 
       integer (kind=int_kind), intent(in) :: &
@@ -350,16 +348,12 @@
       real (kind=dbl_kind), dimension (nx_block,ny_block), intent(in) :: &
          aice    , & ! concentration of ice
          vice    , & ! volume per unit area of ice          (m)
-         vsno    , & ! volume per unit area of snow         (m)
-         strairxT, & ! stress on ice by air, x-direction
-         strairyT    ! stress on ice by air, y-direction
+         vsno        ! volume per unit area of snow         (m)
 
       logical (kind=log_kind), dimension (nx_block,ny_block), intent(in) :: &
          tmask       ! land/boundary mask, thickness (T-cell)
 
       real (kind=dbl_kind), dimension (nx_block,ny_block), intent(out) :: &
-         strairx , & ! stress on ice by air, x-direction
-         strairy , & ! stress on ice by air, y-direction
          tmass       ! total mass of ice and snow (kg/m^2)
 
       integer (kind=int_kind), dimension (nx_block,ny_block), intent(out) :: &
@@ -402,14 +396,6 @@
       !-----------------------------------------------------------------
          tmphm(i,j) = tmask(i,j) .and. (aice (i,j) > a_min) & 
                                  .and. (tmass(i,j) > m_min)
-
-      !-----------------------------------------------------------------
-      ! prep to convert to U grid
-      !-----------------------------------------------------------------
-         ! these quantities include the factor of aice needed for 
-         ! correct treatment of free drift
-         strairx(i,j) = strairxT(i,j)
-         strairy(i,j) = strairyT(i,j)
 
       !-----------------------------------------------------------------
       ! augmented mask (land + open ocean)
@@ -954,8 +940,7 @@
                              aiu,      fm,       &
                              strintx,  strinty,  &
                              strairx,  strairy,  &
-                             strocnx,  strocny,  &
-                             strocnxT, strocnyT) 
+                             strocnx,  strocny)
 
       integer (kind=int_kind), intent(in) :: &
          nx_block, ny_block, & ! block dimensions
@@ -981,10 +966,6 @@
          strocnx , & ! ice-ocean stress, x-direction
          strocny     ! ice-ocean stress, y-direction
 
-      real (kind=dbl_kind), dimension (nx_block,ny_block), intent(out), optional :: &
-         strocnxT, & ! ice-ocean stress, x-direction
-         strocnyT    ! ice-ocean stress, y-direction
-
       ! local variables
 
       integer (kind=int_kind) :: &
@@ -1000,17 +981,6 @@
       call icepack_warnings_flush(nu_diag)
       if (icepack_warnings_aborted()) call abort_ice(error_message=subname, &
          file=__FILE__, line=__LINE__)
-
-      if (present(strocnxT) .and. present(strocnyT)) then
-
-         do j = 1, ny_block
-         do i = 1, nx_block
-            strocnxT(i,j) = c0
-            strocnyT(i,j) = c0
-         enddo
-         enddo
-
-      endif
 
       ! ocean-ice stress for coupling
       do ij =1, icellu
@@ -1037,14 +1007,6 @@
 !         strocnx(i,j) = -(strairx(i,j) + strintx(i,j))
 !         strocny(i,j) = -(strairy(i,j) + strinty(i,j))
 
-         if (present(strocnxT) .and. present(strocnyT)) then
-
-            ! Prepare to convert to T grid
-            ! divide by aice for coupling
-            strocnxT(i,j) = strocnx(i,j) / aiu(i,j)
-            strocnyT(i,j) = strocny(i,j) / aiu(i,j)
-
-         endif
       enddo
 
       end subroutine dyn_finish

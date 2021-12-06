@@ -180,6 +180,12 @@
       logical (kind=log_kind), private :: &
          l_readCenter ! If anglet exist in grid file read it otherwise calculate it
 
+      interface grid_average_X2Y
+         module procedure grid_average_X2Y_1,  &
+                          grid_average_X2Y_1f, &
+                          grid_average_X2Y_2
+      end interface
+
 !=======================================================================
 
       contains
@@ -2354,89 +2360,255 @@
 !
 ! author: T. Craig
 
-      subroutine grid_average_X2Y(X2Y,work1,work2)
+      subroutine grid_average_X2Y_1(X2Y,work1,work2)
 
       character(len=*) , intent(in) :: &
          X2Y
 
-      real (kind=dbl_kind), intent(inout) :: &
+      real (kind=dbl_kind), intent(in) :: &
          work1(:,:,:)
 
-      real (kind=dbl_kind), intent(out), optional :: &
+      real (kind=dbl_kind), intent(out)   :: &
          work2(:,:,:)
 
       ! local variables
 
-      real (kind=dbl_kind), dimension (nx_block,ny_block,max_blocks) :: &
-         work2tmp
-
-      character(len=*), parameter :: subname = '(grid_average_X2Y)'
+      character(len=*), parameter :: subname = '(grid_average_X2Y_1)'
 
       select case (trim(X2Y))
 
          ! flux unmasked
          case('T2UF')
-            call grid_average_X2YF('NE',work1,tarea,work2tmp,uarea)
+            call grid_average_X2YF('NE',work1,tarea,work2,uarea)
          case('T2EF')
-            call grid_average_X2YF('E' ,work1,tarea,work2tmp,earea)
+            call grid_average_X2YF('E' ,work1,tarea,work2,earea)
          case('T2NF')
-            call grid_average_X2YF('N' ,work1,tarea,work2tmp,narea)
+            call grid_average_X2YF('N' ,work1,tarea,work2,narea)
          case('U2TF')
-            call grid_average_X2YF('SW',work1,uarea,work2tmp,tarea)
+            call grid_average_X2YF('SW',work1,uarea,work2,tarea)
          case('U2EF')
-            call grid_average_X2YF('S' ,work1,uarea,work2tmp,earea)
+            call grid_average_X2YF('S' ,work1,uarea,work2,earea)
          case('U2NF')
-            call grid_average_X2YF('W' ,work1,uarea,work2tmp,narea)
+            call grid_average_X2YF('W' ,work1,uarea,work2,narea)
          case('E2TF')
-            call grid_average_X2YF('W' ,work1,earea,work2tmp,tarea)
+            call grid_average_X2YF('W' ,work1,earea,work2,tarea)
          case('E2UF')
-            call grid_average_X2YF('N' ,work1,earea,work2tmp,uarea)
+            call grid_average_X2YF('N' ,work1,earea,work2,uarea)
          case('E2NF')
-            call grid_average_X2YF('NW',work1,earea,work2tmp,narea)
+            call grid_average_X2YF('NW',work1,earea,work2,narea)
          case('N2TF')
-            call grid_average_X2YF('S' ,work1,narea,work2tmp,tarea)
+            call grid_average_X2YF('S' ,work1,narea,work2,tarea)
          case('N2UF')
-            call grid_average_X2YF('E' ,work1,narea,work2tmp,uarea)
+            call grid_average_X2YF('E' ,work1,narea,work2,uarea)
          case('N2EF')
-            call grid_average_X2YF('SE',work1,narea,work2tmp,earea)
+            call grid_average_X2YF('SE',work1,narea,work2,earea)
 
          ! state masked
          case('T2US')
-            call grid_average_X2YS('NE',work1,tarea,hm ,work2tmp)
+            call grid_average_X2YS('NE',work1,tarea,hm ,work2)
          case('T2ES')
-            call grid_average_X2YS('E' ,work1,tarea,hm ,work2tmp)
+            call grid_average_X2YS('E' ,work1,tarea,hm ,work2)
          case('T2NS')
-            call grid_average_X2YS('N' ,work1,tarea,hm ,work2tmp)
+            call grid_average_X2YS('N' ,work1,tarea,hm ,work2)
          case('U2TS')
-            call grid_average_X2YS('SW',work1,uarea,uvm,work2tmp)
+            call grid_average_X2YS('SW',work1,uarea,uvm,work2)
          case('U2ES')
-            call grid_average_X2YS('S' ,work1,uarea,uvm,work2tmp)
+            call grid_average_X2YS('S' ,work1,uarea,uvm,work2)
          case('U2NS')
-            call grid_average_X2YS('W' ,work1,uarea,uvm,work2tmp)
+            call grid_average_X2YS('W' ,work1,uarea,uvm,work2)
          case('E2TS')
-            call grid_average_X2YS('W' ,work1,earea,epm,work2tmp)
+            call grid_average_X2YS('W' ,work1,earea,epm,work2)
          case('E2US')
-            call grid_average_X2YS('N' ,work1,earea,epm,work2tmp)
+            call grid_average_X2YS('N' ,work1,earea,epm,work2)
          case('E2NS')
-            call grid_average_X2YS('NW',work1,earea,epm,work2tmp)
+            call grid_average_X2YS('NW',work1,earea,epm,work2)
          case('N2TS')
-            call grid_average_X2YS('S' ,work1,narea,npm,work2tmp)
+            call grid_average_X2YS('S' ,work1,narea,npm,work2)
          case('N2US')
-            call grid_average_X2YS('E' ,work1,narea,npm,work2tmp)
+            call grid_average_X2YS('E' ,work1,narea,npm,work2)
          case('N2ES')
-            call grid_average_X2YS('SE',work1,narea,npm,work2tmp)
+            call grid_average_X2YS('SE',work1,narea,npm,work2)
+
+         ! state unmasked
+         case('T2UA')
+            call grid_average_X2YA('NE',work1,tarea,work2)
+         case('T2EA')
+            call grid_average_X2YA('E' ,work1,tarea,work2)
+         case('T2NA')
+            call grid_average_X2YA('N' ,work1,tarea,work2)
+         case('U2TA')
+            call grid_average_X2YA('SW',work1,uarea,work2)
+         case('U2EA')
+            call grid_average_X2YA('S' ,work1,uarea,work2)
+         case('U2NA')
+            call grid_average_X2YA('W' ,work1,uarea,work2)
+         case('E2TA')
+            call grid_average_X2YA('W' ,work1,earea,work2)
+         case('E2UA')
+            call grid_average_X2YA('N' ,work1,earea,work2)
+         case('E2NA')
+            call grid_average_X2YA('NW',work1,earea,work2)
+         case('N2TA')
+            call grid_average_X2YA('S' ,work1,narea,work2)
+         case('N2UA')
+            call grid_average_X2YA('E' ,work1,narea,work2)
+         case('N2EA')
+            call grid_average_X2YA('SE',work1,narea,work2)
 
          case default
             call abort_ice(subname//'ERROR: unknown X2Y '//trim(X2Y))
       end select
 
-      if (present(work2)) then
-         work2 = work2tmp
-      else
-         work1 = work2tmp
-      endif
+      end subroutine grid_average_X2Y_1
 
-      end subroutine grid_average_X2Y
+!=======================================================================
+
+! Shifts quantities from one grid to another
+! NOTE: Input array includes ghost cells that must be updated before
+!       calling this routine.
+!
+! author: T. Craig
+
+      subroutine grid_average_X2Y_1f(X2Y,work1,wght1,mask1,work2)
+
+      character(len=*) , intent(in) :: &
+         X2Y
+
+      real (kind=dbl_kind), intent(in) :: &
+         work1(:,:,:), &
+         wght1(:,:,:), &
+         mask1(:,:,:)
+
+      real (kind=dbl_kind), intent(out)   :: &
+         work2(:,:,:)
+
+      ! local variables
+
+      character(len=*), parameter :: subname = '(grid_average_X2Y_1f)'
+
+      select case (trim(X2Y))
+
+! don't support these for now, requires extra destination wght
+!         ! flux unmasked
+!         case('T2UF')
+!            call grid_average_X2YF('NE',work1,tarea,work2,uarea)
+!         case('T2EF')
+!            call grid_average_X2YF('E' ,work1,tarea,work2,earea)
+!         case('T2NF')
+!            call grid_average_X2YF('N' ,work1,tarea,work2,narea)
+!         case('U2TF')
+!            call grid_average_X2YF('SW',work1,uarea,work2,tarea)
+!         case('U2EF')
+!            call grid_average_X2YF('S' ,work1,uarea,work2,earea)
+!         case('U2NF')
+!            call grid_average_X2YF('W' ,work1,uarea,work2,narea)
+!         case('E2TF')
+!            call grid_average_X2YF('W' ,work1,earea,work2,tarea)
+!         case('E2UF')
+!            call grid_average_X2YF('N' ,work1,earea,work2,uarea)
+!         case('E2NF')
+!            call grid_average_X2YF('NW',work1,earea,work2,narea)
+!         case('N2TF')
+!            call grid_average_X2YF('S' ,work1,narea,work2,tarea)
+!         case('N2UF')
+!            call grid_average_X2YF('E' ,work1,narea,work2,uarea)
+!         case('N2EF')
+!            call grid_average_X2YF('SE',work1,narea,work2,earea)
+
+         ! state masked
+         case('T2US')
+            call grid_average_X2YS('NE',work1,wght1,mask1,work2)
+         case('T2ES')
+            call grid_average_X2YS('E' ,work1,wght1,mask1,work2)
+         case('T2NS')
+            call grid_average_X2YS('N' ,work1,wght1,mask1,work2)
+         case('U2TS')
+            call grid_average_X2YS('SW',work1,wght1,mask1,work2)
+         case('U2ES')
+            call grid_average_X2YS('S' ,work1,wght1,mask1,work2)
+         case('U2NS')
+            call grid_average_X2YS('W' ,work1,wght1,mask1,work2)
+         case('E2TS')
+            call grid_average_X2YS('W' ,work1,wght1,mask1,work2)
+         case('E2US')
+            call grid_average_X2YS('N' ,work1,wght1,mask1,work2)
+         case('E2NS')
+            call grid_average_X2YS('NW',work1,wght1,mask1,work2)
+         case('N2TS')
+            call grid_average_X2YS('S' ,work1,wght1,mask1,work2)
+         case('N2US')
+            call grid_average_X2YS('E' ,work1,wght1,mask1,work2)
+         case('N2ES')
+            call grid_average_X2YS('SE',work1,wght1,mask1,work2)
+
+         ! state unmasked
+         case('T2UA')
+            call grid_average_X2YA('NE',work1,wght1,work2)
+         case('T2EA')
+            call grid_average_X2YA('E' ,work1,wght1,work2)
+         case('T2NA')
+            call grid_average_X2YA('N' ,work1,wght1,work2)
+         case('U2TA')
+            call grid_average_X2YA('SW',work1,wght1,work2)
+         case('U2EA')
+            call grid_average_X2YA('S' ,work1,wght1,work2)
+         case('U2NA')
+            call grid_average_X2YA('W' ,work1,wght1,work2)
+         case('E2TA')
+            call grid_average_X2YA('W' ,work1,wght1,work2)
+         case('E2UA')
+            call grid_average_X2YA('N' ,work1,wght1,work2)
+         case('E2NA')
+            call grid_average_X2YA('NW',work1,wght1,work2)
+         case('N2TA')
+            call grid_average_X2YA('S' ,work1,wght1,work2)
+         case('N2UA')
+            call grid_average_X2YA('E' ,work1,wght1,work2)
+         case('N2EA')
+            call grid_average_X2YA('SE',work1,wght1,work2)
+
+         case default
+            call abort_ice(subname//'ERROR: unknown X2Y '//trim(X2Y))
+      end select
+
+      end subroutine grid_average_X2Y_1f
+
+!=======================================================================
+
+! Shifts quantities from one grid to another
+! NOTE: Input array includes ghost cells that must be updated before
+!       calling this routine.
+!
+! author: T. Craig
+
+      subroutine grid_average_X2Y_2(X2Y,work1a,work1b,work2)
+
+      character(len=*) , intent(in) :: &
+         X2Y
+
+      real (kind=dbl_kind), intent(in) :: &
+         work1a(:,:,:), work1b(:,:,:)
+
+      real (kind=dbl_kind), intent(out)   :: &
+         work2(:,:,:)
+
+      ! local variables
+
+      character(len=*), parameter :: subname = '(grid_average_X2Y_2)'
+
+      select case (trim(X2Y))
+
+         ! state masked
+         case('NE2US')
+            call grid_average_X2YS_2('NE2US',work1a,narea,npm,work1b,earea,epm,work2)
+         case('NE2TS')
+            call grid_average_X2YS_2('NE2TS',work1a,narea,npm,work1b,earea,epm,work2)
+
+         case default
+            call abort_ice(subname//'ERROR: unknown X2Y '//trim(X2Y))
+      end select
+
+      end subroutine grid_average_X2Y_2
 
 !=======================================================================
 ! Shifts quantities from one grid to another
@@ -2446,7 +2618,7 @@
 !
 ! author: T. Craig
 
-      subroutine grid_average_X2YS(dir,work1,area1,mask1,work2)
+      subroutine grid_average_X2YS(dir,work1,wght1,mask1,work2)
 
       use ice_constants, only: c0
 
@@ -2455,7 +2627,7 @@
 
       real (kind=dbl_kind), intent(in) :: &
          work1(:,:,:), &
-         area1(:,:,:), &
+         wght1(:,:,:), &
          mask1(:,:,:)
 
       real (kind=dbl_kind), intent(out) :: &
@@ -2489,15 +2661,15 @@
                jhi = this_block%jhi
                do j = jlo, jhi
                do i = ilo, ihi
-                  wtmp = (mask1(i,  j,  iblk)*area1(i,  j,  iblk)  &
-                        + mask1(i+1,j,  iblk)*area1(i+1,j,  iblk)  &
-                        + mask1(i,  j+1,iblk)*area1(i,  j+1,iblk)  &
-                        + mask1(i+1,j+1,iblk)*area1(i+1,j+1,iblk))
+                  wtmp = (mask1(i  ,j  ,iblk)*wght1(i  ,j  ,iblk)  &
+                        + mask1(i+1,j  ,iblk)*wght1(i+1,j  ,iblk)  &
+                        + mask1(i  ,j+1,iblk)*wght1(i  ,j+1,iblk)  &
+                        + mask1(i+1,j+1,iblk)*wght1(i+1,j+1,iblk))
                   if (wtmp /= c0) &
-                  work2(i,j,iblk) = (mask1(i,  j,  iblk)*work1(i,  j,  iblk)*area1(i,  j,  iblk)  &
-                                   + mask1(i+1,j,  iblk)*work1(i+1,j,  iblk)*area1(i+1,j,  iblk)  &
-                                   + mask1(i,  j+1,iblk)*work1(i,  j+1,iblk)*area1(i,  j+1,iblk)  &
-                                   + mask1(i+1,j+1,iblk)*work1(i+1,j+1,iblk)*area1(i+1,j+1,iblk)) &
+                  work2(i,j,iblk) = (mask1(i  ,j  ,iblk)*work1(i  ,j  ,iblk)*wght1(i  ,j  ,iblk)  &
+                                   + mask1(i+1,j  ,iblk)*work1(i+1,j  ,iblk)*wght1(i+1,j  ,iblk)  &
+                                   + mask1(i  ,j+1,iblk)*work1(i  ,j+1,iblk)*wght1(i  ,j+1,iblk)  &
+                                   + mask1(i+1,j+1,iblk)*work1(i+1,j+1,iblk)*wght1(i+1,j+1,iblk)) &
                                    / wtmp
                enddo
                enddo
@@ -2514,15 +2686,15 @@
                jhi = this_block%jhi
                do j = jlo, jhi
                do i = ilo, ihi
-                  wtmp = (mask1(i,  j,  iblk)*area1(i,  j,  iblk)  &
-                        + mask1(i-1,j,  iblk)*area1(i-1,j,  iblk)  &
-                        + mask1(i,  j-1,iblk)*area1(i,  j-1,iblk)  & 
-                        + mask1(i-1,j-1,iblk)*area1(i-1,j-1,iblk))
+                  wtmp = (mask1(i  ,j  ,iblk)*wght1(i  ,j  ,iblk)  &
+                        + mask1(i-1,j  ,iblk)*wght1(i-1,j  ,iblk)  &
+                        + mask1(i  ,j-1,iblk)*wght1(i  ,j-1,iblk)  & 
+                        + mask1(i-1,j-1,iblk)*wght1(i-1,j-1,iblk))
                   if (wtmp /= c0) &
-                  work2(i,j,iblk) = (mask1(i,  j,  iblk)*work1(i,  j,  iblk)*area1(i,  j,  iblk)  &
-                                   + mask1(i-1,j,  iblk)*work1(i-1,j,  iblk)*area1(i-1,j,  iblk)  &
-                                   + mask1(i,  j-1,iblk)*work1(i,  j-1,iblk)*area1(i,  j-1,iblk)  & 
-                                   + mask1(i-1,j-1,iblk)*work1(i-1,j-1,iblk)*area1(i-1,j-1,iblk)) &
+                  work2(i,j,iblk) = (mask1(i  ,j  ,iblk)*work1(i  ,j  ,iblk)*wght1(i  ,j  ,iblk)  &
+                                   + mask1(i-1,j  ,iblk)*work1(i-1,j  ,iblk)*wght1(i-1,j  ,iblk)  &
+                                   + mask1(i  ,j-1,iblk)*work1(i  ,j-1,iblk)*wght1(i  ,j-1,iblk)  & 
+                                   + mask1(i-1,j-1,iblk)*work1(i-1,j-1,iblk)*wght1(i-1,j-1,iblk)) &
                                    / wtmp
                enddo
                enddo
@@ -2539,15 +2711,15 @@
                jhi = this_block%jhi
                do j = jlo, jhi
                do i = ilo, ihi
-                  wtmp = (mask1(i-1,j,  iblk)*area1(i-1,j,  iblk)  &
-                        + mask1(i,  j,  iblk)*area1(i,  j,  iblk)  &
-                        + mask1(i-1,j+1,iblk)*area1(i-1,j+1,iblk)  &
-                        + mask1(i,  j+1,iblk)*area1(i  ,j+1,iblk))
+                  wtmp = (mask1(i-1,j  ,iblk)*wght1(i-1,j  ,iblk)  &
+                        + mask1(i  ,j  ,iblk)*wght1(i  ,j  ,iblk)  &
+                        + mask1(i-1,j+1,iblk)*wght1(i-1,j+1,iblk)  &
+                        + mask1(i  ,j+1,iblk)*wght1(i  ,j+1,iblk))
                   if (wtmp /= c0) &
-                  work2(i,j,iblk) = (mask1(i-1,j,  iblk)*work1(i-1,j,  iblk)*area1(i-1,j,  iblk)  &
-                                   + mask1(i,  j,  iblk)*work1(i,  j,  iblk)*area1(i,  j,  iblk)  &
-                                   + mask1(i-1,j+1,iblk)*work1(i-1,j+1,iblk)*area1(i-1,j+1,iblk)  &
-                                   + mask1(i,  j+1,iblk)*work1(i,  j+1,iblk)*area1(i  ,j+1,iblk)) &
+                  work2(i,j,iblk) = (mask1(i-1,j  ,iblk)*work1(i-1,j  ,iblk)*wght1(i-1,j  ,iblk)  &
+                                   + mask1(i  ,j  ,iblk)*work1(i  ,j  ,iblk)*wght1(i  ,j  ,iblk)  &
+                                   + mask1(i-1,j+1,iblk)*work1(i-1,j+1,iblk)*wght1(i-1,j+1,iblk)  &
+                                   + mask1(i  ,j+1,iblk)*work1(i  ,j+1,iblk)*wght1(i  ,j+1,iblk)) &
                                    / wtmp
                enddo
                enddo
@@ -2564,15 +2736,15 @@
                jhi = this_block%jhi
                do j = jlo, jhi
                do i = ilo, ihi
-                  wtmp = (mask1(i  ,j-1,iblk)*area1(i  ,j-1,iblk)  &
-                        + mask1(i+1,j-1,iblk)*area1(i+1,j-1,iblk)  & 
-                        + mask1(i  ,j  ,iblk)*area1(i  ,j,  iblk)  &
-                        + mask1(i+1,j  ,iblk)*area1(i+1,j,  iblk))
+                  wtmp = (mask1(i  ,j-1,iblk)*wght1(i  ,j-1,iblk)  &
+                        + mask1(i+1,j-1,iblk)*wght1(i+1,j-1,iblk)  & 
+                        + mask1(i  ,j  ,iblk)*wght1(i  ,j  ,iblk)  &
+                        + mask1(i+1,j  ,iblk)*wght1(i+1,j  ,iblk))
                   if (wtmp /= c0) &
-                  work2(i,j,iblk) = (mask1(i  ,j-1,iblk)*work1(i  ,j-1,iblk)*area1(i  ,j-1,iblk)  &
-                                   + mask1(i+1,j-1,iblk)*work1(i+1,j-1,iblk)*area1(i+1,j-1,iblk)  & 
-                                   + mask1(i  ,j  ,iblk)*work1(i  ,j  ,iblk)*area1(i  ,j,  iblk)  &
-                                   + mask1(i+1,j  ,iblk)*work1(i+1,j  ,iblk)*area1(i+1,j,  iblk)) &
+                  work2(i,j,iblk) = (mask1(i  ,j-1,iblk)*work1(i  ,j-1,iblk)*wght1(i  ,j-1,iblk)  &
+                                   + mask1(i+1,j-1,iblk)*work1(i+1,j-1,iblk)*wght1(i+1,j-1,iblk)  & 
+                                   + mask1(i  ,j  ,iblk)*work1(i  ,j  ,iblk)*wght1(i  ,j  ,iblk)  &
+                                   + mask1(i+1,j  ,iblk)*work1(i+1,j  ,iblk)*wght1(i+1,j  ,iblk)) &
                                    / wtmp
                enddo
                enddo
@@ -2589,11 +2761,11 @@
                jhi = this_block%jhi
                do j = jlo, jhi
                do i = ilo, ihi
-                  wtmp = (mask1(i,  j,iblk)*area1(i,  j,iblk)  &
-                        + mask1(i+1,j,iblk)*area1(i+1,j,iblk))
+                  wtmp = (mask1(i  ,j,iblk)*wght1(i  ,j,iblk)  &
+                        + mask1(i+1,j,iblk)*wght1(i+1,j,iblk))
                   if (wtmp /= c0) &
-                  work2(i,j,iblk) = (mask1(i,  j,iblk)*work1(i,  j,iblk)*area1(i,  j,iblk)  &
-                                   + mask1(i+1,j,iblk)*work1(i+1,j,iblk)*area1(i+1,j,iblk)) &
+                  work2(i,j,iblk) = (mask1(i  ,j,iblk)*work1(i  ,j,iblk)*wght1(i  ,j,iblk)  &
+                                   + mask1(i+1,j,iblk)*work1(i+1,j,iblk)*wght1(i+1,j,iblk)) &
                                    / wtmp
                enddo
                enddo
@@ -2610,11 +2782,11 @@
                jhi = this_block%jhi
                do j = jlo, jhi
                do i = ilo, ihi
-                  wtmp = (mask1(i-1,j,iblk)*area1(i-1,j,iblk)  &
-                        + mask1(i,  j,iblk)*area1(i,  j,iblk))
+                  wtmp = (mask1(i-1,j,iblk)*wght1(i-1,j,iblk)  &
+                        + mask1(i  ,j,iblk)*wght1(i  ,j,iblk))
                   if (wtmp /= c0) &
-                  work2(i,j,iblk) = (mask1(i-1,j,iblk)*work1(i-1,j,iblk)*area1(i-1,j,iblk)  &
-                                   + mask1(i,  j,iblk)*work1(i,  j,iblk)*area1(i,  j,iblk)) &
+                  work2(i,j,iblk) = (mask1(i-1,j,iblk)*work1(i-1,j,iblk)*wght1(i-1,j,iblk)  &
+                                   + mask1(i  ,j,iblk)*work1(i  ,j,iblk)*wght1(i  ,j,iblk)) &
                                    / wtmp
                enddo
                enddo
@@ -2631,11 +2803,11 @@
                jhi = this_block%jhi
                do j = jlo, jhi
                do i = ilo, ihi
-                  wtmp = (mask1(i,j,  iblk)*area1(i,j,  iblk)  &
-                        + mask1(i,j+1,iblk)*area1(i,j+1,iblk))
+                  wtmp = (mask1(i,j  ,iblk)*wght1(i,j  ,iblk)  &
+                        + mask1(i,j+1,iblk)*wght1(i,j+1,iblk))
                   if (wtmp /= c0) &
-                  work2(i,j,iblk) = (mask1(i,j,  iblk)*work1(i,j,  iblk)*area1(i,j,  iblk)  &
-                                   + mask1(i,j+1,iblk)*work1(i,j+1,iblk)*area1(i,j+1,iblk)) &
+                  work2(i,j,iblk) = (mask1(i,j  ,iblk)*work1(i,j  ,iblk)*wght1(i,j  ,iblk)  &
+                                   + mask1(i,j+1,iblk)*work1(i,j+1,iblk)*wght1(i,j+1,iblk)) &
                                    / wtmp
                enddo
                enddo
@@ -2652,11 +2824,11 @@
                jhi = this_block%jhi
                do j = jlo, jhi
                do i = ilo, ihi
-                  wtmp = (mask1(i,j-1,iblk)*area1(i,j-1,iblk)  &
-                        + mask1(i,j,  iblk)*area1(i,j,  iblk))
+                  wtmp = (mask1(i,j-1,iblk)*wght1(i,j-1,iblk)  &
+                        + mask1(i,j  ,iblk)*wght1(i,j  ,iblk))
                   if (wtmp /= c0) &
-                  work2(i,j,iblk) = (mask1(i,j-1,iblk)*work1(i,j-1,iblk)*area1(i,j-1,iblk)  &
-                                   + mask1(i,j,  iblk)*work1(i,j,  iblk)*area1(i,j,  iblk)) &
+                  work2(i,j,iblk) = (mask1(i,j-1,iblk)*work1(i,j-1,iblk)*wght1(i,j-1,iblk)  &
+                                   + mask1(i,j  ,iblk)*work1(i,j  ,iblk)*wght1(i,j  ,iblk)) &
                                    / wtmp
                enddo
                enddo
@@ -2671,13 +2843,243 @@
 
 !=======================================================================
 ! Shifts quantities from one grid to another
+! State unmasked version, simple weighted averager
+! NOTE: Input array includes ghost cells that must be updated before
+!       calling this routine.
+!
+! author: T. Craig
+
+      subroutine grid_average_X2YA(dir,work1,wght1,work2)
+
+      use ice_constants, only: c0
+
+      character(len=*) , intent(in) :: &
+         dir
+
+      real (kind=dbl_kind), intent(in) :: &
+         work1(:,:,:), &
+         wght1(:,:,:)
+
+      real (kind=dbl_kind), intent(out) :: &
+         work2(:,:,:)
+
+      ! local variables
+
+      integer (kind=int_kind) :: &
+         i, j, iblk, &
+         ilo,ihi,jlo,jhi      ! beginning and end of physical domain
+
+      real (kind=dbl_kind) :: &
+         wtmp
+
+      type (block) :: &
+         this_block           ! block information for current block
+
+      character(len=*), parameter :: subname = '(grid_average_X2YA)'
+
+      work2(:,:,:) = c0
+
+      select case (trim(dir))
+
+         case('NE')
+            !$OMP PARALLEL DO PRIVATE(iblk,i,j,ilo,ihi,jlo,jhi,this_block,wtmp)
+            do iblk = 1, nblocks
+               this_block = get_block(blocks_ice(iblk),iblk)
+               ilo = this_block%ilo
+               ihi = this_block%ihi
+               jlo = this_block%jlo
+               jhi = this_block%jhi
+               do j = jlo, jhi
+               do i = ilo, ihi
+                  wtmp = (wght1(i  ,j  ,iblk)  &
+                        + wght1(i+1,j  ,iblk)  &
+                        + wght1(i  ,j+1,iblk)  &
+                        + wght1(i+1,j+1,iblk))
+                  if (wtmp /= c0) &
+                  work2(i,j,iblk) = (work1(i  ,j  ,iblk)*wght1(i  ,j  ,iblk)  &
+                                   + work1(i+1,j  ,iblk)*wght1(i+1,j  ,iblk)  &
+                                   + work1(i  ,j+1,iblk)*wght1(i  ,j+1,iblk)  &
+                                   + work1(i+1,j+1,iblk)*wght1(i+1,j+1,iblk)) &
+                                   / wtmp
+               enddo
+               enddo
+            enddo
+            !$OMP END PARALLEL DO
+
+         case('SW')
+            !$OMP PARALLEL DO PRIVATE(iblk,i,j,ilo,ihi,jlo,jhi,this_block,wtmp)
+            do iblk = 1, nblocks
+               this_block = get_block(blocks_ice(iblk),iblk)
+               ilo = this_block%ilo
+               ihi = this_block%ihi
+               jlo = this_block%jlo
+               jhi = this_block%jhi
+               do j = jlo, jhi
+               do i = ilo, ihi
+                  wtmp = (wght1(i  ,j  ,iblk)  &
+                        + wght1(i-1,j  ,iblk)  &
+                        + wght1(i  ,j-1,iblk)  & 
+                        + wght1(i-1,j-1,iblk))
+                  if (wtmp /= c0) &
+                  work2(i,j,iblk) = (work1(i  ,j  ,iblk)*wght1(i  ,j  ,iblk)  &
+                                   + work1(i-1,j  ,iblk)*wght1(i-1,j  ,iblk)  &
+                                   + work1(i  ,j-1,iblk)*wght1(i  ,j-1,iblk)  & 
+                                   + work1(i-1,j-1,iblk)*wght1(i-1,j-1,iblk)) &
+                                   / wtmp
+               enddo
+               enddo
+            enddo
+            !$OMP END PARALLEL DO
+
+         case('NW')
+            !$OMP PARALLEL DO PRIVATE(iblk,i,j,ilo,ihi,jlo,jhi,this_block,wtmp)
+            do iblk = 1, nblocks
+               this_block = get_block(blocks_ice(iblk),iblk)
+               ilo = this_block%ilo
+               ihi = this_block%ihi
+               jlo = this_block%jlo
+               jhi = this_block%jhi
+               do j = jlo, jhi
+               do i = ilo, ihi
+                  wtmp = (wght1(i-1,j  ,iblk)  &
+                        + wght1(i  ,j  ,iblk)  &
+                        + wght1(i-1,j+1,iblk)  &
+                        + wght1(i  ,j+1,iblk))
+                  if (wtmp /= c0) &
+                  work2(i,j,iblk) = (work1(i-1,j  ,iblk)*wght1(i-1,j  ,iblk)  &
+                                   + work1(i  ,j  ,iblk)*wght1(i  ,j  ,iblk)  &
+                                   + work1(i-1,j+1,iblk)*wght1(i-1,j+1,iblk)  &
+                                   + work1(i  ,j+1,iblk)*wght1(i  ,j+1,iblk)) &
+                                   / wtmp
+               enddo
+               enddo
+            enddo
+            !$OMP END PARALLEL DO
+
+         case('SE')
+            !$OMP PARALLEL DO PRIVATE(iblk,i,j,ilo,ihi,jlo,jhi,this_block,wtmp)
+            do iblk = 1, nblocks
+               this_block = get_block(blocks_ice(iblk),iblk)
+               ilo = this_block%ilo
+               ihi = this_block%ihi
+               jlo = this_block%jlo
+               jhi = this_block%jhi
+               do j = jlo, jhi
+               do i = ilo, ihi
+                  wtmp = (wght1(i  ,j-1,iblk)  &
+                        + wght1(i+1,j-1,iblk)  & 
+                        + wght1(i  ,j  ,iblk)  &
+                        + wght1(i+1,j  ,iblk))
+                  if (wtmp /= c0) &
+                  work2(i,j,iblk) = (work1(i  ,j-1,iblk)*wght1(i  ,j-1,iblk)  &
+                                   + work1(i+1,j-1,iblk)*wght1(i+1,j-1,iblk)  & 
+                                   + work1(i  ,j  ,iblk)*wght1(i  ,j  ,iblk)  &
+                                   + work1(i+1,j  ,iblk)*wght1(i+1,j  ,iblk)) &
+                                   / wtmp
+               enddo
+               enddo
+            enddo
+            !$OMP END PARALLEL DO
+
+         case('E')
+            !$OMP PARALLEL DO PRIVATE(iblk,i,j,ilo,ihi,jlo,jhi,this_block,wtmp)
+            do iblk = 1, nblocks
+               this_block = get_block(blocks_ice(iblk),iblk)
+               ilo = this_block%ilo
+               ihi = this_block%ihi
+               jlo = this_block%jlo
+               jhi = this_block%jhi
+               do j = jlo, jhi
+               do i = ilo, ihi
+                  wtmp = (wght1(i  ,j,iblk)  &
+                        + wght1(i+1,j,iblk))
+                  if (wtmp /= c0) &
+                  work2(i,j,iblk) = (work1(i  ,j,iblk)*wght1(i  ,j,iblk)  &
+                                   + work1(i+1,j,iblk)*wght1(i+1,j,iblk)) &
+                                   / wtmp
+               enddo
+               enddo
+            enddo
+            !$OMP END PARALLEL DO
+
+         case('W')
+            !$OMP PARALLEL DO PRIVATE(iblk,i,j,ilo,ihi,jlo,jhi,this_block,wtmp)
+            do iblk = 1, nblocks
+               this_block = get_block(blocks_ice(iblk),iblk)
+               ilo = this_block%ilo
+               ihi = this_block%ihi
+               jlo = this_block%jlo
+               jhi = this_block%jhi
+               do j = jlo, jhi
+               do i = ilo, ihi
+                  wtmp = (wght1(i-1,j,iblk)  &
+                        + wght1(i  ,j,iblk))
+                  if (wtmp /= c0) &
+                  work2(i,j,iblk) = (work1(i-1,j,iblk)*wght1(i-1,j,iblk)  &
+                                   + work1(i  ,j,iblk)*wght1(i  ,j,iblk)) &
+                                   / wtmp
+               enddo
+               enddo
+            enddo
+            !$OMP END PARALLEL DO
+
+         case('N')
+            !$OMP PARALLEL DO PRIVATE(iblk,i,j,ilo,ihi,jlo,jhi,this_block,wtmp)
+            do iblk = 1, nblocks
+               this_block = get_block(blocks_ice(iblk),iblk)
+               ilo = this_block%ilo
+               ihi = this_block%ihi
+               jlo = this_block%jlo
+               jhi = this_block%jhi
+               do j = jlo, jhi
+               do i = ilo, ihi
+                  wtmp = (wght1(i,j  ,iblk)  &
+                        + wght1(i,j+1,iblk))
+                  if (wtmp /= c0) &
+                  work2(i,j,iblk) = (work1(i,j  ,iblk)*wght1(i,j  ,iblk)  &
+                                   + work1(i,j+1,iblk)*wght1(i,j+1,iblk)) &
+                                   / wtmp
+               enddo
+               enddo
+            enddo
+            !$OMP END PARALLEL DO
+
+         case('S')
+            !$OMP PARALLEL DO PRIVATE(iblk,i,j,ilo,ihi,jlo,jhi,this_block,wtmp)
+            do iblk = 1, nblocks
+               this_block = get_block(blocks_ice(iblk),iblk)
+               ilo = this_block%ilo
+               ihi = this_block%ihi
+               jlo = this_block%jlo
+               jhi = this_block%jhi
+               do j = jlo, jhi
+               do i = ilo, ihi
+                  wtmp = (wght1(i,j-1,iblk)  &
+                        + wght1(i,j  ,iblk))
+                  if (wtmp /= c0) &
+                  work2(i,j,iblk) = (work1(i,j-1,iblk)*wght1(i,j-1,iblk)  &
+                                   + work1(i,j  ,iblk)*wght1(i,j  ,iblk)) &
+                                   / wtmp
+               enddo
+               enddo
+            enddo
+            !$OMP END PARALLEL DO
+
+         case default
+            call abort_ice(subname//'ERROR: unknown option '//trim(dir))
+         end select
+
+      end subroutine grid_average_X2YA
+
+!=======================================================================
+! Shifts quantities from one grid to another
 ! Flux masked, original implementation based on earlier t2u and u2t versions
 ! NOTE: Input array includes ghost cells that must be updated before
 !       calling this routine.
 !
 ! author: T. Craig
 
-      subroutine grid_average_X2YF(dir,work1,area1,work2,area2)
+      subroutine grid_average_X2YF(dir,work1,wght1,work2,wght2)
 
       use ice_constants, only: c0, p25, p5
 
@@ -2686,8 +3088,8 @@
 
       real (kind=dbl_kind), intent(in) :: &
          work1(:,:,:), &
-         area1(:,:,:), &
-         area2(:,:,:)
+         wght1(:,:,:), &
+         wght2(:,:,:)
 
       real (kind=dbl_kind), intent(out) :: &
          work2(:,:,:)
@@ -2718,11 +3120,11 @@
                do j = jlo, jhi
                do i = ilo, ihi
                   work2(i,j,iblk) = p25 * &
-                                    (work1(i,  j,  iblk)*area1(i,  j,  iblk)  &
-                                   + work1(i+1,j,  iblk)*area1(i+1,j,  iblk)  &
-                                   + work1(i,  j+1,iblk)*area1(i,  j+1,iblk)  &
-                                   + work1(i+1,j+1,iblk)*area1(i+1,j+1,iblk)) &
-                                   / area2(i,  j,  iblk)
+                                    (work1(i  ,j  ,iblk)*wght1(i  ,j  ,iblk)  &
+                                   + work1(i+1,j  ,iblk)*wght1(i+1,j  ,iblk)  &
+                                   + work1(i  ,j+1,iblk)*wght1(i  ,j+1,iblk)  &
+                                   + work1(i+1,j+1,iblk)*wght1(i+1,j+1,iblk)) &
+                                   / wght2(i  ,j  ,iblk)
                enddo
                enddo
             enddo
@@ -2739,11 +3141,11 @@
                do j = jlo, jhi
                do i = ilo, ihi
                   work2(i,j,iblk) = p25 *  &
-                                   (work1(i,  j,  iblk)*area1(i,  j,  iblk)  &
-                                  + work1(i-1,j,  iblk)*area1(i-1,j,  iblk)  &
-                                  + work1(i,  j-1,iblk)*area1(i,  j-1,iblk)  & 
-                                  + work1(i-1,j-1,iblk)*area1(i-1,j-1,iblk)) &
-                                  / area2(i,  j,  iblk)
+                                   (work1(i  ,j  ,iblk)*wght1(i  ,j  ,iblk)  &
+                                  + work1(i-1,j  ,iblk)*wght1(i-1,j  ,iblk)  &
+                                  + work1(i  ,j-1,iblk)*wght1(i  ,j-1,iblk)  & 
+                                  + work1(i-1,j-1,iblk)*wght1(i-1,j-1,iblk)) &
+                                  / wght2(i  ,j  ,iblk)
                enddo
                enddo
             enddo
@@ -2760,11 +3162,11 @@
                do j = jlo, jhi
                do i = ilo, ihi
                   work2(i,j,iblk) = p25 * &
-                                    (work1(i-1,j,  iblk)*area1(i-1,j,  iblk)  &
-                                   + work1(i,  j,  iblk)*area1(i,  j,  iblk)  &
-                                   + work1(i-1,j+1,iblk)*area1(i-1,j+1,iblk)  &
-                                   + work1(i,  j+1,iblk)*area1(i  ,j+1,iblk)) &
-                                   / area2(i,  j,  iblk)
+                                    (work1(i-1,j  ,iblk)*wght1(i-1,j  ,iblk)  &
+                                   + work1(i  ,j  ,iblk)*wght1(i  ,j  ,iblk)  &
+                                   + work1(i-1,j+1,iblk)*wght1(i-1,j+1,iblk)  &
+                                   + work1(i  ,j+1,iblk)*wght1(i  ,j+1,iblk)) &
+                                   / wght2(i  ,j  ,iblk)
                enddo
                enddo
             enddo
@@ -2781,11 +3183,11 @@
                do j = jlo, jhi
                do i = ilo, ihi
                   work2(i,j,iblk) = p25 *  &
-                                   (work1(i  ,j-1,iblk)*area1(i  ,j-1,iblk)  &
-                                  + work1(i+1,j-1,iblk)*area1(i+1,j-1,iblk)  & 
-                                  + work1(i  ,j  ,iblk)*area1(i  ,j,  iblk)  &
-                                  + work1(i+1,j  ,iblk)*area1(i+1,j,  iblk)) &
-                                  / area2(i,  j,  iblk)
+                                   (work1(i  ,j-1,iblk)*wght1(i  ,j-1,iblk)  &
+                                  + work1(i+1,j-1,iblk)*wght1(i+1,j-1,iblk)  & 
+                                  + work1(i  ,j  ,iblk)*wght1(i  ,j  ,iblk)  &
+                                  + work1(i+1,j  ,iblk)*wght1(i+1,j  ,iblk)) &
+                                  / wght2(i  ,j  ,iblk)
                enddo
                enddo
             enddo
@@ -2802,9 +3204,9 @@
                do j = jlo, jhi
                do i = ilo, ihi
                   work2(i,j,iblk) = p5 * &
-                                    (work1(i,  j,iblk)*area1(i,  j,iblk)  &
-                                   + work1(i+1,j,iblk)*area1(i+1,j,iblk)) &
-                                   / area2(i,  j,iblk)
+                                    (work1(i  ,j,iblk)*wght1(i  ,j,iblk)  &
+                                   + work1(i+1,j,iblk)*wght1(i+1,j,iblk)) &
+                                   / wght2(i  ,j,iblk)
                enddo
                enddo
             enddo
@@ -2821,9 +3223,9 @@
                do j = jlo, jhi
                do i = ilo, ihi
                   work2(i,j,iblk) = p5 * &
-                                    (work1(i-1,j,iblk)*area1(i-1,j,iblk)  &
-                                   + work1(i,  j,iblk)*area1(i,  j,iblk)) &
-                                   / area2(i,  j,iblk)
+                                    (work1(i-1,j,iblk)*wght1(i-1,j,iblk)  &
+                                   + work1(i  ,j,iblk)*wght1(i  ,j,iblk)) &
+                                   / wght2(i  ,j,iblk)
                enddo
                enddo
             enddo
@@ -2840,9 +3242,9 @@
                do j = jlo, jhi
                do i = ilo, ihi
                   work2(i,j,iblk) = p5 * &
-                                    (work1(i,j,  iblk)*area1(i,j,  iblk)  &
-                                   + work1(i,j+1,iblk)*area1(i,j+1,iblk)) &
-                                   / area2(i,  j,iblk)
+                                    (work1(i,j  ,iblk)*wght1(i,j  ,iblk)  &
+                                   + work1(i,j+1,iblk)*wght1(i,j+1,iblk)) &
+                                   / wght2(i  ,j,iblk)
                enddo
                enddo
             enddo
@@ -2859,9 +3261,9 @@
                do j = jlo, jhi
                do i = ilo, ihi
                   work2(i,j,iblk) = p5 * &
-                                    (work1(i,j-1,iblk)*area1(i,j-1,iblk)  &
-                                   + work1(i,j,  iblk)*area1(i,j,  iblk)) &
-                                   / area2(i,  j,iblk)
+                                    (work1(i,j-1,iblk)*wght1(i,j-1,iblk)  &
+                                   + work1(i,j  ,iblk)*wght1(i,j  ,iblk)) &
+                                   / wght2(i  ,j,iblk)
                enddo
                enddo
             enddo
@@ -2903,6 +3305,102 @@
 
       end function grid_neighbor_min
 
+!=======================================================================
+! Shifts quantities from one grid to another
+! State masked version, simple weighted averager
+! NOTE: Input array includes ghost cells that must be updated before
+!       calling this routine.
+!
+! author: T. Craig
+
+      subroutine grid_average_X2YS_2(dir,work1a,wght1a,mask1a,work1b,wght1b,mask1b,work2)
+
+      use ice_constants, only: c0
+
+      character(len=*) , intent(in) :: &
+         dir
+
+      real (kind=dbl_kind), intent(in) :: &
+         work1a(:,:,:), work1b(:,:,:), &
+         wght1a(:,:,:), wght1b(:,:,:), &
+         mask1a(:,:,:), mask1b(:,:,:)
+
+      real (kind=dbl_kind), intent(out) :: &
+         work2(:,:,:)
+
+      ! local variables
+
+      integer (kind=int_kind) :: &
+         i, j, iblk, &
+         ilo,ihi,jlo,jhi      ! beginning and end of physical domain
+
+      real (kind=dbl_kind) :: &
+         wtmp
+
+      type (block) :: &
+         this_block           ! block information for current block
+
+      character(len=*), parameter :: subname = '(grid_average_X2YS_2)'
+
+      work2(:,:,:) = c0
+
+      select case (trim(dir))
+
+         case('NE2US')
+            !$OMP PARALLEL DO PRIVATE(iblk,i,j,ilo,ihi,jlo,jhi,this_block,wtmp)
+            do iblk = 1, nblocks
+               this_block = get_block(blocks_ice(iblk),iblk)
+               ilo = this_block%ilo
+               ihi = this_block%ihi
+               jlo = this_block%jlo
+               jhi = this_block%jhi
+               do j = jlo, jhi
+               do i = ilo, ihi
+                  wtmp = (mask1a(i  ,j  ,iblk)*wght1a(i  ,j  ,iblk)  &
+                        + mask1a(i+1,j  ,iblk)*wght1a(i+1,j  ,iblk)  &
+                        + mask1b(i  ,j  ,iblk)*wght1b(i  ,j  ,iblk)  &
+                        + mask1b(i  ,j+1,iblk)*wght1b(i  ,j+1,iblk))
+                  if (wtmp /= c0) &
+                  work2(i,j,iblk) = (mask1a(i  ,j  ,iblk)*work1a(i  ,j  ,iblk)*wght1a(i  ,j  ,iblk)  &
+                                   + mask1a(i+1,j  ,iblk)*work1a(i+1,j  ,iblk)*wght1a(i+1,j  ,iblk)  &
+                                   + mask1b(i  ,j  ,iblk)*work1b(i  ,j  ,iblk)*wght1b(i  ,j  ,iblk)  &
+                                   + mask1b(i  ,j+1,iblk)*work1b(i  ,j+1,iblk)*wght1b(i  ,j+1,iblk)) &
+                                   / wtmp
+               enddo
+               enddo
+            enddo
+            !$OMP END PARALLEL DO
+
+         case('NE2TS')
+            !$OMP PARALLEL DO PRIVATE(iblk,i,j,ilo,ihi,jlo,jhi,this_block,wtmp)
+            do iblk = 1, nblocks
+               this_block = get_block(blocks_ice(iblk),iblk)
+               ilo = this_block%ilo
+               ihi = this_block%ihi
+               jlo = this_block%jlo
+               jhi = this_block%jhi
+               do j = jlo, jhi
+               do i = ilo, ihi
+                  wtmp = (mask1a(i  ,j-1,iblk)*wght1a(i  ,j-1,iblk)  &
+                        + mask1a(i  ,j  ,iblk)*wght1a(i  ,j  ,iblk)  &
+                        + mask1b(i-1,j  ,iblk)*wght1b(i-1,j  ,iblk)  &
+                        + mask1b(i  ,j  ,iblk)*wght1b(i  ,j  ,iblk))
+                  if (wtmp /= c0) &
+                  work2(i,j,iblk) = (mask1a(i  ,j-1,iblk)*work1a(i  ,j-1,iblk)*wght1a(i  ,j-1,iblk)  &
+                                   + mask1a(i  ,j  ,iblk)*work1a(i  ,j  ,iblk)*wght1a(i  ,j  ,iblk)  &
+                                   + mask1b(i-1,j  ,iblk)*work1b(i-1,j  ,iblk)*wght1b(i-1,j  ,iblk)  &
+                                   + mask1b(i  ,j  ,iblk)*work1b(i  ,j  ,iblk)*wght1b(i  ,j  ,iblk)) &
+                                   / wtmp
+               enddo
+               enddo
+            enddo
+            !$OMP END PARALLEL DO
+
+         case default
+            call abort_ice(subname//'ERROR: unknown option '//trim(dir))
+         end select
+
+      end subroutine grid_average_X2YS_2
 
 !=======================================================================
 ! Compute the maximum of adjacent values of a field at specific indices,

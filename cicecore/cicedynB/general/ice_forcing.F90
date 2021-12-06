@@ -4368,6 +4368,9 @@
       real (kind=dbl_kind), dimension(nx_block,ny_block,max_blocks) :: &
           sstdat              ! data value toward which SST is restored
 
+      real (kind=dbl_kind), dimension (nx_block,ny_block,max_blocks) :: &
+          work1               ! temporary array
+
       real (kind=dbl_kind) :: workx, worky
 
       logical (kind=log_kind) :: readm
@@ -4512,8 +4515,10 @@
      ! Interpolate to U grid 
      !----------------------------------------------------------------- 
 
-         call grid_average_X2Y('T2UF',uocn)
-         call grid_average_X2Y('T2UF',vocn)
+         work1 = uocn
+         call grid_average_X2Y('T2UF',work1,uocn)
+         work1 = vocn
+         call grid_average_X2Y('T2UF',work1,vocn)
 
      endif    !   ocn_data_type = hadgem_sst_uvocn
 

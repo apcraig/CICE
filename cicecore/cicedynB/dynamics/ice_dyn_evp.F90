@@ -86,13 +86,13 @@
           strairx, strairy, uocn, vocn, ss_tltx, ss_tlty, iceumask, fm, &
           strtltx, strtlty, strocnx, strocny, strintx, strinty, taubx, tauby, &
           strocnxT, strocnyT, strax, stray, &
+          Tbu, hwater, &
           strairxN, strairyN, uocnN, vocnN, ss_tltxN, ss_tltyN, icenmask, fmN, &
           strtltxN, strtltyN, strocnxN, strocnyN, strintxN, strintyN, taubxN, taubyN, &
-          straxN, strayN, TbN, &
+          TbN, &
           strairxE, strairyE, uocnE, vocnE, ss_tltxE, ss_tltyE, iceemask, fmE, &
           strtltxE, strtltyE, strocnxE, strocnyE, strintxE, strintyE, taubxE, taubyE, &
-          straxE, strayE, TbE, &
-          Tbu, hwater, &
+          TbE, &
           stressp_1, stressp_2, stressp_3, stressp_4, &
           stressm_1, stressm_2, stressm_3, stressm_4, &
           stress12_1, stress12_2, stress12_3, stress12_4, &
@@ -189,6 +189,10 @@
       type (block) :: &
          this_block           ! block information for current block
 
+      real (kind=dbl_kind), dimension (nx_block,ny_block,max_blocks) :: &
+         work1, &      ! temporary
+         work2         ! temporary
+
       logical (kind=log_kind), save :: first_time = .true.
       
       character(len=*), parameter :: subname = '(evp)'
@@ -252,16 +256,8 @@
                          ilo, ihi,           jlo, jhi,           &
                          aice    (:,:,iblk), vice    (:,:,iblk), & 
                          vsno    (:,:,iblk), tmask   (:,:,iblk), & 
-                         strairxT(:,:,iblk), strairyT(:,:,iblk), & 
-                         strairx (:,:,iblk), strairy (:,:,iblk), & 
                          tmass   (:,:,iblk), icetmask(:,:,iblk))
 
-         if (grid_system == 'CD') then
-            strairxN(:,:,iblk) = strairxT(:,:,iblk)
-            strairyN(:,:,iblk) = strairyT(:,:,iblk)
-            strairxE(:,:,iblk) = strairxT(:,:,iblk)
-            strairyE(:,:,iblk) = strairyT(:,:,iblk)
-         endif
       enddo                     ! iblk
       !$OMP END PARALLEL DO
 
@@ -282,10 +278,16 @@
          call grid_average_X2Y('T2EF',aice_init, aie)
          call grid_average_X2Y('T2NF',tmass,nmass)
          call grid_average_X2Y('T2NF',aice_init, ain)
+         ! TODO, this should be averaged to N and E but it isn't for the B grid either (bug)
+         uocnN = uocn
+         vocnN = vocn
+         uocnE = uocn
+         vocnE = vocn
       endif
       !----------------------------------------------------------------
       ! Set wind stress to values supplied via NEMO or other forcing
-      ! This wind stress is rotated on u grid and multiplied by aice
+      ! Map T to U, N, E as needed
+      ! This wind stress is rotated on u grid and multiplied by aice in coupler
       !----------------------------------------------------------------
       call icepack_query_parameters(calc_strair_out=calc_strair)
       call icepack_warnings_flush(nu_diag)
@@ -296,37 +298,28 @@
          strairx(:,:,:) = strax(:,:,:)
          strairy(:,:,:) = stray(:,:,:)
       else
-         call ice_HaloUpdate (strairx,          halo_info, &
+         call ice_HaloUpdate (strairxT,         halo_info, &
                               field_loc_center, field_type_vector)
-         call ice_HaloUpdate (strairy,          halo_info, &
+         call ice_HaloUpdate (strairyT,         halo_info, &
                               field_loc_center, field_type_vector)
-         call grid_average_X2Y('T2UF',strairx)
-         call grid_average_X2Y('T2UF',strairy)
-      endif      
+         call grid_average_X2Y('T2UF',strairxT,strairx)
+         call grid_average_X2Y('T2UF',strairyT,strairy)
+      endif
 
       if (grid_system == 'CD') then
-
          if (.not. calc_strair) then       
             strairxN(:,:,:) = strax(:,:,:)
             strairyN(:,:,:) = stray(:,:,:)
             strairxE(:,:,:) = strax(:,:,:)
             strairyE(:,:,:) = stray(:,:,:)
          else
-            call ice_HaloUpdate (strairxN,          halo_info, &
-                                 field_loc_center, field_type_vector)
-            call ice_HaloUpdate (strairyN,          halo_info, &
-                                 field_loc_center, field_type_vector)
-            call ice_HaloUpdate (strairxE,          halo_info, &
-                                 field_loc_center, field_type_vector)
-            call ice_HaloUpdate (strairyE,          halo_info, &
-                                 field_loc_center, field_type_vector)
-            call grid_average_X2Y('T2NF',strairxN)
-            call grid_average_X2Y('T2NF',strairyN)
-            call grid_average_X2Y('T2EF',strairxE)
-            call grid_average_X2Y('T2EF',strairyE)
+            call grid_average_X2Y('T2NF',strairxT,strairxN)
+            call grid_average_X2Y('T2NF',strairyT,strairyN)
+            call grid_average_X2Y('T2EF',strairxT,strairxE)
+            call grid_average_X2Y('T2EF',strairyT,strairyE)
          endif      
-
       endif
+
 ! tcraig, tcx, threading here leads to some non-reproducbile results and failures in icepack_ice_strength
 ! need to do more debugging
       !$TCXOMP PARALLEL DO PRIVATE(iblk,ilo,ihi,jlo,jhi,this_block)
@@ -921,8 +914,7 @@
                aiu     (:,:,iblk), fm      (:,:,iblk), & 
                strintx (:,:,iblk), strinty (:,:,iblk), &
                strairx (:,:,iblk), strairy (:,:,iblk), &
-               strocnx (:,:,iblk), strocny (:,:,iblk), & 
-               strocnxT(:,:,iblk), strocnyT(:,:,iblk))
+               strocnx (:,:,iblk), strocny (:,:,iblk))
 
       enddo
       !$OMP END PARALLEL DO
@@ -954,37 +946,39 @@
                   strairxE(:,:,iblk), strairyE(:,:,iblk), &
                   strocnxE(:,:,iblk), strocnyE(:,:,iblk))
 
-            ! If we are coupling to a C grid ocean model
-!           do ij =1, icelle
-!              i = indxei(ij,iblk)
-!              j = indxej(ij,iblk)
-
-!              strocnxT(i,j,iblk) = strocnxE(i,j,iblk) / aiE(i,j,iblk)
-!           enddo
-
-!           do ij =1, icelln
-!              i = indxni(ij,iblk)
-!              j = indxnj(ij,iblk)
-
-!              strocnyT(i,j,iblk) = strocnyN(i,j,iblk) / aiN(i,j,iblk)
-!           enddo
-
          enddo
          !$OMP END PARALLEL DO
 
       endif
 
-      call ice_HaloUpdate (strocnxT,           halo_info, &
+      ! strocn computed on U, N, E as needed. Map strocn U divided by aiu to T
+      ! TODO: This should be done elsewhere as part of generalization?
+      ! conservation requires aiu be divided before averaging
+      work1 = c0
+      work2 = c0
+      !$OMP PARALLEL DO PRIVATE(iblk,ij,i,j)
+      do iblk = 1, nblocks
+      do ij = 1, icellu(iblk)
+         i = indxui(ij,iblk)
+         j = indxuj(ij,iblk)
+         work1(i,j,iblk) = strocnx(i,j,iblk)/aiu(i,j,iblk)
+         work2(i,j,iblk) = strocny(i,j,iblk)/aiu(i,j,iblk)
+      enddo
+      enddo
+      !$OMP END PARALLEL DO
+      call ice_HaloUpdate (work1,              halo_info, &
                            field_loc_NEcorner, field_type_vector)
-      call ice_HaloUpdate (strocnyT,           halo_info, &
+      call ice_HaloUpdate (work2,              halo_info, &
                            field_loc_NEcorner, field_type_vector)
-      call grid_average_X2Y('U2TF',strocnxT)    ! shift
-      call grid_average_X2Y('U2TF',strocnyT)
+      call grid_average_X2Y('U2TF',work1,strocnxT)    ! shift
+      call grid_average_X2Y('U2TF',work2,strocnyT)
+
 ! shift velocity components from CD grid locations (N, E) to B grid location (U) for transport
       if (grid_system == 'CD') then
           call grid_average_X2Y('E2US',uvelE,uvel)
           call grid_average_X2Y('N2US',vvelN,vvel)
       endif
+
       call ice_timer_stop(timer_dynamics)    ! dynamics
 
       end subroutine evp

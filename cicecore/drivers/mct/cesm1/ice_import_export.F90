@@ -9,7 +9,7 @@ module ice_import_export
   use ice_constants     , only: field_type_vector, c100
   use ice_constants     , only: p001, p5
   use ice_blocks        , only: block, get_block, nx_block, ny_block
-  use ice_flux          , only: strairxt, strairyt, strocnxt, strocnyt           
+  use ice_flux          , only: strairxT, strairyT, strocnxT, strocnyT
   use ice_flux          , only: alvdr, alidr, alvdf, alidf, Tref, Qref, Uref
   use ice_flux          , only: flat, fsens, flwout, evap, fswabs, fhocn, fswthru
   use ice_flux          , only: fresh, fsalt, zlvl, uatm, vatm, potT, Tair, Qa
