@@ -82,10 +82,10 @@
       numgroups_name(2) = 'X2YS'
       numgroups_name(3) = 'X2YF'
       numgroups_name(4) = 'NE2YS'
-      nbase(1) = 12
-      nbase(2) = 12
+      nbase(1) = 16
+      nbase(2) = 16
       nbase(3) = 0
-      nbase(4) = 2
+      nbase(4) = 4
       errmax = c0
 
       if (.not. landblockelim) nbase(3) = nbase(2)  ! no land block elimination, can test F mappings
@@ -111,18 +111,22 @@
          errtolijind(n+1:n+nbase(1)) = 0.03_dbl_kind
          errtolarea (n+1:n+nbase(1)) = 0.003_dbl_kind
       endif
+      n=n+1; avgname(n) = 'T2TA' ; dmask(:,:,:,n) = tmask(:,:,:)
       n=n+1; avgname(n) = 'T2UA' ; dmask(:,:,:,n) = umask(:,:,:)
       n=n+1; avgname(n) = 'T2NA' ; dmask(:,:,:,n) = nmask(:,:,:)
       n=n+1; avgname(n) = 'T2EA' ; dmask(:,:,:,n) = emask(:,:,:)
       n=n+1; avgname(n) = 'U2TA' ; dmask(:,:,:,n) = tmask(:,:,:)
+      n=n+1; avgname(n) = 'U2UA' ; dmask(:,:,:,n) = umask(:,:,:)
       n=n+1; avgname(n) = 'U2NA' ; dmask(:,:,:,n) = nmask(:,:,:)
       n=n+1; avgname(n) = 'U2EA' ; dmask(:,:,:,n) = emask(:,:,:)
       n=n+1; avgname(n) = 'N2TA' ; dmask(:,:,:,n) = tmask(:,:,:)
       n=n+1; avgname(n) = 'N2UA' ; dmask(:,:,:,n) = umask(:,:,:)
+      n=n+1; avgname(n) = 'N2NA' ; dmask(:,:,:,n) = nmask(:,:,:)
       n=n+1; avgname(n) = 'N2EA' ; dmask(:,:,:,n) = emask(:,:,:)
       n=n+1; avgname(n) = 'E2TA' ; dmask(:,:,:,n) = tmask(:,:,:)
       n=n+1; avgname(n) = 'E2UA' ; dmask(:,:,:,n) = umask(:,:,:)
       n=n+1; avgname(n) = 'E2NA' ; dmask(:,:,:,n) = nmask(:,:,:)
+      n=n+1; avgname(n) = 'E2EA' ; dmask(:,:,:,n) = emask(:,:,:)
 
       errtolconst(n+1:n+nbase(2)) = 0.00001_dbl_kind
       errtolijind(n+1:n+nbase(2)) = 0.51_dbl_kind
@@ -130,18 +134,22 @@
       if (nx_global > 200 .and. ny_global > 200) then
          errtolarea (n+1:n+nbase(2)) = 0.06_dbl_kind
       endif
+      n=n+1; avgname(n) = 'T2TS' ; dmask(:,:,:,n) = tmask(:,:,:)
       n=n+1; avgname(n) = 'T2US' ; dmask(:,:,:,n) = umask(:,:,:)
       n=n+1; avgname(n) = 'T2NS' ; dmask(:,:,:,n) = nmask(:,:,:)
       n=n+1; avgname(n) = 'T2ES' ; dmask(:,:,:,n) = emask(:,:,:)
       n=n+1; avgname(n) = 'U2TS' ; dmask(:,:,:,n) = tmask(:,:,:)
+      n=n+1; avgname(n) = 'U2US' ; dmask(:,:,:,n) = umask(:,:,:)
       n=n+1; avgname(n) = 'U2NS' ; dmask(:,:,:,n) = nmask(:,:,:)
       n=n+1; avgname(n) = 'U2ES' ; dmask(:,:,:,n) = emask(:,:,:)
       n=n+1; avgname(n) = 'N2TS' ; dmask(:,:,:,n) = tmask(:,:,:)
       n=n+1; avgname(n) = 'N2US' ; dmask(:,:,:,n) = umask(:,:,:)
+      n=n+1; avgname(n) = 'N2NS' ; dmask(:,:,:,n) = nmask(:,:,:)
       n=n+1; avgname(n) = 'N2ES' ; dmask(:,:,:,n) = emask(:,:,:)
       n=n+1; avgname(n) = 'E2TS' ; dmask(:,:,:,n) = tmask(:,:,:)
       n=n+1; avgname(n) = 'E2US' ; dmask(:,:,:,n) = umask(:,:,:)
       n=n+1; avgname(n) = 'E2NS' ; dmask(:,:,:,n) = nmask(:,:,:)
+      n=n+1; avgname(n) = 'E2ES' ; dmask(:,:,:,n) = emask(:,:,:)
 
      if (nbase(3) > 0) then
       errtolconst(n+1:n+nbase(3)) = 0.0065_dbl_kind
@@ -151,18 +159,22 @@
          errtolijind(n+1:n+nbase(3)) = 0.22_dbl_kind
          errtolarea (n+1:n+nbase(3)) = 0.004_dbl_kind
       endif
+      n=n+1; avgname(n) = 'T2TF' ; dmask(:,:,:,n) = tmask(:,:,:)
       n=n+1; avgname(n) = 'T2UF' ; dmask(:,:,:,n) = umask(:,:,:)
       n=n+1; avgname(n) = 'T2NF' ; dmask(:,:,:,n) = nmask(:,:,:)
       n=n+1; avgname(n) = 'T2EF' ; dmask(:,:,:,n) = emask(:,:,:)
       n=n+1; avgname(n) = 'U2TF' ; dmask(:,:,:,n) = tmask(:,:,:)
+      n=n+1; avgname(n) = 'U2UF' ; dmask(:,:,:,n) = umask(:,:,:)
       n=n+1; avgname(n) = 'U2NF' ; dmask(:,:,:,n) = nmask(:,:,:)
       n=n+1; avgname(n) = 'U2EF' ; dmask(:,:,:,n) = emask(:,:,:)
       n=n+1; avgname(n) = 'N2TF' ; dmask(:,:,:,n) = tmask(:,:,:)
       n=n+1; avgname(n) = 'N2UF' ; dmask(:,:,:,n) = umask(:,:,:)
+      n=n+1; avgname(n) = 'N2NF' ; dmask(:,:,:,n) = nmask(:,:,:)
       n=n+1; avgname(n) = 'N2EF' ; dmask(:,:,:,n) = emask(:,:,:)
       n=n+1; avgname(n) = 'E2TF' ; dmask(:,:,:,n) = tmask(:,:,:)
       n=n+1; avgname(n) = 'E2UF' ; dmask(:,:,:,n) = umask(:,:,:)
       n=n+1; avgname(n) = 'E2NF' ; dmask(:,:,:,n) = nmask(:,:,:)
+      n=n+1; avgname(n) = 'E2EF' ; dmask(:,:,:,n) = emask(:,:,:)
      endif
 
       errtolconst(n+1:n+nbase(4)) = 0.00001_dbl_kind
@@ -173,7 +185,9 @@
          errtolarea (n+1:n+nbase(4)) = 0.03_dbl_kind
       endif
       n=n+1; avgname(n) = 'NE2TS'; dmask(:,:,:,n) = tmask(:,:,:)
+      n=n+1; avgname(n) = 'EN2TS'; dmask(:,:,:,n) = tmask(:,:,:)
       n=n+1; avgname(n) = 'NE2US'; dmask(:,:,:,n) = umask(:,:,:)
+      n=n+1; avgname(n) = 'EN2US'; dmask(:,:,:,n) = umask(:,:,:)
 
       if (n /= mtests) then
         call abort_ice(subname//' n ne mtests')
@@ -256,10 +270,16 @@
          endif
 
          array2x = c0
-         if (n <= mtests - nbase(4)) then
-            call grid_average_X2Y(trim(avgname(n)),array1x,array2x)
-         else
-            call grid_average_X2Y(trim(avgname(n)),array1x,arraysx,array2x)
+         if (len_trim(avgname(n)) == 4) then
+!            call grid_average_X2Y(trim(avgname(n)),array1x,array2x)
+            call grid_average_X2Y(avgname(n)(4:4),array1x,avgname(n)(1:1),array2x,avgname(n)(3:3))
+         else   ! len_trim(avgname(n)) == 5
+!            call grid_average_X2Y(trim(avgname(n)),array1x,arraysx,array2x)
+            if (avgname(n)(1:2) == 'NE') then
+               call grid_average_X2Y(avgname(n)(5:5),array1x,avgname(n)(1:1),arraysx,avgname(n)(2:2),array2x,avgname(n)(4:4))
+            else  ! EN, swap needed
+               call grid_average_X2Y(avgname(n)(5:5),arraysx,avgname(n)(1:1),array1x,avgname(n)(2:2),array2x,avgname(n)(4:4))
+            endif
          endif
 
          array3x = c0
@@ -381,7 +401,8 @@
              avgname(n)(1:3) == 'T2E' .or. &
              avgname(n)(1:3) == 'N2U' .or. &
              avgname(n)(1:3) == 'N2E' .or. &
-             avgname(n)(1:4) == 'NE2U') then
+             avgname(n)(1:4) == 'NE2U'.or. &
+             avgname(n)(1:4) == 'EN2U') then
             deltax0 = 0.5_dbl_kind
          elseif (avgname(n)(1:3) == 'U2T' .or. &
              avgname(n)(1:3) == 'U2N' .or. &
@@ -398,18 +419,28 @@
              avgname(n)(1:3) == 'U2E' .or. &
              avgname(n)(1:3) == 'N2T' .or. &
              avgname(n)(1:3) == 'N2E' .or. &
-             avgname(n)(1:4) == 'NE2T') then
+             avgname(n)(1:4) == 'NE2T'.or. &
+             avgname(n)(1:4) == 'EN2T') then
             deltay0 = -0.5_dbl_kind
          endif
 
          array2x = c0
          array2y = c0
-         if (n <= mtests - nbase(4)) then
-            call grid_average_X2Y(trim(avgname(n)),array1x,array2x)
-            call grid_average_X2Y(trim(avgname(n)),array1y,array2y)
-         else
-            call grid_average_X2Y(trim(avgname(n)),array1x,arraysx,array2x)
-            call grid_average_X2Y(trim(avgname(n)),array1y,arraysy,array2y)
+         if (len_trim(avgname(n)) == 4) then
+!            call grid_average_X2Y(trim(avgname(n)),array1x,array2x)
+!            call grid_average_X2Y(trim(avgname(n)),array1y,array2y)
+            call grid_average_X2Y(avgname(n)(4:4),array1x,avgname(n)(1:1),array2x,avgname(n)(3:3))
+            call grid_average_X2Y(avgname(n)(4:4),array1y,avgname(n)(1:1),array2y,avgname(n)(3:3))
+         else   ! len_trim(avgname(n)) == 5
+!            call grid_average_X2Y(trim(avgname(n)),array1x,arraysx,array2x)
+!            call grid_average_X2Y(trim(avgname(n)),array1y,arraysy,array2y)
+            if (avgname(n)(1:2) == 'NE') then
+               call grid_average_X2Y(avgname(n)(5:5),array1x,avgname(n)(1:1),arraysx,avgname(n)(2:2),array2x,avgname(n)(4:4))
+               call grid_average_X2Y(avgname(n)(5:5),array1y,avgname(n)(1:1),arraysy,avgname(n)(2:2),array2y,avgname(n)(4:4))
+            else  ! EN, swap needed array1 is N, arrays is E
+               call grid_average_X2Y(avgname(n)(5:5),arraysx,avgname(n)(1:1),array1x,avgname(n)(2:2),array2x,avgname(n)(4:4))
+               call grid_average_X2Y(avgname(n)(5:5),arraysy,avgname(n)(1:1),array1y,avgname(n)(2:2),array2y,avgname(n)(4:4))
+            endif
          endif
 
          array3x = c0
@@ -539,8 +570,11 @@
          elseif (avgname(n)(1:3) == 'NE2') then
             array1x = narea
             arraysx = earea
+         elseif (avgname(n)(1:3) == 'EN2') then
+            array1x = earea
+            arraysx = narea
          else
-            call abort_ice(subname//' avgname not supported = '//trim(avgname(n)))
+            call abort_ice(subname//' avgname not supported 1x = '//trim(avgname(n)))
          endif
 
          array2y = -999.
@@ -555,12 +589,13 @@
          elseif (avgname(n)(2:3) == '2N') then
             array2y = narea
          else
-            call abort_ice(subname//' avgname not supported = '//trim(avgname(n)))
+            call abort_ice(subname//' avgname not supported 2y = '//trim(avgname(n)))
          endif
 
          array2x = c0
-         if (n <= mtests - nbase(4)) then
-            call grid_average_X2Y(trim(avgname(n)),array1x,array2x)
+         if (len_trim(avgname(n)) == 4) then
+!            call grid_average_X2Y(trim(avgname(n)),array1x,array2x)
+            call grid_average_X2Y(avgname(n)(4:4),array1x,avgname(n)(1:1),array2x,avgname(n)(3:3))
             ! ------
             ! Extra Explicit Calc Test
             ! ------
@@ -568,11 +603,13 @@
                stringflag(testcnt) = trim(stringflag(testcnt))//' + explicit'
                if (avgname(n)(4:4) == 'S') then
                   ! test direct mapping compared to S, array1x*wght1*mask1 where wght1=area and mask1=mask
-                  call grid_average_X2Y(trim(avgname(n)),array1x,wght1,mask1,array2z)
+!                  call grid_average_X2Y(trim(avgname(n)),array1x,wght1,mask1,array2z)
+                  call grid_average_X2Y(avgname(n)(4:4),array1x,avgname(n)(1:1),wght1,mask1,array2z,avgname(n)(3:3))
                elseif (avgname(n)(4:4) == 'A') then
                   ! test direct mapping compared to A, array1x*wght1 where wght1=area and mask1=1.0
                   mask1 = c1
-                  call grid_average_X2Y(trim(avgname(n)),array1x,wght1,mask1,array2z)
+!                  call grid_average_X2Y(trim(avgname(n)),array1x,wght1,mask1,array2z)
+                  call grid_average_X2Y(avgname(n)(4:4),array1x,avgname(n)(1:1),wght1,mask1,array2z,avgname(n)(3:3))
                endif
                fmax = global_maxval(abs(array1x), distrb_info)
                amax = global_maxval(abs(array2z-array2x), distrb_info)
@@ -594,8 +631,10 @@
                endif
             endif
 
-         else
-            call grid_average_X2Y(trim(avgname(n)),array1x,arraysx,array2x)
+         else   ! len_trim(avgname(n)) == 5
+!            call grid_average_X2Y(trim(avgname(n)),array1x,arraysx,array2x)
+             ! no swap needed 1x and sx set based on NE or EN
+             call grid_average_X2Y(avgname(n)(5:5),array1x,avgname(n)(1:1),arraysx,avgname(n)(2:2),array2x,avgname(n)(4:4))
          endif
 
          array3x = c1

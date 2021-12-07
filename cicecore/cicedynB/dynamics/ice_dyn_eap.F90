@@ -256,8 +256,8 @@
       ! convert fields from T to U grid
       !-----------------------------------------------------------------
 
-      call grid_average_X2Y('T2UF',tmass,umass)
-      call grid_average_X2Y('T2UF',aice_init, aiu)
+      call grid_average_X2Y('F',tmass,'T',umass,'U')
+      call grid_average_X2Y('F',aice_init,'T',aiu,'U')
 
       !----------------------------------------------------------------
       ! Set wind stress to values supplied via NEMO or other forcing
@@ -276,8 +276,8 @@
                               field_loc_center, field_type_vector)
          call ice_HaloUpdate (strairyT,         halo_info, &
                               field_loc_center, field_type_vector)
-         call grid_average_X2Y('T2UF',strairxT,strairx)
-         call grid_average_X2Y('T2UF',strairyT,strairy)
+         call grid_average_X2Y('F',strairxT,'T',strairx,'U')
+         call grid_average_X2Y('F',strairyT,'T',strairy,'U')
       endif
 
 ! tcraig, tcx, turned off this threaded region, in evp, this block and 
@@ -572,8 +572,8 @@
                            field_loc_NEcorner, field_type_vector)
       call ice_HaloUpdate (work2,              halo_info, &
                            field_loc_NEcorner, field_type_vector)
-      call grid_average_X2Y('U2TF',work1,strocnxT)    ! shift
-      call grid_average_X2Y('U2TF',work2,strocnyT)
+      call grid_average_X2Y('F',work1,'U',strocnxT,'T')    ! shift
+      call grid_average_X2Y('F',work2,'U',strocnyT,'T')
 
 ! shift velocity components from CD grid locations (N, E) to B grid location (U) for transport
 ! commented out in order to focus on EVP for now within the cdgrid

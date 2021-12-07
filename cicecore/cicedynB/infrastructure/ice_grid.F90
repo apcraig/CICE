@@ -57,7 +57,18 @@
          bathymetry_file, & !  input bathymetry for seabed stress
          bathymetry_format, & ! bathymetry file format (default or pop)
          grid_spacing , & !  default of 30.e3m or set by user in namelist 
-         grid_system  , & !  Underlying grid structure (i.e. B, C, CD, etc)
+         grid_system  , & !  Underlying model grid structure (A, B, C, CD)
+         grid_sys_thrm, & !  ocean forcing grid for thermo fields (T, U, N, E)
+         grid_sys_dynu, & !  ocean forcing grid for dyn U fields  (T, U, N, E)
+         grid_sys_dynv, & !  ocean forcing grid for dyn V fields  (T, U, N, E)
+         grid_atm     , & !  atmos forcing grid structure (A, B, C, CD)
+         grid_atm_thrm, & !  atmos forcing grid for thermo fields (T, U, N, E)
+         grid_atm_dynu, & !  atmos forcing grid for dyn U fields  (T, U, N, E)
+         grid_atm_dynv, & !  atmos forcing grid for dyn V fields  (T, U, N, E)
+         grid_ocn     , & !  ocean forcing grid structure (A B, C, CD)
+         grid_ocn_thrm, & !  ocean forcing grid for thermo fields (T, U, N, E)
+         grid_ocn_dynu, & !  ocean forcing grid for dyn U fields  (T, U, N, E)
+         grid_ocn_dynv, & !  ocean forcing grid for dyn V fields  (T, U, N, E)
          grid_type        !  current options are rectangular (default),
                           !  displaced_pole, tripole, regional
 
@@ -181,9 +192,9 @@
          l_readCenter ! If anglet exist in grid file read it otherwise calculate it
 
       interface grid_average_X2Y
-         module procedure grid_average_X2Y_1,  &
-                          grid_average_X2Y_1f, &
-                          grid_average_X2Y_2
+         module procedure grid_average_X2Y_1C , &
+                          grid_average_X2Y_1fC, &
+                          grid_average_X2Y_2C
       end interface
 
 !=======================================================================
@@ -2355,6 +2366,122 @@
 !=======================================================================
 
 ! Shifts quantities from one grid to another
+! Constructs the shift based on the grid
+! NOTE: Input array includes ghost cells that must be updated before
+!       calling this routine.
+!
+! author: T. Craig
+
+      subroutine grid_average_X2Y_1C(type,work1,grid1,work2,grid2)
+
+      character(len=*) , intent(in) :: &
+         type, grid1, grid2
+
+      real (kind=dbl_kind), intent(in) :: &
+         work1(:,:,:)
+
+      real (kind=dbl_kind), intent(out)   :: &
+         work2(:,:,:)
+
+      ! local variables
+
+      character(len=16) :: X2Y
+
+      character(len=*), parameter :: subname = '(grid_average_X2Y_1C)'
+
+      if (trim(grid1) == trim(grid2)) then
+         work2 = work1
+      else
+         X2Y = trim(grid1)//'2'//trim(grid2)//trim(type)
+         call grid_average_X2Y_1(X2Y,work1,work2)
+      endif
+
+      end subroutine grid_average_X2Y_1C
+
+!=======================================================================
+
+! Shifts quantities from one grid to another
+! NOTE: Input array includes ghost cells that must be updated before
+!       calling this routine.
+!
+! author: T. Craig
+
+      subroutine grid_average_X2Y_1fC(type,work1,grid1,wght1,mask1,work2,grid2)
+
+      character(len=*) , intent(in) :: &
+         type, grid1, grid2
+
+      real (kind=dbl_kind), intent(in) :: &
+         work1(:,:,:), &
+         wght1(:,:,:), &
+         mask1(:,:,:)
+
+      real (kind=dbl_kind), intent(out)   :: &
+         work2(:,:,:)
+
+      ! local variables
+
+      character(len=16) :: X2Y
+
+      character(len=*), parameter :: subname = '(grid_average_X2Y_1fC)'
+
+      if (trim(grid1) == trim(grid2)) then
+         work2 = work1
+      else
+         X2Y = trim(grid1)//'2'//trim(grid2)//trim(type)
+         call grid_average_X2Y_1f(X2Y,work1,wght1,mask1,work2)
+      endif
+
+      end subroutine grid_average_X2Y_1fC
+
+!=======================================================================
+
+! Shifts quantities from one grid to another
+! NOTE: Input array includes ghost cells that must be updated before
+!       calling this routine.
+!
+! author: T. Craig
+
+      subroutine grid_average_X2Y_2C(type,work1a,grid1a,work1b,grid1b,work2,grid2)
+
+      character(len=*) , intent(in) :: &
+         type, grid1a, grid1b, grid2
+
+      real (kind=dbl_kind), intent(in) :: &
+         work1a(:,:,:), work1b(:,:,:)
+
+      real (kind=dbl_kind), intent(out)   :: &
+         work2(:,:,:)
+
+      ! local variables
+
+      character(len=16) :: X2Y
+
+      character(len=*), parameter :: subname = '(grid_average_X2Y_2C)'
+
+      X2Y = trim(grid1a)//trim(grid1b)//'2'//trim(grid2)//trim(type)
+
+      select case (trim(X2Y))
+
+         ! state masked
+         case('NE2US')
+            call grid_average_X2YS_2('NE2US',work1a,narea,npm,work1b,earea,epm,work2)
+         case('EN2US')
+            call grid_average_X2YS_2('NE2US',work1b,narea,npm,work1a,earea,epm,work2)
+         case('NE2TS')
+            call grid_average_X2YS_2('NE2TS',work1a,narea,npm,work1b,earea,epm,work2)
+         case('EN2TS')
+            call grid_average_X2YS_2('NE2TS',work1b,narea,npm,work1a,earea,epm,work2)
+
+         case default
+            call abort_ice(subname//'ERROR: unknown X2Y '//trim(X2Y))
+      end select
+
+      end subroutine grid_average_X2Y_2C
+
+!=======================================================================
+
+! Shifts quantities from one grid to another
 ! NOTE: Input array includes ghost cells that must be updated before
 !       calling this routine.
 !
@@ -2574,7 +2701,7 @@
       end subroutine grid_average_X2Y_1f
 
 !=======================================================================
-
+#if (1 == 0)
 ! Shifts quantities from one grid to another
 ! NOTE: Input array includes ghost cells that must be updated before
 !       calling this routine.
@@ -2609,7 +2736,7 @@
       end select
 
       end subroutine grid_average_X2Y_2
-
+#endif
 !=======================================================================
 ! Shifts quantities from one grid to another
 ! State masked version, simple area weighted averager

@@ -99,7 +99,10 @@
       use ice_grid, only: grid_file, gridcpl_file, kmt_file, &
                           bathymetry_file, use_bathymetry, &
                           bathymetry_format, kmt_type, &
-                          grid_type, grid_format, grid_system, &
+                          grid_type, grid_format, &
+                          grid_system, grid_sys_thrm, grid_sys_dynu, grid_sys_dynv, &
+                          grid_ocn,    grid_ocn_thrm, grid_ocn_dynu, grid_ocn_dynv, & 
+                          grid_atm,    grid_atm_thrm, grid_atm_dynu, grid_atm_dynv, &
                           dxrect, dyrect, &
                           pgl_global_ext
       use ice_dyn_shared, only: ndte, kdyn, revised_evp, yield_curve, &
@@ -185,7 +188,8 @@
         bathymetry_file, use_bathymetry, nfsd,          bathymetry_format, &
         ncat,           nilyr,           nslyr,         nblyr,          &
         kcatbound,      gridcpl_file,    dxrect,        dyrect,         &
-        close_boundaries, orca_halogrid, grid_system,   kmt_type
+        close_boundaries, orca_halogrid, grid_system,   kmt_type,       &
+        grid_atm,       grid_ocn
 
       namelist /tracer_nml/                                             &
         tr_iage, restart_age,                                           &
@@ -326,7 +330,8 @@
       grid_format  = 'bin'          ! file format ('bin'=binary or 'nc'=netcdf)
       grid_type    = 'rectangular'  ! define rectangular grid internally
       grid_system  = 'B'            ! underlying grid system
-      grid_file    = 'unknown_grid_file'
+      grid_atm     = 'A'            ! underlying atm forcing/coupling grid
+      grid_ocn     = 'A'            ! underlying atm forcing/coupling grid
       gridcpl_file = 'unknown_gridcpl_file'
       orca_halogrid = .false.  ! orca haloed grid
       bathymetry_file   = 'unknown_bathymetry_file'
@@ -1336,6 +1341,68 @@
       wave_spec = .false.
       if (tr_fsd .and. (trim(wave_spec_type) /= 'none')) wave_spec = .true.
 
+      ! compute grid locations for thermo, u and v fields
+
+      grid_sys_thrm = 'T'
+      if (grid_system == 'A') then
+         grid_sys_dynu = 'T'
+         grid_sys_dynv = 'T'
+      elseif (grid_system == 'B') then
+         grid_sys_dynu = 'U'
+         grid_sys_dynv = 'U'
+      elseif (grid_system == 'C') then
+         grid_sys_dynu = 'E'
+         grid_sys_dynv = 'N'
+      elseif (grid_system == 'CD') then
+         grid_sys_dynu = 'NE'
+         grid_sys_dynv = 'NE'
+      else
+         if (my_task == master_task) then
+            write(nu_diag,*) subname//' ERROR: unknown grid_system: '//trim(grid_system)
+         endif
+         abort_list = trim(abort_list)//":64"
+      endif
+
+      grid_atm_thrm = 'T'
+      if (grid_atm == 'A') then
+         grid_atm_dynu = 'T'
+         grid_atm_dynv = 'T'
+      elseif (grid_atm == 'B') then
+         grid_atm_dynu = 'U'
+         grid_atm_dynv = 'U'
+      elseif (grid_atm == 'C') then
+         grid_atm_dynu = 'E'
+         grid_atm_dynv = 'N'
+      elseif (grid_atm == 'CD') then
+         grid_atm_dynu = 'NE'
+         grid_atm_dynv = 'NE'
+      else
+         if (my_task == master_task) then
+            write(nu_diag,*) subname//' ERROR: unknown grid_atm: '//trim(grid_atm)
+         endif
+         abort_list = trim(abort_list)//":65"
+      endif
+
+      grid_ocn_thrm = 'T'
+      if (grid_ocn == 'A') then
+         grid_ocn_dynu = 'T'
+         grid_ocn_dynv = 'T'
+      elseif (grid_ocn == 'B') then
+         grid_ocn_dynu = 'U'
+         grid_ocn_dynv = 'U'
+      elseif (grid_ocn == 'C') then
+         grid_ocn_dynu = 'E'
+         grid_ocn_dynv = 'N'
+      elseif (grid_ocn == 'CD') then
+         grid_ocn_dynu = 'NE'
+         grid_ocn_dynv = 'NE'
+      else
+         if (my_task == master_task) then
+            write(nu_diag,*) subname//' ERROR: unknown grid_ocn: '//trim(grid_ocn)
+         endif
+         abort_list = trim(abort_list)//":66"
+      endif
+
       !-----------------------------------------------------------------
       ! spew
       !-----------------------------------------------------------------
@@ -1368,6 +1435,17 @@
          if (trim(grid_type) == 'tripole')        tmpstr2 = ' : user-defined grid with northern hemisphere zipper'
          write(nu_diag,1030) ' grid_type        = ',trim(grid_type),trim(tmpstr2)
          write(nu_diag,1030) ' grid_system      = ',trim(grid_system)
+         write(nu_diag,1030) '   grid_sys_thrm  = ',trim(grid_sys_thrm)
+         write(nu_diag,1030) '   grid_sys_dynu  = ',trim(grid_sys_dynu)
+         write(nu_diag,1030) '   grid_sys_dynv  = ',trim(grid_sys_dynv)
+         write(nu_diag,1030) ' grid_atm         = ',trim(grid_atm)
+         write(nu_diag,1030) '   grid_atm_thrm  = ',trim(grid_atm_thrm)
+         write(nu_diag,1030) '   grid_atm_dynu  = ',trim(grid_atm_dynu)
+         write(nu_diag,1030) '   grid_atm_dynv  = ',trim(grid_atm_dynv)
+         write(nu_diag,1030) ' grid_ocn         = ',trim(grid_ocn)
+         write(nu_diag,1030) '   grid_ocn_thrm  = ',trim(grid_ocn_thrm)
+         write(nu_diag,1030) '   grid_ocn_dynu  = ',trim(grid_ocn_dynu)
+         write(nu_diag,1030) '   grid_ocn_dynv  = ',trim(grid_ocn_dynv)
          write(nu_diag,1030) ' kmt_type         = ',trim(kmt_type)
          if (trim(grid_type) /= 'rectangular') then
             if (use_bathymetry) then
@@ -2380,10 +2458,10 @@
 
          ! move from B-grid to CD-grid for boxslotcyl test 
          if (trim(ice_data_type) == 'boxslotcyl') then 
-            call grid_average_X2Y('U2NS',uvel,uvelN)
-            call grid_average_X2Y('U2NS',vvel,vvelN)
-            call grid_average_X2Y('U2ES',uvel,uvelE)
-            call grid_average_X2Y('U2ES',vvel,vvelE)
+            call grid_average_X2Y('S',uvel,'U',uvelN,'N')
+            call grid_average_X2Y('S',vvel,'U',vvelN,'N')
+            call grid_average_X2Y('S',uvel,'U',uvelE,'E')
+            call grid_average_X2Y('S',vvel,'U',vvelE,'E')
          endif
          
          ! Halo update on North, East faces

@@ -4110,8 +4110,8 @@
 
              work1(:,:,:) = ocn_frc_m(:,:,:,n  ,m)
              work2(:,:,:) = ocn_frc_m(:,:,:,n+1,m)
-             call grid_average_X2Y('T2UF',work1,ocn_frc_m(:,:,:,n  ,m))
-             call grid_average_X2Y('T2UF',work2,ocn_frc_m(:,:,:,n+1,m))
+             call grid_average_X2Y('F',work1,'T',ocn_frc_m(:,:,:,n  ,m),'U')
+             call grid_average_X2Y('F',work2,'T',ocn_frc_m(:,:,:,n+1,m),'U')
 
           enddo               ! month loop
         enddo               ! field loop
@@ -4516,9 +4516,9 @@
      !----------------------------------------------------------------- 
 
          work1 = uocn
-         call grid_average_X2Y('T2UF',work1,uocn)
+         call grid_average_X2Y('F',work1,'T',uocn,'U')
          work1 = vocn
-         call grid_average_X2Y('T2UF',work1,vocn)
+         call grid_average_X2Y('F',work1,'T',vocn,'U')
 
      endif    !   ocn_data_type = hadgem_sst_uvocn
 
@@ -5321,7 +5321,7 @@
       call icepack_query_parameters(pi_out=pi, pi2_out=pi2, puny_out=puny)
       call icepack_query_parameters(secday_out=secday)
 
-      call grid_average_X2Y('T2UF',aice, aiu)
+      call grid_average_X2Y('F',aice,'T',aiu,'U')
 
       period = c4*secday
 

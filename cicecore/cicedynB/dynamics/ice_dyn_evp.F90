@@ -270,14 +270,14 @@
       ! convert fields from T to U grid
       !-----------------------------------------------------------------
 
-      call grid_average_X2Y('T2UF',tmass,umass)
-      call grid_average_X2Y('T2UF',aice_init, aiu)
+      call grid_average_X2Y('F',tmass,'T',umass,'U')
+      call grid_average_X2Y('F',aice_init,'T',aiu,'U')
 
       if (grid_system == 'CD') then
-         call grid_average_X2Y('T2EF',tmass,emass)
-         call grid_average_X2Y('T2EF',aice_init, aie)
-         call grid_average_X2Y('T2NF',tmass,nmass)
-         call grid_average_X2Y('T2NF',aice_init, ain)
+         call grid_average_X2Y('F',tmass,'T',emass,'E')
+         call grid_average_X2Y('F',aice_init,'T', aie,'E')
+         call grid_average_X2Y('F',tmass,'T',nmass,'N')
+         call grid_average_X2Y('F',aice_init,'T', ain,'N')
          ! TODO, this should be averaged to N and E but it isn't for the B grid either (bug)
          uocnN = uocn
          vocnN = vocn
@@ -302,8 +302,8 @@
                               field_loc_center, field_type_vector)
          call ice_HaloUpdate (strairyT,         halo_info, &
                               field_loc_center, field_type_vector)
-         call grid_average_X2Y('T2UF',strairxT,strairx)
-         call grid_average_X2Y('T2UF',strairyT,strairy)
+         call grid_average_X2Y('F',strairxT,'T',strairx,'U')
+         call grid_average_X2Y('F',strairyT,'T',strairy,'U')
       endif
 
       if (grid_system == 'CD') then
@@ -313,10 +313,10 @@
             strairxE(:,:,:) = strax(:,:,:)
             strairyE(:,:,:) = stray(:,:,:)
          else
-            call grid_average_X2Y('T2NF',strairxT,strairxN)
-            call grid_average_X2Y('T2NF',strairyT,strairyN)
-            call grid_average_X2Y('T2EF',strairxT,strairxE)
-            call grid_average_X2Y('T2EF',strairyT,strairyE)
+            call grid_average_X2Y('F',strairxT,'T',strairxN,'N')
+            call grid_average_X2Y('F',strairyT,'T',strairyN,'N')
+            call grid_average_X2Y('F',strairxT,'T',strairxE,'E')
+            call grid_average_X2Y('F',strairyT,'T',strairyE,'E')
          endif      
       endif
 
@@ -643,8 +643,8 @@
          ! shift velocity components from CD grid locations (N, E) to B grid location (U) for stress_U
 
             if (grid_system == 'CD') then
-                call grid_average_X2Y('E2US',uvelE,uvel)
-                call grid_average_X2Y('N2US',vvelN,vvel)
+                call grid_average_X2Y('S',uvelE,'E',uvel,'U')
+                call grid_average_X2Y('S',vvelN,'N',vvel,'U')
             endif
 
          !-----------------------------------------------------------------
@@ -970,13 +970,13 @@
                            field_loc_NEcorner, field_type_vector)
       call ice_HaloUpdate (work2,              halo_info, &
                            field_loc_NEcorner, field_type_vector)
-      call grid_average_X2Y('U2TF',work1,strocnxT)    ! shift
-      call grid_average_X2Y('U2TF',work2,strocnyT)
+      call grid_average_X2Y('F',work1,'U',strocnxT,'T')    ! shift
+      call grid_average_X2Y('F',work2,'U',strocnyT,'T')
 
 ! shift velocity components from CD grid locations (N, E) to B grid location (U) for transport
       if (grid_system == 'CD') then
-          call grid_average_X2Y('E2US',uvelE,uvel)
-          call grid_average_X2Y('N2US',vvelN,vvel)
+          call grid_average_X2Y('S',uvelE,'E',uvel,'U')
+          call grid_average_X2Y('S',vvelN,'N',vvel,'U')
       endif
 
       call ice_timer_stop(timer_dynamics)    ! dynamics
