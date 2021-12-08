@@ -271,10 +271,8 @@
 
          array2x = c0
          if (len_trim(avgname(n)) == 4) then
-!            call grid_average_X2Y(trim(avgname(n)),array1x,array2x)
             call grid_average_X2Y(avgname(n)(4:4),array1x,avgname(n)(1:1),array2x,avgname(n)(3:3))
          else   ! len_trim(avgname(n)) == 5
-!            call grid_average_X2Y(trim(avgname(n)),array1x,arraysx,array2x)
             if (avgname(n)(1:2) == 'NE') then
                call grid_average_X2Y(avgname(n)(5:5),array1x,avgname(n)(1:1),arraysx,avgname(n)(2:2),array2x,avgname(n)(4:4))
             else  ! EN, swap needed
@@ -427,13 +425,9 @@
          array2x = c0
          array2y = c0
          if (len_trim(avgname(n)) == 4) then
-!            call grid_average_X2Y(trim(avgname(n)),array1x,array2x)
-!            call grid_average_X2Y(trim(avgname(n)),array1y,array2y)
             call grid_average_X2Y(avgname(n)(4:4),array1x,avgname(n)(1:1),array2x,avgname(n)(3:3))
             call grid_average_X2Y(avgname(n)(4:4),array1y,avgname(n)(1:1),array2y,avgname(n)(3:3))
          else   ! len_trim(avgname(n)) == 5
-!            call grid_average_X2Y(trim(avgname(n)),array1x,arraysx,array2x)
-!            call grid_average_X2Y(trim(avgname(n)),array1y,arraysy,array2y)
             if (avgname(n)(1:2) == 'NE') then
                call grid_average_X2Y(avgname(n)(5:5),array1x,avgname(n)(1:1),arraysx,avgname(n)(2:2),array2x,avgname(n)(4:4))
                call grid_average_X2Y(avgname(n)(5:5),array1y,avgname(n)(1:1),arraysy,avgname(n)(2:2),array2y,avgname(n)(4:4))
@@ -603,17 +597,15 @@
                stringflag(testcnt) = trim(stringflag(testcnt))//' + explicit'
                if (avgname(n)(4:4) == 'S') then
                   ! test direct mapping compared to S, array1x*wght1*mask1 where wght1=area and mask1=mask
-!                  call grid_average_X2Y(trim(avgname(n)),array1x,wght1,mask1,array2z)
                   call grid_average_X2Y(avgname(n)(4:4),array1x,avgname(n)(1:1),wght1,mask1,array2z,avgname(n)(3:3))
                elseif (avgname(n)(4:4) == 'A') then
                   ! test direct mapping compared to A, array1x*wght1 where wght1=area and mask1=1.0
                   mask1 = c1
-!                  call grid_average_X2Y(trim(avgname(n)),array1x,wght1,mask1,array2z)
                   call grid_average_X2Y(avgname(n)(4:4),array1x,avgname(n)(1:1),wght1,mask1,array2z,avgname(n)(3:3))
                endif
                fmax = global_maxval(abs(array1x), distrb_info)
                amax = global_maxval(abs(array2z-array2x), distrb_info)
-!              tcraig, errtol=c0 doesn't work here, diff seems smaller than roundoff - interesting
+!              tcraig, errtol=c0 doesn't work here, diff seems smaller than roundoff? - interesting
 !               errtol = c0
                errtol = 1.0e-20_dbl_kind
                if (amax < fmax * errtol) then
@@ -632,7 +624,6 @@
             endif
 
          else   ! len_trim(avgname(n)) == 5
-!            call grid_average_X2Y(trim(avgname(n)),array1x,arraysx,array2x)
              ! no swap needed 1x and sx set based on NE or EN
              call grid_average_X2Y(avgname(n)(5:5),array1x,avgname(n)(1:1),arraysx,avgname(n)(2:2),array2x,avgname(n)(4:4))
          endif

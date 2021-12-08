@@ -87,10 +87,10 @@
           strtltx, strtlty, strocnx, strocny, strintx, strinty, taubx, tauby, &
           strocnxT, strocnyT, strax, stray, &
           Tbu, hwater, &
-          strairxN, strairyN, uocnN, vocnN, ss_tltxN, ss_tltyN, icenmask, fmN, &
+          strairxN, strairyN, icenmask, fmN, &
           strtltxN, strtltyN, strocnxN, strocnyN, strintxN, strintyN, taubxN, taubyN, &
           TbN, &
-          strairxE, strairyE, uocnE, vocnE, ss_tltxE, ss_tltyE, iceemask, fmE, &
+          strairxE, strairyE, iceemask, fmE, &
           strtltxE, strtltyE, strocnxE, strocnyE, strintxE, strintyE, taubxE, taubyE, &
           TbE, &
           stressp_1, stressp_2, stressp_3, stressp_4, &
@@ -103,7 +103,7 @@
           ratiodxN, ratiodxNr, ratiodyE, ratiodyEr, & 
           dxhy, dyhx, cxp, cyp, cxm, cym, &
           tarear, uarear, earear, narear, tinyarea, grid_average_X2Y, tarea, &
-          grid_type, grid_system
+          grid_type, grid_system, grid_ocn_dynu, grid_ocn_dynv
       use ice_state, only: aice, vice, vsno, uvel, vvel, uvelN, vvelN, &
           uvelE, vvelE, divu, shear, &
           aice_init, aice0, aicen, vicen, strength
@@ -141,6 +141,10 @@
          indxuj       ! compressed index in j-direction
 
       real (kind=dbl_kind), dimension (nx_block,ny_block,max_blocks) :: &
+         uocnU    , & ! i ocean current (m/s)
+         vocnU    , & ! j ocean current (m/s)
+         ss_tltxU , & ! sea surface slope, x-direction (m/m)
+         ss_tltyU , & ! sea surface slope, y-direction (m/m)
          tmass    , & ! total mass of ice and snow (kg/m^2)
          waterx   , & ! for ocean stress calculation, x (m/s)
          watery   , & ! for ocean stress calculation, y (m/s)
@@ -151,6 +155,10 @@
          umassdti     ! mass of U-cell/dte (kg/m^2 s)
 
       real (kind=dbl_kind), dimension (nx_block,ny_block,max_blocks) :: &
+         uocnN    , & ! i ocean current (m/s)
+         vocnN    , & ! j ocean current (m/s)
+         ss_tltxN , & ! sea surface slope, x-direction (m/m)
+         ss_tltyN , & ! sea surface slope, y-direction (m/m)
          waterxN  , & ! for ocean stress calculation, x (m/s)
          wateryN  , & ! for ocean stress calculation, y (m/s)
          forcexN  , & ! work array: combined atm stress and ocn tilt, x
@@ -160,6 +168,10 @@
          nmassdti     ! mass of N-cell/dte (kg/m^2 s)
 
       real (kind=dbl_kind), dimension (nx_block,ny_block,max_blocks) :: &
+         uocnE    , & ! i ocean current (m/s)
+         vocnE    , & ! j ocean current (m/s)
+         ss_tltxE , & ! sea surface slope, x-direction (m/m)
+         ss_tltyE , & ! sea surface slope, y-direction (m/m)
          waterxE  , & ! for ocean stress calculation, x (m/s)
          wateryE  , & ! for ocean stress calculation, y (m/s)
          forcexE  , & ! work array: combined atm stress and ocn tilt, x
@@ -272,17 +284,26 @@
 
       call grid_average_X2Y('F',tmass,'T',umass,'U')
       call grid_average_X2Y('F',aice_init,'T',aiu,'U')
+! TODO, tcraig, comment this in.  In general, [u,v]ocn and ss_tlt[x,y]  have not been on the correct grid
+!       this will change answers.  For now, just copy varU = var
+      uocnU = uocn
+      vocnU = vocn
+      ss_tltxU = ss_tltx
+      ss_tltyU = ss_tlty
+!      call grid_average_X2Y('S',uocn,grid_ocn_dynu,uocnU,'U')
+!      call grid_average_X2Y('S',vocn,grid_ocn_dynv,vocnU,'U')
+!      call grid_average_X2Y('S',ss_tltx,grid_ocn_dynu,ss_tltxU,'U')
+!      call grid_average_X2Y('S',ss_tlty,grid_ocn_dynv,ss_tltyU,'U')
 
       if (grid_system == 'CD') then
          call grid_average_X2Y('F',tmass,'T',emass,'E')
          call grid_average_X2Y('F',aice_init,'T', aie,'E')
          call grid_average_X2Y('F',tmass,'T',nmass,'N')
          call grid_average_X2Y('F',aice_init,'T', ain,'N')
-         ! TODO, this should be averaged to N and E but it isn't for the B grid either (bug)
-         uocnN = uocn
-         vocnN = vocn
-         uocnE = uocn
-         vocnE = vocn
+         call grid_average_X2Y('S',uocn,grid_ocn_dynu,uocnN,'N')
+         call grid_average_X2Y('S',vocn,grid_ocn_dynv,vocnN,'N')
+         call grid_average_X2Y('S',uocn,grid_ocn_dynu,uocnE,'E')
+         call grid_average_X2Y('S',vocn,grid_ocn_dynv,vocnE,'E')
       endif
       !----------------------------------------------------------------
       ! Set wind stress to values supplied via NEMO or other forcing
@@ -344,9 +365,9 @@
                             aiu       (:,:,iblk), umass     (:,:,iblk), & 
                             umassdti  (:,:,iblk), fcor_blk  (:,:,iblk), & 
                             umask     (:,:,iblk),                       & 
-                            uocn      (:,:,iblk), vocn      (:,:,iblk), & 
+                            uocnU     (:,:,iblk), vocnU     (:,:,iblk), &
                             strairx   (:,:,iblk), strairy   (:,:,iblk), & 
-                            ss_tltx   (:,:,iblk), ss_tlty   (:,:,iblk), &  
+                            ss_tltxU  (:,:,iblk), ss_tltyU  (:,:,iblk), &  
                             icetmask  (:,:,iblk), iceumask  (:,:,iblk), & 
                             fm        (:,:,iblk), dt,                   & 
                             strtltx   (:,:,iblk), strtlty   (:,:,iblk), & 
@@ -374,9 +395,9 @@
                             aiu       (:,:,iblk), umass     (:,:,iblk), &
                             umassdti  (:,:,iblk), fcor_blk  (:,:,iblk), &
                             umaskCD   (:,:,iblk),                       &
-                            uocn      (:,:,iblk), vocn      (:,:,iblk), &
+                            uocnU     (:,:,iblk), vocnU     (:,:,iblk), &
                             strairx   (:,:,iblk), strairy   (:,:,iblk), &
-                            ss_tltx   (:,:,iblk), ss_tlty   (:,:,iblk), &
+                            ss_tltxU  (:,:,iblk), ss_tltyU  (:,:,iblk), &
                             icetmask  (:,:,iblk), iceumask  (:,:,iblk), &
                             fm        (:,:,iblk), dt,                   &
                             strtltx   (:,:,iblk), strtlty   (:,:,iblk), &
@@ -618,7 +639,7 @@
          call ice_dyn_evp_1d_copyin(                                                &
             nx_block,ny_block,nblocks,nx_global+2*nghost,ny_global+2*nghost, &
             icetmask, iceumask,                                           &
-            cdn_ocn,aiu,uocn,vocn,forcex,forcey,Tbu,        &
+            cdn_ocn,aiu,uocnU,vocnU,forcex,forcey,Tbu,        &
             umassdti,fm,uarear,tarear,strintx,strinty,uvel_init,vvel_init,&
             strength,uvel,vvel,dxt,dyt,                                   &
             stressp_1 ,stressp_2, stressp_3, stressp_4,                   &
@@ -684,7 +705,7 @@
                               indxui     (:,iblk), indxuj    (:,iblk), &
                               ksub,                                    &
                               aiu      (:,:,iblk), strtmp  (:,:,:),    &
-                              uocn     (:,:,iblk), vocn    (:,:,iblk), &
+                              uocnU    (:,:,iblk), vocnU   (:,:,iblk), &
                               waterx   (:,:,iblk), watery  (:,:,iblk), &
                               forcex   (:,:,iblk), forcey  (:,:,iblk), &
                               umassdti (:,:,iblk), fm      (:,:,iblk), &
@@ -773,7 +794,7 @@
                                  icelln        (iblk), Cdn_ocn   (:,:,iblk), &
                                  indxni      (:,iblk), indxnj      (:,iblk), &
                                  ksub,                 aiN       (:,:,iblk), &
-                                 uocnN     (:,:,iblk), vocnE     (:,:,iblk), &
+                                 uocnN     (:,:,iblk), vocnN     (:,:,iblk), &
                                  waterxN   (:,:,iblk), wateryN   (:,:,iblk), &
                                  forcexN   (:,:,iblk), forceyN   (:,:,iblk), &
                                  nmassdti  (:,:,iblk), fmN       (:,:,iblk), &
@@ -910,7 +931,7 @@
                icellu      (iblk), Cdn_ocn (:,:,iblk), & 
                indxui    (:,iblk), indxuj    (:,iblk), & 
                uvel    (:,:,iblk), vvel    (:,:,iblk), & 
-               uocn    (:,:,iblk), vocn    (:,:,iblk), & 
+               uocnU   (:,:,iblk), vocnU   (:,:,iblk), &
                aiu     (:,:,iblk), fm      (:,:,iblk), & 
                strintx (:,:,iblk), strinty (:,:,iblk), &
                strairx (:,:,iblk), strairy (:,:,iblk), &

@@ -4515,10 +4515,11 @@
      ! Interpolate to U grid 
      !----------------------------------------------------------------- 
 
-         work1 = uocn
-         call grid_average_X2Y('F',work1,'T',uocn,'U')
-         work1 = vocn
-         call grid_average_X2Y('F',work1,'T',vocn,'U')
+         ! tcraig, this is now computed in dynamics for consistency
+         !work1 = uocn
+         !call grid_average_X2Y('F',work1,'T',uocn,'U')
+         !work1 = vocn
+         !call grid_average_X2Y('F',work1,'T',vocn,'U')
 
      endif    !   ocn_data_type = hadgem_sst_uvocn
 

@@ -165,6 +165,8 @@
          indxuj       ! compressed index in j-direction
 
       real (kind=dbl_kind), dimension (nx_block,ny_block,max_blocks) :: &
+         uocnU    , & ! i ocean current (m/s)
+         vocnU    , & ! j ocean current (m/s)
          tmass    , & ! total mass of ice and snow (kg/m^2)
          waterx   , & ! for ocean stress calculation, x (m/s)
          watery   , & ! for ocean stress calculation, y (m/s)
@@ -258,6 +260,12 @@
 
       call grid_average_X2Y('F',tmass,'T',umass,'U')
       call grid_average_X2Y('F',aice_init,'T',aiu,'U')
+! TODO, tcraig, comment this in.  In general, uocn and vocn have not been on the correct grid
+!       this will change answers.  For now, just copy u/vocnU = u/vocn
+      uocnU = uocn
+      vocnU = vocn
+!      call grid_average_X2Y('S',uocn,grid_ocn_dynu,uocnU,'U')
+!      call grid_average_X2Y('S',vocn,grid_ocn_dynv,vocnU,'U')
 
       !----------------------------------------------------------------
       ! Set wind stress to values supplied via NEMO or other forcing
@@ -304,7 +312,7 @@
                          aiu       (:,:,iblk), umass     (:,:,iblk), & 
                          umassdti  (:,:,iblk), fcor_blk  (:,:,iblk), & 
                          umask     (:,:,iblk),                       & 
-                         uocn      (:,:,iblk), vocn      (:,:,iblk), & 
+                         uocnU     (:,:,iblk), vocnU     (:,:,iblk), &
                          strairx   (:,:,iblk), strairy   (:,:,iblk), & 
                          ss_tltx   (:,:,iblk), ss_tlty   (:,:,iblk), &  
                          icetmask  (:,:,iblk), iceumask  (:,:,iblk), & 
@@ -480,7 +488,7 @@
                         indxui     (:,iblk), indxuj    (:,iblk), & 
                         ksub,                                    &
                         aiu      (:,:,iblk), strtmp  (:,:,:),    & 
-                        uocn     (:,:,iblk), vocn    (:,:,iblk), &     
+                        uocnU    (:,:,iblk), vocnU   (:,:,iblk), &
                         waterx   (:,:,iblk), watery  (:,:,iblk), & 
                         forcex   (:,:,iblk), forcey  (:,:,iblk), & 
                         umassdti (:,:,iblk), fm      (:,:,iblk), & 
@@ -545,7 +553,7 @@
                icellu      (iblk), Cdn_ocn (:,:,iblk), & 
                indxui    (:,iblk), indxuj    (:,iblk), & 
                uvel    (:,:,iblk), vvel    (:,:,iblk), & 
-               uocn    (:,:,iblk), vocn    (:,:,iblk), & 
+               uocnU   (:,:,iblk), vocnU   (:,:,iblk), &
                aiu     (:,:,iblk), fm      (:,:,iblk), &
                strintx (:,:,iblk), strinty (:,:,iblk), &
                strairx (:,:,iblk), strairy (:,:,iblk), & 

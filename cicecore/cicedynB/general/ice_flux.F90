@@ -44,16 +44,8 @@
        ! in from ocean
          uocn    , & ! ocean current, x-direction (m/s) on T grid from forcing, should it be on U??
          vocn    , & ! ocean current, y-direction (m/s) on T grid from forcing
-         uocnE   , & ! ocean current, x-direction (m/s) on ??
-         vocnE   , & ! ocean current, y-direction (m/s) on ??
-         uocnN   , & ! ocean current, x-direction (m/s) on ??
-         vocnN   , & ! ocean current, y-direction (m/s) on ??
          ss_tltx , & ! sea surface slope, x-direction (m/m)
          ss_tlty , & ! sea surface slope, y-direction
-         ss_tltxE, & ! sea surface slope, x-direction (m/m)
-         ss_tltyE, & ! sea surface slope, y-direction
-         ss_tltxN, & ! sea surface slope, x-direction (m/m)
-         ss_tltyN, & ! sea surface slope, y-direction
          hwater  , & ! water depth for seabed stress calc (landfast ice) 
 
        ! out to atmosphere
@@ -584,10 +576,6 @@
 
       if (grid_system == "CD") &
          allocate( &
-         uocnN      (nx_block,ny_block,max_blocks), & ! ocean current, x-direction (m/s)
-         vocnN      (nx_block,ny_block,max_blocks), & ! ocean current, y-direction (m/s)
-         ss_tltxN   (nx_block,ny_block,max_blocks), & ! sea surface slope, x-direction (m/m)
-         ss_tltyN   (nx_block,ny_block,max_blocks), & ! sea surface slope, y-direction
          taubxN     (nx_block,ny_block,max_blocks), & ! seabed stress (x) at N points (N/m^2)
          taubyN     (nx_block,ny_block,max_blocks), & ! seabed stress (y) at N points (N/m^2)
          strairxN   (nx_block,ny_block,max_blocks), & ! stress on ice by air, x-direction at N points
@@ -601,10 +589,6 @@
          icenmask   (nx_block,ny_block,max_blocks), & ! ice extent mask (N-cell)
          fmN        (nx_block,ny_block,max_blocks), & ! Coriolis param. * mass in N-cell (kg/s)
          TbN        (nx_block,ny_block,max_blocks), & ! factor for seabed stress (landfast ice)
-         uocnE      (nx_block,ny_block,max_blocks), & ! ocean current, x-direction (m/s)
-         vocnE      (nx_block,ny_block,max_blocks), & ! ocean current, y-direction (m/s)
-         ss_tltxE   (nx_block,ny_block,max_blocks), & ! sea surface slope, x-direction (m/m)
-         ss_tltyE   (nx_block,ny_block,max_blocks), & ! sea surface slope, y-direction
          taubxE     (nx_block,ny_block,max_blocks), & ! seabed stress (x) at E points (N/m^2)
          taubyE     (nx_block,ny_block,max_blocks), & ! seabed stress (y) at E points (N/m^2)
          strairxE   (nx_block,ny_block,max_blocks), & ! stress on ice by air, x-direction at E points
@@ -746,17 +730,6 @@
       frzmlt  (:,:,:) = c0              ! freezing/melting potential (W/m^2)
       frzmlt_init(:,:,:) = c0           ! freezing/melting potential (W/m^2)
       sss     (:,:,:) = 34.0_dbl_kind   ! sea surface salinity (ppt)
-
-      if (grid_system == 'CD') then
-         ss_tltxN(:,:,:) = c0           ! sea surface tilt (m/m)
-         ss_tltyN(:,:,:) = c0
-         ss_tltxE(:,:,:) = c0           ! sea surface tilt (m/m)
-         ss_tltyE(:,:,:) = c0
-         uocnN   (:,:,:) = c0           ! surface ocean currents (m/s)
-         vocnN   (:,:,:) = c0
-         uocnE   (:,:,:) = c0           ! surface ocean currents (m/s)
-         vocnE   (:,:,:) = c0
-      endif
 
       do iblk = 1, size(Tf,3)
       do j = 1, size(Tf,2)

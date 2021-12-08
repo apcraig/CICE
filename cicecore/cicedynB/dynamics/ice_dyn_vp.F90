@@ -218,6 +218,8 @@
          i, j, ij
 
       real (kind=dbl_kind), dimension (nx_block,ny_block,max_blocks) :: &
+         uocnU    , & ! i ocean current (m/s)
+         vocnU    , & ! j ocean current (m/s)
          tmass    , & ! total mass of ice and snow (kg/m^2)
          waterx   , & ! for ocean stress calculation, x (m/s)
          watery   , & ! for ocean stress calculation, y (m/s)
@@ -324,6 +326,12 @@
 
       call grid_average_X2Y('F',tmass,'T',umass,'U')
       call grid_average_X2Y('F',aice_init,'T', aiu,'U')
+! TODO, tcraig, comment this in.  In general, uocn and vocn have not been on the correct grid
+!       this will change answers.  For now, just copy u/vocnU = u/vocn
+      uocnU = uocn
+      vocnU = vocn
+!      call grid_average_X2Y('S',uocn,grid_ocn_dynu,uocnU,'U')
+!      call grid_average_X2Y('S',vocn,grid_ocn_dynv,vocnU,'U')
 
       !----------------------------------------------------------------
       ! Set wind stress to values supplied via NEMO or other forcing
@@ -369,7 +377,7 @@
                          aiu       (:,:,iblk), umass     (:,:,iblk), &
                          umassdti  (:,:,iblk), fcor_blk  (:,:,iblk), &
                          umask     (:,:,iblk),                       &
-                         uocn      (:,:,iblk), vocn      (:,:,iblk), &
+                         uocnU     (:,:,iblk), vocnU     (:,:,iblk), &
                          strairx   (:,:,iblk), strairy   (:,:,iblk), &
                          ss_tltx   (:,:,iblk), ss_tlty   (:,:,iblk), &
                          icetmask  (:,:,iblk), iceumask  (:,:,iblk), &
@@ -492,6 +500,7 @@
                             indxti  , indxtj, &
                             indxui  , indxuj, &
                             aiu     , ntot  , &
+                            uocnU   , vocnU , &
                             waterx  , watery, &
                             bxfix   , byfix , &
                             umassdti, sol   , &
@@ -644,7 +653,7 @@
                icellu      (iblk), Cdn_ocn (:,:,iblk), &
                indxui    (:,iblk), indxuj    (:,iblk), &
                uvel    (:,:,iblk), vvel    (:,:,iblk), &
-               uocn    (:,:,iblk), vocn    (:,:,iblk), &
+               uocnU   (:,:,iblk), vocnU   (:,:,iblk), &
                aiu     (:,:,iblk), fm      (:,:,iblk), &
                strintx (:,:,iblk), strinty (:,:,iblk), &
                strairx (:,:,iblk), strairy (:,:,iblk), &
@@ -702,6 +711,7 @@
                                   indxti  , indxtj, &
                                   indxui  , indxuj, &
                                   aiu     , ntot  , &
+                                  uocn    , vocn  , &
                                   waterx  , watery, &
                                   bxfix   , byfix , &
                                   umassdti, sol   , &
@@ -716,7 +726,7 @@
       use ice_constants, only: c1
       use ice_domain, only: maskhalo_dyn, halo_info
       use ice_domain_size, only: max_blocks
-      use ice_flux, only:   uocn, vocn, fm, Tbu
+      use ice_flux, only:   fm, Tbu
       use ice_grid, only: dxt, dyt, dxhy, dyhx, cxp, cyp, cxm, cym, &
           uarear, tinyarea
       use ice_state, only: uvel, vvel, strength
@@ -737,6 +747,8 @@
 
       real (kind=dbl_kind), dimension (nx_block,ny_block,max_blocks), intent(in) :: &
          aiu      , & ! ice fraction on u-grid
+         uocn     , & ! i ocean current (m/s)
+         vocn     , & ! j ocean current (m/s)
          waterx   , & ! for ocean stress calculation, x (m/s)
          watery   , & ! for ocean stress calculation, y (m/s)
          bxfix    , & ! part of bx that is constant during Picard

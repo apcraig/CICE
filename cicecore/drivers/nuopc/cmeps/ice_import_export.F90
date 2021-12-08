@@ -802,14 +802,15 @@ contains
        call ice_HaloUpdate(vocn, halo_info, field_loc_center, field_type_scalar)
        call ice_HaloUpdate(ss_tltx, halo_info, field_loc_center, field_type_scalar)
        call ice_HaloUpdate(ss_tlty, halo_info, field_loc_center, field_type_scalar)
-       work = uocn
-       call grid_average_X2Y('F',work,'T',uocn,'U')
-       work = vocn
-       call grid_average_X2Y('F',work,'T',vocn,'U')
-       work = ss_tltx
-       call grid_average_X2Y('F',work,'T',ss_tltx,'U')
-       work = ss_tlty
-       call grid_average_X2Y('F',work,'T',ss_tlty,'U')
+       ! tcraig, moved to dynamics for consistency
+       !work = uocn
+       !call grid_average_X2Y('F',work,'T',uocn,'U')
+       !work = vocn
+       !call grid_average_X2Y('F',work,'T',vocn,'U')
+       !work = ss_tltx
+       !call grid_average_X2Y('F',work,'T',ss_tltx,'U')
+       !work = ss_tlty
+       !call grid_average_X2Y('F',work,'T',ss_tlty,'U')
        call t_stopf ('cice_imp_t2u')
     end if
 
