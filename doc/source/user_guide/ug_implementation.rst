@@ -472,14 +472,15 @@ grids.  The generic interface to this method is ``grid_average_X2Y`` and there a
 
 where type is a interpolation type with valid values
 
-``S`` is a normalized masked area weighted interpolation::
+``S`` is a normalized masked area weighted interpolation
+
 .. math:: 
-   work2(i,j,n)=\sum_{n=1}^{n} {mask_grid1(i,j,n)*area_grid1(i,j,n)*work1(i,j,n)}/\sum_{n=1}^{n} {mask_grid1(i,j,n)*area_grid1(i,j,n)}
+   work2(i,j,n)=\sum_{n=1}^{n} {mask_{grid1}(i,j,n)*area_{grid1}(i,j,n)*work1(i,j,n)}/\sum_{n=1}^{n} {mask_{grid1}(i,j,n)*area_{grid1}(i,j,n)}
 
 ``A`` is a normalized unmasked area weighted interpolation
 
 .. math:: 
-   work2(i,j,n)=\sum\{area_grid1(i,j,n)*work1(i,j,n)}/\sum\{area_grid1(i,j,n)}
+   work2(i,j,n)=\sum{area_grid1(i,j,n)*work1(i,j,n)}/\sum{area_grid1(i,j,n)}
 
 ``F`` is a normalized conservative flux interpolation
 
