@@ -436,9 +436,10 @@ the Arakawa grid definitions shown in :ref:`tab_gridsys`.
 .. _tab-gridsyss:
 
 .. table:: Grid System Definition
+   :align: center
 
    +--------------+----------------+----------------+----------------+
-   | grid_system  |   thermo grid  | u dynamic grid | v dynamic grid |
+   | grid type    |   thermo grid  | u dynamic grid | v dynamic grid |
    +==============+================+================+================+
    |     A        |       T        |       T        |       T        |
    +--------------+----------------+----------------+----------------+
@@ -463,17 +464,18 @@ grids.  The generic interface to this method is ``grid_average_X2Y`` and there a
 .. code-block:: fortran
 
       subroutine grid_average_X2Y(type,work1,grid1,work2,grid2)
-      character(len=*)    , intent(in)  :: type           ! mapping type
+
+      character(len=*)    , intent(in)  :: type           ! mapping type (S, A, F)
+      real (kind=dbl_kind), intent(in)  :: work1(:,:,:)   ! input field(nx_block, ny_block, max_blocks)
       character(len=*)    , intent(in)  :: grid1          ! work1 grid (T, U, N, E)
+      real (kind=dbl_kind), intent(out) :: work2(:,:,:)   ! output field(nx_block, ny_block, max_blocks)
       character(len=*)    , intent(in)  :: grid2          ! work2 grid (T, U, N, E)
-      real (kind=dbl_kind), intent(in)  :: work1(:,:,:)   ! input field
-      real (kind=dbl_kind), intent(out) :: work2(:,:,:)   ! output field
 
 where type is a interpolation type with valid values
 
 ``S`` is a normalized masked area weighted interpolation::
 .. math:: 
-   work2(i,j,n)=\sum_{n=1}^{n} {mask_{grid1}(i,j,n)*area_{grid1}(i,j,n)*work1(i,j,n)} / \sum_{n=1}^{n} {mask_{grid1}(i,j,n)*area_{grid1}(i,j,n)}
+   work2(i,j,n)=\sum_{n=1}^{n} {mask_{grid1}(i,j,n)*area_{grid1}(i,j,n)*work1(i,j,n)}/\sum_{n=1}^{n} {mask_{grid1}(i,j,n)*area_{grid1}(i,j,n)}
 
 ``A`` is a normalized unmasked area weighted interpolation
 
