@@ -425,16 +425,16 @@ points in the history files and diagnostics.
 Interpolating between grids
 ****************************
 
-Fields in CICE are generally defined on a particular grid, such as the T, U, N, or E
+Fields in CICE are generally defined on a particular grid, such as the ``T``, ``U``, ``N``, or ``E``
 grid.  These are tracked internally in CICE and the namelist variable, ``grid_system``, 
 defines the model grid system.  Forcing/coupling fields are also associated with a 
 specific set of grids that may or may not be the same as the internal CICE model grid.
 The namelist variables ``grid_atm`` and ``grid_ocn`` define the forcing/coupling grids.  
 The ``grid_system``, ``grid_atm``, and ``grid_ocn`` variables are independent and take
 values like ``A``, ``B``, ``C``, or ``CD`` consistent with the Arakawa grid convention.
-The relationship between the grid system and the internal grids is shown in :ref:`tab_gridsys`.
+The relationship between the grid system and the internal grids is shown in :ref:`tab-gridsys`.
 
-.. _tab-gridsyss:
+.. _tab-gridsys:
 
 .. table:: Grid System and Type Definitions
    :align: center
@@ -460,9 +460,9 @@ character strings (``T``, ``U``, ``N``, ``E`` , ``NE``) derived from the ``grid_
 and ``grid_ocn`` namelist values.
 
 The CICE model has several internal methods that will interpolate (a.k.a. map or average) fields on 
-(``T``, ``U``, ``N``, ``E``, ``NE``) grids to (``T``, ``U``, ``N``, ``E``).  An interpolation from
-to the identical grid results in a copy.  The generic interface to this method is ``grid_average_X2Y``,
- and there are several forms.
+(``T``, ``U``, ``N``, ``E``, ``NE``) grids to (``T``, ``U``, ``N``, ``E``).  An interpolation
+to an identical grid results in a field copy.  The generic interface to this method is ``grid_average_X2Y``,
+and there are several forms.
 
 .. code-block:: fortran
 
@@ -506,7 +506,7 @@ Another form of the ``grid_average_X2Y`` is
 
 In this case, the input arrays `wght1` and `mask1` are used in the interpolation equations instead of gridcell
 area and mask.  This version allows the user to define the weights and mask
-explicitly.  This implementation is supported for only type = ``S`` or ``A`` interpolations.
+explicitly.  This implementation is supported only for type = ``S`` or ``A`` interpolations.
 
 A final form of the ``grid_average_X2Y`` interface is
 
@@ -522,7 +522,7 @@ A final form of the ``grid_average_X2Y`` interface is
         character(len=*)    , intent(in)  :: grid2          ! work2 grid (T, U)
 
 This version supports mapping from an ``NE`` grid to a ``T`` or ``U`` grid.  In this case, the ``1a`` arguments
-are for either the `N` or `E` field and the 1b arguments are for the complement field (``E`` or ``N`` respectively).
+are for either the `N` or `E` field and the 1b arguments are for the complementary field (``E`` or ``N`` respectively).
 
 In all cases, the work1, wght1, and mask1 arrays should have correct halo values when called.  Examples of usage
 can be found in the source code, but to demonstrate mapping of the uocn and vocn forcing fields, the following
@@ -530,9 +530,9 @@ calls would map the uocn and vocn fields from their native forcing/coupling grid
 weighted average method.
 
 .. code-block:: fortran
+
       call grid_average_X2Y('S',uocn,grid_ocn_dynu,uocnU,'U')
       call grid_average_X2Y('S',vocn,grid_ocn_dynv,vocnU,'U')
-
 
 
 .. _performance:
