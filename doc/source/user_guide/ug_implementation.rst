@@ -475,18 +475,18 @@ where type is a interpolation type with valid values
 ``S`` is a normalized masked area weighted interpolation
 
 .. math:: 
-   work2(i,j,n)=\sum_{n=1}^{n} {mask_{grid1}(i,j,n)*area_{grid1}(i,j,n)*work1(i,j,n)}/\sum_{n=1}^{n} {mask_{grid1}(i,j,n)*area_{grid1}(i,j,n)}
+   work2(i,j,n)=\sum_{n=1}^{n} ({mask_{grid1}(i,j,n)*area_{grid1}(i,j,n)*work1(i,j,n)})/
+                \sum_{n=1}^{n} ({mask_{grid1}(i,j,n)*area_{grid1}(i,j,n)})
 
 ``A`` is a normalized unmasked area weighted interpolation
 
 .. math:: 
-   work2(i,j,n)=\sum{area_grid1(i,j,n)*work1(i,j,n)}/\sum{area_grid1(i,j,n)}
+   work2(i,j,n)=\frac{\sum_{n=1}^{n} (area_{grid1}(i,j,n)*work1(i,j,n)})}{\sum_{n=1}^{n} (area_{grid1}(i,j,n)})}
 
-``F`` is a normalized conservative flux interpolation
+``F`` is a normalized unmasked conservative flux interpolation
 
 .. math:: 
-   work2(i,j,n)=\sum\{mask_grid1(i,j,n)*area_grid1(i,j,n)*work1(i,j,n)}/\sum\{mask_grid1(i,j,n)*area_grid1(i,j,n)}
-
+   work2(i,j,n)=\sum_{n=1}^{n} ({area_{grid1}(i,j,n)*work1(i,j,n)})/ (n*area_{grid2}(i,j,n))
 
 
 .. _performance:
