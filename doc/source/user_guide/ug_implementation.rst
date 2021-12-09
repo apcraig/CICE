@@ -490,7 +490,7 @@ typ = ``F`` is a normalized unmasked conservative flux interpolation
 .. math:: 
    work2 = \frac{\sum_{i=1}^{n} (A_{1i}work1_{i})} {n*A_{2}}
 
-where A is the appropriate gridcell area and M is the gridcell mask.
+with A defined as the appropriate gridcell area and M as the gridcell mask.
 Another form of the ``grid_average_X2Y`` is
 
 .. code-block:: fortran
@@ -525,9 +525,8 @@ This version supports mapping from an ``NE`` grid to a ``T`` or ``U`` grid.  In 
 are for either the `N` or `E` field and the 1b arguments are for the complementary field (``E`` or ``N`` respectively).
 
 In all cases, the work1, wght1, and mask1 arrays should have correct halo values when called.  Examples of usage
-can be found in the source code, but to demonstrate mapping of the uocn and vocn forcing fields, the following
-calls would map the uocn and vocn fields from their native forcing/coupling grid to the ``U`` grid using a masked
-weighted average method.
+can be found in the source code, but the following example maps the uocn and vocn fields from their native 
+forcing/coupling grid to the ``U`` grid using a masked weighted average method.
 
 .. code-block:: fortran
 
