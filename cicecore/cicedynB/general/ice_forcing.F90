@@ -516,7 +516,7 @@
       elseif (trim(ocn_data_type) == 'hycom') then
          call ocn_data_hycom_init
 
-      elseif (trim(atm_data_type) == 'box2001') then
+      elseif (trim(ocn_data_type) == 'box2001') then
          call box2001_data_ocn
 
       ! uniform forcing options
@@ -751,7 +751,7 @@
       elseif (trim(ocn_data_type) == 'hycom') then
 !         call ocn_data_hycom(dt)
 !MHRI: NOT IMPLEMENTED YET
-      elseif (trim(atm_data_type) == 'box2001') then
+      elseif (trim(ocn_data_type) == 'box2001') then
          call box2001_data_ocn
       ! uniform forcing options
       elseif (trim(ocn_data_type) == 'uniform_northeast') then
@@ -5449,7 +5449,7 @@
       use ice_flux, only: uatm, vatm, wind, rhoa, strax, stray
 
       character(len=*), intent(in) :: dir
-      real(kind=dbl_kind), intent(in), optional :: spd ! speed for test
+      real(kind=dbl_kind), intent(in), optional :: spd ! velocity
 
       ! local parameters
 
@@ -5515,7 +5515,7 @@
 
       character(len=*), intent(in) :: dir
 
-      real(kind=dbl_kind), intent(in), optional :: spd ! speed for test
+      real(kind=dbl_kind), intent(in), optional :: spd ! velocity 
 
       ! local parameters
 

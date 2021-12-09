@@ -1,3 +1,4 @@
+grid_ocn = "B"
 days_per_year = 360
 use_leap_years = .false.
 npt = 240

@@ -134,9 +134,9 @@
           stressm_1, stressm_2, stressm_3, stressm_4, &
           stress12_1, stress12_2, stress12_3, stress12_4
       use ice_grid, only: tmask, umask, dxt, dyt, dxhy, dyhx, cxp, cyp, cxm, cym, &
-          tarear, uarear, grid_average_X2Y!, grid_system commented out until implementation of cd-grid
+          tarear, uarear, grid_average_X2Y, grid_ocn_dynu, grid_ocn_dynv
       use ice_state, only: aice, vice, vsno, uvel, vvel, divu, shear, &
-          aice_init, aice0, aicen, vicen, strength !, uvelE, vvelN grid_system commented out until implementation of cd-grid
+          aice_init, aice0, aicen, vicen, strength
 !      use ice_timers, only: timer_dynamics, timer_bound, &
 !          ice_timer_start, ice_timer_stop, &
 !          timer_tmp1, timer_tmp2, timer_tmp3
@@ -260,12 +260,8 @@
 
       call grid_average_X2Y('F',tmass,'T',umass,'U')
       call grid_average_X2Y('F',aice_init,'T',aiu,'U')
-! TODO, tcraig, comment this in.  In general, uocn and vocn have not been on the correct grid
-!       this will change answers.  For now, just copy u/vocnU = u/vocn
-      uocnU = uocn
-      vocnU = vocn
-!      call grid_average_X2Y('S',uocn,grid_ocn_dynu,uocnU,'U')
-!      call grid_average_X2Y('S',vocn,grid_ocn_dynv,vocnU,'U')
+      call grid_average_X2Y('S',uocn,grid_ocn_dynu,uocnU,'U')
+      call grid_average_X2Y('S',vocn,grid_ocn_dynv,vocnU,'U')
 
       !----------------------------------------------------------------
       ! Set wind stress to values supplied via NEMO or other forcing

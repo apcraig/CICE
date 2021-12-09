@@ -2701,43 +2701,6 @@
       end subroutine grid_average_X2Y_1f
 
 !=======================================================================
-#if (1 == 0)
-! Shifts quantities from one grid to another
-! NOTE: Input array includes ghost cells that must be updated before
-!       calling this routine.
-!
-! author: T. Craig
-
-      subroutine grid_average_X2Y_2(X2Y,work1a,work1b,work2)
-
-      character(len=*) , intent(in) :: &
-         X2Y
-
-      real (kind=dbl_kind), intent(in) :: &
-         work1a(:,:,:), work1b(:,:,:)
-
-      real (kind=dbl_kind), intent(out)   :: &
-         work2(:,:,:)
-
-      ! local variables
-
-      character(len=*), parameter :: subname = '(grid_average_X2Y_2)'
-
-      select case (trim(X2Y))
-
-         ! state masked
-         case('NE2US')
-            call grid_average_X2YS_2('NE2US',work1a,narea,npm,work1b,earea,epm,work2)
-         case('NE2TS')
-            call grid_average_X2YS_2('NE2TS',work1a,narea,npm,work1b,earea,epm,work2)
-
-         case default
-            call abort_ice(subname//'ERROR: unknown X2Y '//trim(X2Y))
-      end select
-
-      end subroutine grid_average_X2Y_2
-#endif
-!=======================================================================
 ! Shifts quantities from one grid to another
 ! State masked version, simple area weighted averager
 ! NOTE: Input array includes ghost cells that must be updated before

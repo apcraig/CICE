@@ -706,6 +706,8 @@
       call broadcast_scalar(close_boundaries,     master_task)
       call broadcast_scalar(grid_type,            master_task)
       call broadcast_scalar(grid_system,          master_task)
+      call broadcast_scalar(grid_ocn,             master_task)
+      call broadcast_scalar(grid_atm,             master_task)
       call broadcast_scalar(grid_file,            master_task)
       call broadcast_scalar(gridcpl_file,         master_task)
       call broadcast_scalar(orca_halogrid,        master_task)
