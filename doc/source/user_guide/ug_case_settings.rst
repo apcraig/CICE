@@ -247,6 +247,8 @@ grid_nml
    "", "``B``", "ocn forcing/coupling grid, thermo fields on T grid, dyn fields on U grid", ""
    "", "``C``", "ocn forcing/coupling grid, thermo fields on T grid, dynu fields on E grid, dynv fields on N grid", ""
    "", "``CD``", "ocn forcing/coupling grid, thermo fields on T grid, dyn fields on N and E grid", ""
+   "``grid_system``", "``B``", "use B grid structure with T at center and U at NE corner", "``B``"
+   "", "``CD``", "use CD grid structure with T at center and U/V at N and E edge", ""
    "``grid_type``", "``displaced_pole``", "read from file in *popgrid*", "``rectangular``"
    "", "``rectangular``", "defined in *rectgrid*", ""
    "", "``regional``", "read from file in *popgrid*", ""
