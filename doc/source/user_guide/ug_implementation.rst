@@ -475,20 +475,19 @@ where type is a interpolation type with valid values
 ``S`` is a normalized masked area weighted interpolation
 
 .. math:: 
-   work2(i,j,n)=\sum_{n=1}^{n} ({mask_{grid1}(i,j,n)*area_{grid1}(i,j,n)*work1(i,j,n)})/
-
-                \sum_{n=1}^{n} ({mask_{grid1}(i,j,n)*area_{grid1}(i,j,n)})
+   work2 = \frac{\sum_{i=1}^{n} (M_{1i}A_{1i}work1_{i})} {\sum_{i=1}^{n} (M_{1i}A_{1i})}
 
 ``A`` is a normalized unmasked area weighted interpolation
 
 .. math:: 
-   work2(i,j,n) = \frac{\sum_{n=1}^{n} area_{grid1}(i,j,n)*work1(i,j,n)}} {\sum_{n=1}^{n} area_{grid1}(i,j,n)}}
+   work2 = \frac{\sum_{i=1}^{n} (A_{1i}work1_{i})} {\sum_{i=1}^{n} (A_{1i})}
 
 ``F`` is a normalized unmasked conservative flux interpolation
 
 .. math:: 
-   work2(i,j,n)=\sum_{n=1}^{n} ({area_{grid1}(i,j,n)*work1(i,j,n)})/ (n*area_{grid2}(i,j,n))
+   work2 = \frac{\sum_{i=1}^{n} (A_{1i}work1_{i})} {n*A_{2}}
 
+where A is the appropriate gridcell area and M is the gridcell mask.
 
 .. _performance:
 
