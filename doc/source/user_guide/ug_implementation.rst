@@ -419,6 +419,76 @@ or southern hemispheres, respectively. Special constants (``spval`` and
 points in the history files and diagnostics.
 
 
+.. _interpolation:
+
+****************************
+Interpolating between grids
+****************************
+
+Fields in CICE are generally defined on a particular grid, such as the T, U, N, or E
+grid.  The ``grid_system`` namelist defines the model grid system, while the ``grid_atm``
+and ``grid_ocn`` namelists define the forcing/coupling grids.  The ``grid_system``, ``grid_atm``,
+and ``grid_ocn`` variables are independent.  For instance, the model could be running
+on the ``B`` or ``CD`` ``grid_system`` but have forcing/coupling associated with ``grid_atm`` = ``A``
+and ``grid_ocn`` = ``C``.  The ``A``, ``B``, ``C``, and ``CD`` conventions are consistent with
+the Arakawa grid definitions shown in :ref:`tab_gridsys`.
+
+.. _tab-gridsyss:
+
+.. table:: Grid System Definition
+
+   +--------------+------------+-----------+-----------+
+   | grid_system  |   thermo   | u dynamic | v dynamic |
+   |              |    grid    |  grid     |  grid     |
+   +==============+============+===========+===========+
+   | A            |  T         |  T        |  T        |
+   +--------------+------------+-----------+-----------+
+   | B            |  T         |  U        |  U        |
+   +--------------+------------+-----------+-----------+
+   | C            |  T         |  E        |  N        |
+   +--------------+------------+-----------+-----------+
+   | CD           |  T         |  N+E      |  N+E      |
+   +--------------+------------+-----------+-----------+
+
+For each grid system, thermodynamics variable are always defined on the ``T`` grid for the model and 
+model forcing/coupling fields.  However, the dynamics u and v fields vary.
+In the ``CD`` grid, there are twice as many u and v fields as on the other grids.  Within the CICE model,
+the variables ``grid_sys_thrm``, ``grid_sys_dynu``, ``grid_sys_dynv``, ``grid_atm_thrm``, 
+``grid_atm_dynu``, ``grid_atm_dynv``, ``grid_ocn_thrm``, ``grid_ocn_dynu``,  and ``grid_ocn_dynv`` are
+character strings (``T``, ``U``, ``N``, ``E`` , ``NE``) derived from the ``grid_system``, ``grid_atm``, 
+and ``grid_ocn`` namelist values.
+
+The CICE model has several internal methods that will interpolate (a.k.a. map or average) fields between
+grids.  The generic interface to this method is ``grid_average_X2Y`` and there are several forms
+
+.. code-block:: fortran
+
+      subroutine grid_average_X2Y(type,work1,grid1,work2,grid2)
+      character(len=*)    , intent(in)  :: type           ! mapping type
+      character(len=*)    , intent(in)  :: grid1          ! work1 grid (T, U, N, E)
+      character(len=*)    , intent(in)  :: grid2          ! work2 grid (T, U, N, E)
+      real (kind=dbl_kind), intent(in)  :: work1(:,:,:)   ! input field
+      real (kind=dbl_kind), intent(out) :: work2(:,:,:)   ! output field
+
+where type is a interpolation type with valid values
+
+S       normalized masked area weighted interpolation
+
+.. math:: 
+   work2(i,j,n)=\sum_{n=1}^{n} {mask_grid1(i,j,n)*area_grid1(i,j,n)*work1(i,j,n)}/\sum_{n=1}^{n} {mask_grid1(i,j,n)*area_grid1(i,j,n)}
+
+A       normalized unmasked area weighted interpolation
+
+.. math:: 
+   work2(i,j,n)=\sum\{area_grid1(i,j,n)*work1(i,j,n)}/\sum\{area_grid1(i,j,n)}
+
+F       normalized conservative flux interpolation
+
+.. math:: 
+   work2(i,j,n)=\sum\{mask_grid1(i,j,n)*area_grid1(i,j,n)*work1(i,j,n)}/\sum\{mask_grid1(i,j,n)*area_grid1(i,j,n)}
+
+
+
 .. _performance:
 
 ***************
