@@ -435,11 +435,13 @@ the Arakawa grid definitions shown in :ref:`tab_gridsys`.
 
 .. _tab-gridsyss:
 
-.. table:: Grid System Definition
+.. table:: Grid System and Type Definitions
    :align: center
 
    +--------------+----------------+----------------+----------------+
-   | grid type    |   thermo grid  | u dynamic grid | v dynamic grid |
+   | grid system  |   thermo grid  | u dynamic grid | v dynamic grid |
+   +--------------+----------------+----------------+----------------+
+   |              |                     types                        |
    +==============+================+================+================+
    |     A        |       T        |       T        |       T        |
    +--------------+----------------+----------------+----------------+
@@ -458,8 +460,10 @@ the variables ``grid_sys_thrm``, ``grid_sys_dynu``, ``grid_sys_dynv``, ``grid_at
 character strings (``T``, ``U``, ``N``, ``E`` , ``NE``) derived from the ``grid_system``, ``grid_atm``, 
 and ``grid_ocn`` namelist values.
 
-The CICE model has several internal methods that will interpolate (a.k.a. map or average) fields between
-grids.  The generic interface to this method is ``grid_average_X2Y`` and there are several forms
+The CICE model has several internal methods that will interpolate (a.k.a. map or average) fields on 
+(``T``, ``U``, ``N``, ``E``, ``NE``) grids to (``T``, ``U``, ``N``, ``E``).  An interpolation from
+to the identical grid results in a copy.  The generic interface to this method is ``grid_average_X2Y``,
+ and there are several forms.
 
 .. code-block:: fortran
 
@@ -472,22 +476,57 @@ grids.  The generic interface to this method is ``grid_average_X2Y`` and there a
 
 where type is a interpolation type with valid values
 
-``S`` is a normalized masked area weighted interpolation
+type = ``S`` is a normalized masked area weighted interpolation
 
 .. math:: 
    work2 = \frac{\sum_{i=1}^{n} (M_{1i}A_{1i}work1_{i})} {\sum_{i=1}^{n} (M_{1i}A_{1i})}
 
-``A`` is a normalized unmasked area weighted interpolation
+type = ``A`` is a normalized unmasked area weighted interpolation
 
 .. math:: 
    work2 = \frac{\sum_{i=1}^{n} (A_{1i}work1_{i})} {\sum_{i=1}^{n} (A_{1i})}
 
-``F`` is a normalized unmasked conservative flux interpolation
+typ = ``F`` is a normalized unmasked conservative flux interpolation
 
 .. math:: 
    work2 = \frac{\sum_{i=1}^{n} (A_{1i}work1_{i})} {n*A_{2}}
 
 where A is the appropriate gridcell area and M is the gridcell mask.
+Another form of the ``grid_average_X2Y`` is
+
+.. code-block:: fortran
+
+      subroutine grid_average_X2Y(type,work1,grid1,wght1,mask1,work2,grid2)
+        character(len=*)    , intent(in)  :: type           ! mapping type (S, A, F)
+        real (kind=dbl_kind), intent(in)  :: work1(:,:,:)   ! input field(nx_block, ny_block, max_blocks)
+        real (kind=dbl_kind), intent(in)  :: wght1(:,:,:)   ! input weight(nx_block, ny_block, max_blocks)
+        real (kind=dbl_kind), intent(in)  :: mask1(:,:,:)   ! input mask(nx_block, ny_block, max_blocks)
+        character(len=*)    , intent(in)  :: grid1          ! work1 grid (T, U, N, E)
+        real (kind=dbl_kind), intent(out) :: work2(:,:,:)   ! output field(nx_block, ny_block, max_blocks)
+        character(len=*)    , intent(in)  :: grid2          ! work2 grid (T, U, N, E)
+
+In this case, the input arrays `wght1` and `mask1` are used in the interpolation equations instead of gridcell
+area and mask.  This version allows the user to define the weights and mask
+explicitly.  This implementation is supported for only type = ``S`` or ``A`` interpolations.
+
+A final form of the ``grid_average_X2Y`` interface is
+
+.. code-block:: fortran
+
+      subroutine grid_average_X2Y(type,work1a,grid1a,work1b,grid1b,work2,grid2)
+        character(len=*)    , intent(in)  :: type           ! mapping type (S, A, F)
+        real (kind=dbl_kind), intent(in)  :: work1a(:,:,:)  ! input field(nx_block, ny_block, max_blocks)
+        character(len=*)    , intent(in)  :: grid1a         ! work1 grid (N, E)
+        real (kind=dbl_kind), intent(in)  :: work1b(:,:,:)  ! input field(nx_block, ny_block, max_blocks)
+        character(len=*)    , intent(in)  :: grid1b         ! work1 grid (N, E)
+        real (kind=dbl_kind), intent(out) :: work2(:,:,:)   ! output field(nx_block, ny_block, max_blocks)
+        character(len=*)    , intent(in)  :: grid2          ! work2 grid (T, U)
+
+This version supports mapping from an ``NE`` grid to a ``T`` or ``U`` grid.  In this case, the ``1a`` arguments
+are for either the `N` or `E` field and the 1b arguments are for the complement field (``E`` or ``N`` respectively).
+
+In all cases, the work1, wght1, and mask1 arrays should have correct halo values when called.
+
 
 .. _performance:
 
