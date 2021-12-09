@@ -437,18 +437,17 @@ the Arakawa grid definitions shown in :ref:`tab_gridsys`.
 
 .. table:: Grid System Definition
 
-   +--------------+------------+-----------+-----------+
-   | grid_system  |   thermo   | u dynamic | v dynamic |
-   |              |    grid    |  grid     |  grid     |
-   +==============+============+===========+===========+
-   | A            |  T         |  T        |  T        |
-   +--------------+------------+-----------+-----------+
-   | B            |  T         |  U        |  U        |
-   +--------------+------------+-----------+-----------+
-   | C            |  T         |  E        |  N        |
-   +--------------+------------+-----------+-----------+
-   | CD           |  T         |  N+E      |  N+E      |
-   +--------------+------------+-----------+-----------+
+   +--------------+----------------+----------------+----------------+
+   | grid_system  |   thermo grid  | u dynamic grid | v dynamic grid |
+   +==============+================+================+================+
+   |     A        |       T        |       T        |       T        |
+   +--------------+----------------+----------------+----------------+
+   |     B        |       T        |       U        |       U        |
+   +--------------+----------------+----------------+----------------+
+   |     C        |       T        |       E        |       N        |
+   +--------------+----------------+----------------+----------------+
+   |     CD       |       T        |       N+E      |       N+E      |
+   +--------------+----------------+----------------+----------------+
 
 For each grid system, thermodynamics variable are always defined on the ``T`` grid for the model and 
 model forcing/coupling fields.  However, the dynamics u and v fields vary.
@@ -472,17 +471,16 @@ grids.  The generic interface to this method is ``grid_average_X2Y`` and there a
 
 where type is a interpolation type with valid values
 
-S       normalized masked area weighted interpolation
-
+``S`` is a normalized masked area weighted interpolation::
 .. math:: 
-   work2(i,j,n)=\sum_{n=1}^{n} {mask_grid1(i,j,n)*area_grid1(i,j,n)*work1(i,j,n)}/\sum_{n=1}^{n} {mask_grid1(i,j,n)*area_grid1(i,j,n)}
+   work2(i,j,n)=\sum_{n=1}^{n} {mask_{grid1}(i,j,n)*area_{grid1}(i,j,n)*work1(i,j,n)} / \sum_{n=1}^{n} {mask_{grid1}(i,j,n)*area_{grid1}(i,j,n)}
 
-A       normalized unmasked area weighted interpolation
+``A`` is a normalized unmasked area weighted interpolation
 
 .. math:: 
    work2(i,j,n)=\sum\{area_grid1(i,j,n)*work1(i,j,n)}/\sum\{area_grid1(i,j,n)}
 
-F       normalized conservative flux interpolation
+``F`` is a normalized conservative flux interpolation
 
 .. math:: 
    work2(i,j,n)=\sum\{mask_grid1(i,j,n)*area_grid1(i,j,n)*work1(i,j,n)}/\sum\{mask_grid1(i,j,n)*area_grid1(i,j,n)}
