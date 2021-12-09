@@ -329,6 +329,7 @@
       ice_ic       = 'default'      ! latitude and sst-dependent
       grid_format  = 'bin'          ! file format ('bin'=binary or 'nc'=netcdf)
       grid_type    = 'rectangular'  ! define rectangular grid internally
+      grid_file    = 'unknown_grid_file'
       grid_system  = 'B'            ! underlying grid system
       grid_atm     = 'A'            ! underlying atm forcing/coupling grid
       grid_ocn     = 'A'            ! underlying atm forcing/coupling grid
