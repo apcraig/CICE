@@ -426,12 +426,13 @@ Interpolating between grids
 ****************************
 
 Fields in CICE are generally defined on a particular grid, such as the T, U, N, or E
-grid.  The ``grid_system`` namelist defines the model grid system, while the ``grid_atm``
-and ``grid_ocn`` namelists define the forcing/coupling grids.  The ``grid_system``, ``grid_atm``,
-and ``grid_ocn`` variables are independent.  For instance, the model could be running
-on the ``B`` or ``CD`` ``grid_system`` but have forcing/coupling associated with ``grid_atm`` = ``A``
-and ``grid_ocn`` = ``C``.  The ``A``, ``B``, ``C``, and ``CD`` conventions are consistent with
-the Arakawa grid definitions shown in :ref:`tab_gridsys`.
+grid.  These are tracked internally in CICE and the namelist variable, ``grid_system``, 
+defines the model grid system.  Forcing/coupling fields are also associated with a 
+specific set of grids that may or may not be the same as the internal CICE model grid.
+The namelist variables ``grid_atm`` and ``grid_ocn`` define the forcing/coupling grids.  
+The ``grid_system``, ``grid_atm``, and ``grid_ocn`` variables are independent and take
+values like ``A``, ``B``, ``C``, or ``CD`` consistent with the Arakawa grid convention.
+The relationship between the grid system and the internal grids is shown in :ref:`tab_gridsys`.
 
 .. _tab-gridsyss:
 
@@ -440,8 +441,6 @@ the Arakawa grid definitions shown in :ref:`tab_gridsys`.
 
    +--------------+----------------+----------------+----------------+
    | grid system  |   thermo grid  | u dynamic grid | v dynamic grid |
-   +--------------+----------------+----------------+----------------+
-   |              |                     types                        |
    +==============+================+================+================+
    |     A        |       T        |       T        |       T        |
    +--------------+----------------+----------------+----------------+
@@ -452,7 +451,7 @@ the Arakawa grid definitions shown in :ref:`tab_gridsys`.
    |     CD       |       T        |       N+E      |       N+E      |
    +--------------+----------------+----------------+----------------+
 
-For each grid system, thermodynamics variable are always defined on the ``T`` grid for the model and 
+For all grid systems, thermodynamic variables are always defined on the ``T`` grid for the model and 
 model forcing/coupling fields.  However, the dynamics u and v fields vary.
 In the ``CD`` grid, there are twice as many u and v fields as on the other grids.  Within the CICE model,
 the variables ``grid_sys_thrm``, ``grid_sys_dynu``, ``grid_sys_dynv``, ``grid_atm_thrm``, 
@@ -525,7 +524,15 @@ A final form of the ``grid_average_X2Y`` interface is
 This version supports mapping from an ``NE`` grid to a ``T`` or ``U`` grid.  In this case, the ``1a`` arguments
 are for either the `N` or `E` field and the 1b arguments are for the complement field (``E`` or ``N`` respectively).
 
-In all cases, the work1, wght1, and mask1 arrays should have correct halo values when called.
+In all cases, the work1, wght1, and mask1 arrays should have correct halo values when called.  Examples of usage
+can be found in the source code, but to demonstrate mapping of the uocn and vocn forcing fields, the following
+calls would map the uocn and vocn fields from their native forcing/coupling grid to the ``U`` grid using a masked
+weighted average method.
+
+.. code-block:: fortran
+      call grid_average_X2Y('S',uocn,grid_ocn_dynu,uocnU,'U')
+      call grid_average_X2Y('S',vocn,grid_ocn_dynv,vocnU,'U')
+
 
 
 .. _performance:
