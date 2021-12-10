@@ -68,7 +68,7 @@
       use ice_domain_size, only: max_blocks, max_nstrm, nilyr, nslyr, nblyr, ncat, nfsd
       use ice_dyn_shared, only: kdyn
       use ice_flux, only: mlt_onset, frz_onset, albcnt, snwcnt
-      use ice_grid, only: grid_system, &
+      use ice_grid, only: grid_ice, &
           grid_atm_thrm, grid_atm_dynu, grid_atm_dynv, &
           grid_ocn_thrm, grid_ocn_dynu, grid_ocn_dynv
       use ice_history_shared ! everything
@@ -380,7 +380,7 @@
          f_sispeed = f_CMIP
       endif
 
-      if (grid_system == 'CD') then
+      if (grid_ice == 'CD') then
          f_uvelE = f_uvel
          f_vvelE = f_vvel
          f_icespdE = f_icespd
@@ -1301,7 +1301,7 @@
              "none", secday*c100, c0,                                &
              ns1, f_shear)
       
-         select case (grid_system)
+         select case (grid_ice)
          case('B')
             description = ", on U grid  (NE corner values)"
          case ('CD')
@@ -2088,7 +2088,7 @@
       use ice_blocks, only: block, get_block, nx_block, ny_block
       use ice_domain, only: blocks_ice, nblocks
       use ice_domain_size, only: nfsd
-      use ice_grid, only: tmask, lmask_n, lmask_s, dxu, dyu, grid_system
+      use ice_grid, only: tmask, lmask_n, lmask_s, dxu, dyu, grid_ice
       use ice_calendar, only: new_year, write_history, &
                               write_ic, timesecs, histfreq, nstreams, mmonth, &
                               new_month
@@ -4398,7 +4398,7 @@
       !---------------------------------------------------------------
 
             ! compute sig1 and sig2
-            select case (grid_system)
+            select case (grid_ice)
             case('B')
                call principal_stress (nx_block,  ny_block,  &
                                       stressp_1 (:,:,iblk), &

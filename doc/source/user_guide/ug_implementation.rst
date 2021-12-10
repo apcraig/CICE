@@ -426,11 +426,11 @@ Interpolating between grids
 ****************************
 
 Fields in CICE are generally defined at particular grid locations, such as T cell centers, 
-U corners, or N or E edges. These are assigned internally in CICE based on the ``grid_system``
+U corners, or N or E edges. These are assigned internally in CICE based on the ``grid_ice``
 namelist variable. Forcing/coupling fields are also associated with a
 specific set of grid locations that may or may not be the same as on the internal CICE model grid.
 The namelist variables ``grid_atm`` and ``grid_ocn`` define the forcing/coupling grids.
-The ``grid_system``, ``grid_atm``, and ``grid_ocn`` variables are independent and take
+The ``grid_ice``, ``grid_atm``, and ``grid_ocn`` variables are independent and take
 values like ``A``, ``B``, ``C``, or ``CD`` consistent with the Arakawa grid convention :cite:`Arakawa77`.
 The relationship between the grid system and the internal grids is shown in :ref:`tab-gridsys`.
 
@@ -454,9 +454,9 @@ The relationship between the grid system and the internal grids is shown in :ref
 For all grid systems, thermodynamic variables are always defined on the ``T`` grid for the model and 
 model forcing/coupling fields.  However, the dynamics u and v fields vary.
 In the ``CD`` grid, there are twice as many u and v fields as on the other grids.  Within the CICE model,
-the variables ``grid_sys_thrm``, ``grid_sys_dynu``, ``grid_sys_dynv``, ``grid_atm_thrm``, 
+the variables ``grid_ice_thrm``, ``grid_ice_dynu``, ``grid_ice_dynv``, ``grid_atm_thrm``, 
 ``grid_atm_dynu``, ``grid_atm_dynv``, ``grid_ocn_thrm``, ``grid_ocn_dynu``,  and ``grid_ocn_dynv`` are
-character strings (``T``, ``U``, ``N``, ``E`` , ``NE``) derived from the ``grid_system``, ``grid_atm``, 
+character strings (``T``, ``U``, ``N``, ``E`` , ``NE``) derived from the ``grid_ice``, ``grid_atm``, 
 and ``grid_ocn`` namelist values.
 
 The CICE model has several internal methods that will interpolate (a.k.a. map or average) fields on 

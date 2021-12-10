@@ -57,10 +57,10 @@
          bathymetry_file, & !  input bathymetry for seabed stress
          bathymetry_format, & ! bathymetry file format (default or pop)
          grid_spacing , & !  default of 30.e3m or set by user in namelist 
-         grid_system  , & !  Underlying model grid structure (A, B, C, CD)
-         grid_sys_thrm, & !  ocean forcing grid for thermo fields (T, U, N, E)
-         grid_sys_dynu, & !  ocean forcing grid for dyn U fields  (T, U, N, E)
-         grid_sys_dynv, & !  ocean forcing grid for dyn V fields  (T, U, N, E)
+         grid_ice  , & !  Underlying model grid structure (A, B, C, CD)
+         grid_ice_thrm, & !  ocean forcing grid for thermo fields (T, U, N, E)
+         grid_ice_dynu, & !  ocean forcing grid for dyn U fields  (T, U, N, E)
+         grid_ice_dynv, & !  ocean forcing grid for dyn V fields  (T, U, N, E)
          grid_atm     , & !  atmos forcing grid structure (A, B, C, CD)
          grid_atm_thrm, & !  atmos forcing grid for thermo fields (T, U, N, E)
          grid_atm_dynu, & !  atmos forcing grid for dyn U fields  (T, U, N, E)
@@ -284,7 +284,7 @@
          stat=ierr)
       if (ierr/=0) call abort_ice(subname//'ERROR: Out of memory')
 
-      if (grid_system == 'CD') then
+      if (grid_ice == 'CD') then
          allocate( &
             ratiodxN (nx_block,ny_block,max_blocks), &
             ratiodyE (nx_block,ny_block,max_blocks), &
@@ -551,7 +551,7 @@
          enddo
          enddo
 
-         if (grid_system == 'CD') then
+         if (grid_ice == 'CD') then
             do j = jlo, jhi
             do i = ilo, ihi
                ratiodxN (i,j,iblk) = - dxn(i+1,j  ,iblk) / dxn(i,j,iblk)

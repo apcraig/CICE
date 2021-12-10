@@ -125,7 +125,7 @@
          stressp_1, stressp_2, stressp_3, stressp_4 , & ! sigma11+sigma22
          stressm_1, stressm_2, stressm_3, stressm_4 , & ! sigma11-sigma22
          stress12_1,stress12_2,stress12_3,stress12_4, & ! sigma12
-       ! ice stress tensor at U and T locations (grid_system = 'CD') (kg/s^2)
+       ! ice stress tensor at U and T locations (grid_ice = 'CD') (kg/s^2)
          stresspT, stressmT, stress12T, & ! sigma11+sigma22, sigma11-sigma22, sigma12
          stresspU, stressmU, stress12U    ! "
 
@@ -387,7 +387,7 @@
 !
       subroutine alloc_flux
 
-      use ice_grid, only : grid_system
+      use ice_grid, only : grid_ice
 
       integer (int_kind) :: ierr
 
@@ -580,7 +580,7 @@
          stat=ierr)
       if (ierr/=0) call abort_ice('(alloc_flux): Out of memory')
 
-      if (grid_system == "CD") &
+      if (grid_ice == "CD") &
          allocate( &
          taubxN     (nx_block,ny_block,max_blocks), & ! seabed stress (x) at N points (N/m^2)
          taubyN     (nx_block,ny_block,max_blocks), & ! seabed stress (y) at N points (N/m^2)
@@ -632,7 +632,7 @@
       use ice_flux_bgc, only: flux_bio_atm, flux_bio, faero_atm, fiso_atm, &
            fnit, famm, fsil, fdmsp, fdms, fhum, fdust, falgalN, &
            fdoc, fdon, fdic, ffed, ffep
-      use ice_grid, only: bathymetry, grid_system
+      use ice_grid, only: bathymetry, grid_ice
 
       integer (kind=int_kind) :: n
 
