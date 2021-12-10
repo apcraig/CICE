@@ -362,6 +362,8 @@
       !-----------------------------------------------------------------
 
       real (kind=dbl_kind), dimension (:,:,:), allocatable, public :: &
+         uatmT   , & ! uatm mapped to T grid (m/s)
+         vatmT   , & ! vatm mapped to T grid (m/s)
          rside   , & ! fraction of ice that melts laterally
          fside   , & ! lateral heat flux (W/m^2)
          fsw     , & ! incoming shortwave radiation (W/m^2)
@@ -535,6 +537,8 @@
          fswthru_ai (nx_block,ny_block,max_blocks), &  ! shortwave penetrating to ocean (W/m^2)
          fresh_da   (nx_block,ny_block,max_blocks), & ! fresh water flux to ocean due to data assim (kg/m^2/s)
          fsalt_da   (nx_block,ny_block,max_blocks), & ! salt flux to ocean due to data assimilation(kg/m^2/s)
+         uatmT      (nx_block,ny_block,max_blocks), & ! uatm mapped to T grid
+         vatmT      (nx_block,ny_block,max_blocks), & ! vatm mapped to T grid
          rside      (nx_block,ny_block,max_blocks), & ! fraction of ice that melts laterally
          fside      (nx_block,ny_block,max_blocks), & ! lateral melt rate (W/m^2)
          fsw        (nx_block,ny_block,max_blocks), & ! incoming shortwave radiation (W/m^2)

@@ -785,22 +785,22 @@
              "vector direction - coming from", c1, c0,                 &
              ns1, f_icedir)
       
-         call define_hist_field(n_uatm,"uatm","m/s",ustr2D, ucstr,  &
+         call define_hist_field(n_uatm,"uatm","m/s",str2D_gau, cstr_gau,  &
              "atm velocity (x)",                                  &
              "positive is x direction on U grid", c1, c0,         &
              ns1, f_uatm)
       
-         call define_hist_field(n_vatm,"vatm","m/s",ustr2D, ucstr,  &
+         call define_hist_field(n_vatm,"vatm","m/s",str2D_gav, cstr_gav,  &
              "atm velocity (y)",                                  &
              "positive is y direction on U grid", c1, c0,         &
              ns1, f_vatm)
 
-         call define_hist_field(n_atmspd,"atmspd","m/s",ustr2D, ucstr, &
+         call define_hist_field(n_atmspd,"atmspd","m/s",str2D_gau, cstr_gau, &
              "atmosphere wind speed",                                  &
              "vector magnitude", c1, c0,                               &
              ns1, f_atmspd)
       
-         call define_hist_field(n_atmdir,"atmdir","deg",ustr2D, ucstr, &
+         call define_hist_field(n_atmdir,"atmdir","deg",str2D_gau, cstr_gau, &
              "atmosphere wind direction",                              &
              "vector direction - coming from", c1, c0,                 &
              ns1, f_atmdir)
