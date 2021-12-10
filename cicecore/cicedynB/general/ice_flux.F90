@@ -33,19 +33,21 @@
 
       !-----------------------------------------------------------------
       ! Dynamics component
+      ! All variables are assumed to be on the atm or ocn thermodynamic
+      ! grid except as noted
       !-----------------------------------------------------------------
 
       real (kind=dbl_kind), dimension (:,:,:), allocatable, public :: &
 
        ! in from atmos (if .not.calc_strair)  
-         strax   , & ! wind stress components (N/m^2)
-         stray   , &
+         strax   , & ! wind stress components (N/m^2), on grid_atm_dynu
+         stray   , & !                                 on grid_atm_dynv
 
        ! in from ocean
-         uocn    , & ! ocean current, x-direction (m/s) on T grid from forcing, should it be on U??
-         vocn    , & ! ocean current, y-direction (m/s) on T grid from forcing
-         ss_tltx , & ! sea surface slope, x-direction (m/m)
-         ss_tlty , & ! sea surface slope, y-direction
+         uocn    , & ! ocean current, x-direction (m/s) on T grid from forcing, on grid_ocn_dynu
+         vocn    , & ! ocean current, y-direction (m/s) on T grid from forcing, on grid_ocn_dynv
+         ss_tltx , & ! sea surface slope, x-direction (m/m)                   , on grid_ocn_dynu
+         ss_tlty , & ! sea surface slope, y-direction                         , on grid_ocn_dynv
          hwater  , & ! water depth for seabed stress calc (landfast ice) 
 
        ! out to atmosphere
@@ -158,9 +160,9 @@
       real (kind=dbl_kind), dimension (:,:,:), allocatable, public :: &
          zlvl    , & ! atm level height (momentum) (m)
          zlvs    , & ! atm level height (scalar quantities) (m)
-         uatm    , & ! wind velocity components (m/s)
-         vatm    , &
-         wind    , & ! wind speed (m/s)
+         uatm    , & ! wind velocity components (m/s), on grid_atm_dynu
+         vatm    , & !                                 on grid_atm_dynv
+         wind    , & ! wind speed (m/s)              , on grid_atm_dynu
          potT    , & ! air potential temperature  (K)
          Tair    , & ! air temperature  (K)
          Qa      , & ! specific humidity (kg/kg)

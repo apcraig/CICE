@@ -425,13 +425,13 @@ points in the history files and diagnostics.
 Interpolating between grids
 ****************************
 
-Fields in CICE are generally defined on a particular grid, such as the ``T``, ``U``, ``N``, or ``E``
-grid.  These are tracked internally in CICE and the namelist variable, ``grid_system``, 
-defines the model grid system.  Forcing/coupling fields are also associated with a 
-specific set of grids that may or may not be the same as the internal CICE model grid.
-The namelist variables ``grid_atm`` and ``grid_ocn`` define the forcing/coupling grids.  
+Fields in CICE are generally defined at particular grid locations, such as T cell centers, 
+U corners, or N or E edges. These are assigned internally in CICE based on the ``grid_system``
+namelist variable. Forcing/coupling fields are also associated with a
+specific set of grid locations that may or may not be the same as on the internal CICE model grid.
+The namelist variables ``grid_atm`` and ``grid_ocn`` define the forcing/coupling grids.
 The ``grid_system``, ``grid_atm``, and ``grid_ocn`` variables are independent and take
-values like ``A``, ``B``, ``C``, or ``CD`` consistent with the Arakawa grid convention.
+values like ``A``, ``B``, ``C``, or ``CD`` consistent with the Arakawa grid convention :cite:`Arakawa77`.
 The relationship between the grid system and the internal grids is shown in :ref:`tab-gridsys`.
 
 .. _tab-gridsys:
@@ -473,19 +473,19 @@ and there are several forms.
         real (kind=dbl_kind), intent(out) :: work2(:,:,:)   ! output field(nx_block, ny_block, max_blocks)
         character(len=*)    , intent(in)  :: grid2          ! work2 grid (T, U, N, E)
 
-where type is a interpolation type with valid values
+where type is an interpolation type with the following valid values,
 
-type = ``S`` is a normalized masked area weighted interpolation
+type = ``S`` is a normalized, masked, area-weighted interpolation
 
 .. math:: 
    work2 = \frac{\sum_{i=1}^{n} (M_{1i}A_{1i}work1_{i})} {\sum_{i=1}^{n} (M_{1i}A_{1i})}
 
-type = ``A`` is a normalized unmasked area weighted interpolation
+type = ``A`` is a normalized, unmasked, area-weighted interpolation
 
 .. math:: 
    work2 = \frac{\sum_{i=1}^{n} (A_{1i}work1_{i})} {\sum_{i=1}^{n} (A_{1i})}
 
-typ = ``F`` is a normalized unmasked conservative flux interpolation
+typ = ``F`` is a normalized, unmasked, conservative flux interpolation
 
 .. math:: 
    work2 = \frac{\sum_{i=1}^{n} (A_{1i}work1_{i})} {n*A_{2}}
@@ -524,14 +524,14 @@ A final form of the ``grid_average_X2Y`` interface is
 This version supports mapping from an ``NE`` grid to a ``T`` or ``U`` grid.  In this case, the ``1a`` arguments
 are for either the `N` or `E` field and the 1b arguments are for the complementary field (``E`` or ``N`` respectively).
 
-In all cases, the work1, wght1, and mask1 arrays should have correct halo values when called.  Examples of usage
+In all cases, the work1, wght1, and mask1 input arrays should have correct halo values when called.  Examples of usage
 can be found in the source code, but the following example maps the uocn and vocn fields from their native 
-forcing/coupling grid to the ``U`` grid using a masked weighted average method.
+forcing/coupling grid to the ``U`` grid using a masked, area-weighted, average method.
 
 .. code-block:: fortran
 
-      call grid_average_X2Y('S',uocn,grid_ocn_dynu,uocnU,'U')
-      call grid_average_X2Y('S',vocn,grid_ocn_dynv,vocnU,'U')
+      call grid_average_X2Y('S', uocn, grid_ocn_dynu, uocnU, 'U')
+      call grid_average_X2Y('S', vocn, grid_ocn_dynv, vocnU, 'U')
 
 
 .. _performance:

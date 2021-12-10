@@ -192,9 +192,9 @@
          l_readCenter ! If anglet exist in grid file read it otherwise calculate it
 
       interface grid_average_X2Y
-         module procedure grid_average_X2Y_1C , &
-                          grid_average_X2Y_1fC, &
-                          grid_average_X2Y_2C
+         module procedure grid_average_X2Y_base , &
+                          grid_average_X2Y_userwghts, &
+                          grid_average_X2Y_NEversion
       end interface
 
 !=======================================================================
@@ -2372,7 +2372,7 @@
 !
 ! author: T. Craig
 
-      subroutine grid_average_X2Y_1C(type,work1,grid1,work2,grid2)
+      subroutine grid_average_X2Y_base(type,work1,grid1,work2,grid2)
 
       character(len=*) , intent(in) :: &
          type, grid1, grid2
@@ -2387,7 +2387,7 @@
 
       character(len=16) :: X2Y
 
-      character(len=*), parameter :: subname = '(grid_average_X2Y_1C)'
+      character(len=*), parameter :: subname = '(grid_average_X2Y_base)'
 
       if (trim(grid1) == trim(grid2)) then
          work2 = work1
@@ -2396,7 +2396,7 @@
          call grid_average_X2Y_1(X2Y,work1,work2)
       endif
 
-      end subroutine grid_average_X2Y_1C
+      end subroutine grid_average_X2Y_base
 
 !=======================================================================
 
@@ -2406,7 +2406,7 @@
 !
 ! author: T. Craig
 
-      subroutine grid_average_X2Y_1fC(type,work1,grid1,wght1,mask1,work2,grid2)
+      subroutine grid_average_X2Y_userwghts(type,work1,grid1,wght1,mask1,work2,grid2)
 
       character(len=*) , intent(in) :: &
          type, grid1, grid2
@@ -2423,7 +2423,7 @@
 
       character(len=16) :: X2Y
 
-      character(len=*), parameter :: subname = '(grid_average_X2Y_1fC)'
+      character(len=*), parameter :: subname = '(grid_average_X2Y_userwghts)'
 
       if (trim(grid1) == trim(grid2)) then
          work2 = work1
@@ -2432,7 +2432,7 @@
          call grid_average_X2Y_1f(X2Y,work1,wght1,mask1,work2)
       endif
 
-      end subroutine grid_average_X2Y_1fC
+      end subroutine grid_average_X2Y_userwghts
 
 !=======================================================================
 
@@ -2442,7 +2442,7 @@
 !
 ! author: T. Craig
 
-      subroutine grid_average_X2Y_2C(type,work1a,grid1a,work1b,grid1b,work2,grid2)
+      subroutine grid_average_X2Y_NEversion(type,work1a,grid1a,work1b,grid1b,work2,grid2)
 
       character(len=*) , intent(in) :: &
          type, grid1a, grid1b, grid2
@@ -2457,7 +2457,7 @@
 
       character(len=16) :: X2Y
 
-      character(len=*), parameter :: subname = '(grid_average_X2Y_2C)'
+      character(len=*), parameter :: subname = '(grid_average_X2Y_NEversion)'
 
       X2Y = trim(grid1a)//trim(grid1b)//'2'//trim(grid2)//trim(type)
 
@@ -2477,7 +2477,7 @@
             call abort_ice(subname//'ERROR: unknown X2Y '//trim(X2Y))
       end select
 
-      end subroutine grid_average_X2Y_2C
+      end subroutine grid_average_X2Y_NEversion
 
 !=======================================================================
 

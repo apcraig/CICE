@@ -200,7 +200,8 @@
           stressm_1, stressm_2, stressm_3, stressm_4, &
           stress12_1, stress12_2, stress12_3, stress12_4
       use ice_grid, only: tmask, umask, dxt, dyt, cxp, cyp, cxm, cym, &
-          tarear, grid_type, grid_average_X2Y, grid_ocn_dynu, grid_ocn_dynv
+          tarear, grid_type, grid_average_X2Y, &
+          grid_atm_dynu, grid_atm_dynv, grid_ocn_dynu, grid_ocn_dynv
       use ice_state, only: aice, vice, vsno, uvel, vvel, divu, shear, &
           aice_init, aice0, aicen, vicen, strength
       use ice_timers, only: timer_dynamics, timer_bound, &
@@ -339,8 +340,8 @@
          file=__FILE__, line=__LINE__)
 
       if (.not. calc_strair) then
-         strairx(:,:,:) = strax(:,:,:)
-         strairy(:,:,:) = stray(:,:,:)
+         call grid_average_X2Y('F', strax, grid_atm_dynu, strairx, 'U')
+         call grid_average_X2Y('F', stray, grid_atm_dynv, strairy, 'U')
       else
          call ice_HaloUpdate (strairxT,         halo_info, &
                               field_loc_center, field_type_vector)

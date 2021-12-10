@@ -103,7 +103,8 @@
           ratiodxN, ratiodxNr, ratiodyE, ratiodyEr, & 
           dxhy, dyhx, cxp, cyp, cxm, cym, &
           tarear, uarear, earear, narear, tinyarea, grid_average_X2Y, tarea, &
-          grid_type, grid_system, grid_ocn_dynu, grid_ocn_dynv
+          grid_type, grid_system, &
+          grid_atm_dynu, grid_atm_dynv, grid_ocn_dynu, grid_ocn_dynv
       use ice_state, only: aice, vice, vsno, uvel, vvel, uvelN, vvelN, &
           uvelE, vvelE, divu, shear, &
           aice_init, aice0, aicen, vicen, strength
@@ -309,9 +310,9 @@
       if (icepack_warnings_aborted()) call abort_ice(error_message=subname, &
          file=__FILE__, line=__LINE__)
 
-      if (.not. calc_strair) then       
-         strairx(:,:,:) = strax(:,:,:)
-         strairy(:,:,:) = stray(:,:,:)
+      if (.not. calc_strair) then
+         call grid_average_X2Y('F', strax, grid_atm_dynu, strairx, 'U')
+         call grid_average_X2Y('F', stray, grid_atm_dynv, strairy, 'U')
       else
          call ice_HaloUpdate (strairxT,         halo_info, &
                               field_loc_center, field_type_vector)
@@ -322,11 +323,11 @@
       endif
 
       if (grid_system == 'CD') then
-         if (.not. calc_strair) then       
-            strairxN(:,:,:) = strax(:,:,:)
-            strairyN(:,:,:) = stray(:,:,:)
-            strairxE(:,:,:) = strax(:,:,:)
-            strairyE(:,:,:) = stray(:,:,:)
+         if (.not. calc_strair) then
+            call grid_average_X2Y('F', strax, grid_atm_dynu, strairxN, 'N')
+            call grid_average_X2Y('F', stray, grid_atm_dynv, strairyN, 'N')
+            call grid_average_X2Y('F', strax, grid_atm_dynu, strairxE, 'E')
+            call grid_average_X2Y('F', stray, grid_atm_dynv, strairyE, 'E')
          else
             call grid_average_X2Y('F',strairxT,'T',strairxN,'N')
             call grid_average_X2Y('F',strairyT,'T',strairyN,'N')
@@ -968,6 +969,7 @@
 
       ! strocn computed on U, N, E as needed. Map strocn U divided by aiu to T
       ! TODO: This should be done elsewhere as part of generalization?
+      ! TODO: Rename strocn[x,y]T since it's different than strocn[x,y][U,N,E]
       ! conservation requires aiu be divided before averaging
       work1 = c0
       work2 = c0
