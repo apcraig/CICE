@@ -485,7 +485,7 @@ type = ``A`` is a normalized, unmasked, area-weighted interpolation
 .. math:: 
    work2 = \frac{\sum_{i=1}^{n} (A_{1i}work1_{i})} {\sum_{i=1}^{n} (A_{1i})}
 
-typ = ``F`` is a normalized, unmasked, conservative flux interpolation
+type = ``F`` is a normalized, unmasked, conservative flux interpolation
 
 .. math:: 
    work2 = \frac{\sum_{i=1}^{n} (A_{1i}work1_{i})} {n*A_{2}}
@@ -523,6 +523,7 @@ A final form of the ``grid_average_X2Y`` interface is
 
 This version supports mapping from an ``NE`` grid to a ``T`` or ``U`` grid.  In this case, the ``1a`` arguments
 are for either the `N` or `E` field and the 1b arguments are for the complementary field (``E`` or ``N`` respectively).
+At present, only ``S`` type mappings are supported with this interface.
 
 In all cases, the work1, wght1, and mask1 input arrays should have correct halo values when called.  Examples of usage
 can be found in the source code, but the following example maps the uocn and vocn fields from their native 
