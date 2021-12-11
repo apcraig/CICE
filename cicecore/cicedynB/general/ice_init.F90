@@ -1437,7 +1437,7 @@
          if (trim(grid_type) == 'displaced_pole') tmpstr2 = ' : user-defined grid with rotated north pole'
          if (trim(grid_type) == 'tripole')        tmpstr2 = ' : user-defined grid with northern hemisphere zipper'
          write(nu_diag,1030) ' grid_type        = ',trim(grid_type),trim(tmpstr2)
-         write(nu_diag,1030) ' grid_ice      = ',trim(grid_ice)
+         write(nu_diag,1030) ' grid_ice         = ',trim(grid_ice)
          write(nu_diag,1030) '   grid_ice_thrm  = ',trim(grid_ice_thrm)
          write(nu_diag,1030) '   grid_ice_dynu  = ',trim(grid_ice_dynu)
          write(nu_diag,1030) '   grid_ice_dynv  = ',trim(grid_ice_dynv)
