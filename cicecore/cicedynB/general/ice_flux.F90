@@ -44,10 +44,10 @@
          stray   , & !                                 on grid_atm_dynv
 
        ! in from ocean
-         uocn    , & ! ocean current, x-direction (m/s) on T grid from forcing, on grid_ocn_dynu
-         vocn    , & ! ocean current, y-direction (m/s) on T grid from forcing, on grid_ocn_dynv
-         ss_tltx , & ! sea surface slope, x-direction (m/m)                   , on grid_ocn_dynu
-         ss_tlty , & ! sea surface slope, y-direction                         , on grid_ocn_dynv
+         uocn    , & ! ocean current, x-direction (m/s),     on grid_ocn_dynu
+         vocn    , & ! ocean current, y-direction (m/s),     on grid_ocn_dynv
+         ss_tltx , & ! sea surface slope, x-direction (m/m), on grid_ocn_dynu
+         ss_tlty , & ! sea surface slope, y-direction,       on grid_ocn_dynv
          hwater  , & ! water depth for seabed stress calc (landfast ice) 
 
        ! out to atmosphere
