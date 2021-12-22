@@ -493,7 +493,7 @@
                          uocnE     (:,:,iblk), vocnE     (:,:,iblk), & 
                          strairxE  (:,:,iblk), strairyE  (:,:,iblk), & 
                          ss_tltxE  (:,:,iblk), ss_tltyE  (:,:,iblk), &  
-                         icetmask  (:,:,iblk), icenmask  (:,:,iblk), & 
+                         icetmask  (:,:,iblk), iceemask  (:,:,iblk), & 
                          fmE       (:,:,iblk), dt,                   & 
                          strtltxE  (:,:,iblk), strtltyE  (:,:,iblk), & 
                          strocnxE  (:,:,iblk), strocnyE  (:,:,iblk), & 
@@ -520,16 +520,6 @@
       if (icepack_warnings_aborted()) call abort_ice(error_message=subname, &
          file=__FILE__, line=__LINE__)
 
-      call ice_timer_start(timer_bound)
-      call ice_HaloUpdate (strength,           halo_info, &
-                           field_loc_center,   field_type_scalar)
-      ! velocities may have changed in dyn_prep2
-      call stack_velocity_field(uvel, vvel, fld2)
-      call ice_HaloUpdate (fld2,               halo_info, &
-                           field_loc_NEcorner, field_type_vector)
-      call unstack_velocity_field(fld2, uvel, vvel)
-      call ice_timer_stop(timer_bound)
-
       if (grid_ice == 'CD') then
 
          call ice_timer_start(timer_bound)
@@ -545,7 +535,20 @@
          call unstack_velocity_field(fld2, uvelE, vvelE)
          call ice_timer_stop(timer_bound)
 
+         call grid_average_X2Y('S',uvelE,'E',uvel,'U')
+         call grid_average_X2Y('S',vvelN,'N',vvel,'U')
       endif
+
+      call ice_timer_start(timer_bound)
+      call ice_HaloUpdate (strength,           halo_info, &
+                           field_loc_center,   field_type_scalar)
+
+      ! velocities may have changed in dyn_prep2
+      call stack_velocity_field(uvel, vvel, fld2)
+      call ice_HaloUpdate (fld2,               halo_info, &
+                           field_loc_NEcorner, field_type_vector)
+      call unstack_velocity_field(fld2, uvel, vvel)
+      call ice_timer_stop(timer_bound)
 
       if (maskhalo_dyn) then
          call ice_timer_start(timer_bound)
@@ -658,13 +661,6 @@
 
          do ksub = 1,ndte        ! subcycling
 
-         ! shift velocity components from CD grid locations (N, E) to B grid location (U) for stress_U
-
-            if (grid_ice == 'CD') then
-                call grid_average_X2Y('S',uvelE,'E',uvel,'U')
-                call grid_average_X2Y('S',vvelN,'N',vvel,'U')
-            endif
-
          !-----------------------------------------------------------------
          ! stress tensor equation, total surface stress
          !-----------------------------------------------------------------
@@ -715,15 +711,6 @@
 
                case('CD')
 
-                  if (iblk == 1) then
-                     print *,'before stress_T uvel,vvel',ksub,iblk,uvel(1,10,iblk),vvel(1,10,iblk)
-                     print *,'before stress_T uvelE,vvelE',ksub,iblk,uvelE(1,10,iblk),vvelE(1,10,iblk)
-                     print *,'before stress_T uvelN,vvelN',ksub,iblk,uvelN(1,10,iblk),vvelN(1,10,iblk)
-                     print *,'before stress_T stresspT',ksub,iblk,stresspT(1,10,iblk)
-                     print *,'before stress_T stressmT',ksub,iblk,stressmT(1,10,iblk)
-                     print *,'before stress_T stress12T',ksub,iblk,stress12T(1,10,iblk)
-                  endif
-
                   call stress_T (nx_block,             ny_block,             &
                                  ksub,                 icellt(iblk),         &
                                  indxti      (:,iblk), indxtj      (:,iblk), &
@@ -738,24 +725,6 @@
                                  stress12T (:,:,iblk),                       &
                                  shear     (:,:,iblk), divu      (:,:,iblk), &
                                  rdg_conv  (:,:,iblk), rdg_shear (:,:,iblk)  )
-
-                  if (iblk == 1) then
-                     print *,'after stress_T uvel,vvel',ksub,iblk,uvel(1,10,iblk),vvel(1,10,iblk)
-                     print *,'after stress_T uvelE,vvelE',ksub,iblk,uvelE(1,10,iblk),vvelE(1,10,iblk)
-                     print *,'after stress_T uvelN,vvelN',ksub,iblk,uvelN(1,10,iblk),vvelN(1,10,iblk)
-                     print *,'after stress_T stresspT',ksub,iblk,stresspT(1,10,iblk)
-                     print *,'after stress_T stressmT',ksub,iblk,stressmT(1,10,iblk)
-                     print *,'after stress_T stress12T',ksub,iblk,stress12T(1,10,iblk)
-                  endif
-
-                  if (iblk == 1) then
-                     print *,'before stress_U uvel,vvel',ksub,iblk,uvel(1,10,iblk),vvel(1,10,iblk)
-                     print *,'before stress_U uvelE,vvelE',ksub,iblk,uvelE(1,10,iblk),vvelE(1,10,iblk)
-                     print *,'before stress_U uvelN,vvelN',ksub,iblk,uvelN(1,10,iblk),vvelN(1,10,iblk)
-                     print *,'before stress_U stresspU',ksub,iblk,stresspU(1,10,iblk)
-                     print *,'before stress_U stressmU',ksub,iblk,stressmU(1,10,iblk)
-                     print *,'before stress_U stress12U',ksub,iblk,stress12U(1,10,iblk)
-                  endif
 
                   call stress_U (nx_block,             ny_block,             &
                                  ksub,                 icellu(iblk),         &
@@ -773,15 +742,6 @@
                                  zetax2T   (:,:,iblk), etax2T    (:,:,iblk), &
                                  stresspU  (:,:,iblk), stressmU  (:,:,iblk), &
                                  stress12U (:,:,iblk))                   
-
-                  if (iblk == 1) then
-                     print *,'after stress_U uvel,vvel',ksub,iblk,uvel(1,10,iblk),vvel(1,10,iblk)
-                     print *,'after stress_U uvelE,vvelE',ksub,iblk,uvelE(1,10,iblk),vvelE(1,10,iblk)
-                     print *,'after stress_U uvelN,vvelN',ksub,iblk,uvelN(1,10,iblk),vvelN(1,10,iblk)
-                     print *,'after stress_U stresspU',ksub,iblk,stresspU(1,10,iblk)
-                     print *,'after stress_U stressmU',ksub,iblk,stressmU(1,10,iblk)
-                     print *,'after stress_U stress12U',ksub,iblk,stress12U(1,10,iblk)
-                  endif
 
                   call div_stress (nx_block,             ny_block,             & ! E point
                                    ksub,                 icelle(iblk),         &
@@ -842,8 +802,26 @@
             enddo
             !$TCXOMP END PARALLEL DO
 
-            call stack_velocity_field(uvel, vvel, fld2)
+            if (grid_ice == 'CD') then
+
+               call ice_timer_start(timer_bound)
+               call stack_velocity_field(uvelN, vvelN, fld2)
+               call ice_HaloUpdate (fld2,               halo_info, &
+                                    field_loc_Nface, field_type_vector)
+               call unstack_velocity_field(fld2, uvelN, vvelN)
+               call stack_velocity_field(uvelE, vvelE, fld2)
+               call ice_HaloUpdate (fld2,               halo_info, &
+                                    field_loc_Eface, field_type_vector)
+               call unstack_velocity_field(fld2, uvelE, vvelE)
+               call ice_timer_stop(timer_bound)
+
+               call grid_average_X2Y('S',uvelE,'E',uvel,'U')
+               call grid_average_X2Y('S',vvelN,'N',vvel,'U')
+
+            endif
+
             call ice_timer_start(timer_bound)
+            call stack_velocity_field(uvel, vvel, fld2)
             if (maskhalo_dyn) then
                call ice_HaloUpdate (fld2,               halo_info_mask, &
                                     field_loc_NEcorner, field_type_vector)
@@ -851,26 +829,9 @@
                call ice_HaloUpdate (fld2,               halo_info, &
                                     field_loc_NEcorner, field_type_vector)
             endif
-            call ice_timer_stop(timer_bound)
             call unstack_velocity_field(fld2, uvel, vvel)
+            call ice_timer_stop(timer_bound)
          
-            if (grid_ice == 'CD') then
-
-               call ice_timer_start(timer_bound)
-               ! velocities may have changed in dyn_prep2
-               call stack_velocity_field(uvelN, vvelN, fld2)
-               call ice_HaloUpdate (fld2,               halo_info, &
-                                    field_loc_Nface, field_type_vector)
-               call unstack_velocity_field(fld2, uvelN, vvelN)
-               ! velocities may have changed in dyn_prep2
-               call stack_velocity_field(uvelE, vvelE, fld2)
-               call ice_HaloUpdate (fld2,               halo_info, &
-                                    field_loc_Eface, field_type_vector)
-               call unstack_velocity_field(fld2, uvelE, vvelE)
-               call ice_timer_stop(timer_bound)
-
-            endif
-
          enddo                     ! subcycling
       endif  ! evp_algorithm
 
@@ -1027,12 +988,6 @@
                            field_loc_NEcorner, field_type_vector)
       call grid_average_X2Y('F',work1,'U',strocnxT,'T')    ! shift
       call grid_average_X2Y('F',work2,'U',strocnyT,'T')
-
-! shift velocity components from CD grid locations (N, E) to B grid location (U) for transport
-      if (grid_ice == 'CD') then
-          call grid_average_X2Y('S',uvelE,'E',uvel,'U')
-          call grid_average_X2Y('S',vvelN,'N',vvel,'U')
-      endif
 
       call ice_timer_stop(timer_dynamics)    ! dynamics
 
@@ -1569,7 +1524,7 @@
          ratiodyE , & ! -dyE(i,j+1)/dyE(i,j) factor for BCs across coastline
          ratiodyEr, & ! -dyE(i,j)/dyE(i,j+1) factor for BCs across coastline
          epm      , & ! E-cell mask
-         npm      , & ! E-cell mask
+         npm      , & ! N-cell mask
          hm       , & ! T-cell mask
          uvm      , & ! U-cell mask
          zetax2T  , & ! 2*zeta at the T point
@@ -1750,7 +1705,6 @@
          case default
             call abort_ice(subname // ' unknown grid_location: ' // grid_location)
          end select
-         
 
       enddo                     ! ij
 
