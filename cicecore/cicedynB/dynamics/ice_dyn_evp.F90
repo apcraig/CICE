@@ -558,7 +558,7 @@
       endif
 
       call ice_timer_start(timer_bound)
-        call ice_HaloUpdate (strength,           halo_info, &
+      call ice_HaloUpdate (strength,           halo_info, &
                            field_loc_center,   field_type_scalar)
 
       ! velocities may have changed in dyn_prep2
