@@ -23,7 +23,7 @@
 
       implicit none
       private
-      public :: set_evp_parameters, stepu, step_vel, stepu_Cgrid, stepv_Cgrid &
+      public :: set_evp_parameters, stepu, step_vel, stepu_Cgrid, stepv_Cgrid, &
                 principal_stress, init_dyn, dyn_prep1, dyn_prep2, dyn_finish, &
                 seabed_stress_factor_LKD, seabed_stress_factor_prob, &
                 alloc_dyn_shared, &
@@ -976,8 +976,8 @@
       real (kind=dbl_kind) :: &
          uold, vold         , & ! old-time uvel, vvel
          vrel               , & ! relative ice-ocean velocity
-         cca,ccb,ccc, cc1   , & ! intermediate variables
-         taux,              , & ! part of ocean stress term
+         cca,ccb,ccc,cc1    , & ! intermediate variables
+         taux               , & ! part of ocean stress term
          Cb                 , & ! complete seabed (basal) stress coeff
          rhow                   !
 
