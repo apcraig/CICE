@@ -895,7 +895,7 @@
                                         indxni      (:,iblk), indxnj      (:,iblk), &
                                         ksub,                 aiN       (:,:,iblk), &
                                         uocnN     (:,:,iblk), vocnN     (:,:,iblk), &
-                                        waterxN   (:,:,iblk), forceyN   (:,:,iblk), &
+                                        wateryN   (:,:,iblk), forceyN   (:,:,iblk), &
                                         nmassdti  (:,:,iblk), fmN       (:,:,iblk), &
                                         strintyN  (:,:,iblk), taubyN    (:,:,iblk), &
                                         vvelN_init(:,:,iblk),                       &
