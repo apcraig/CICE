@@ -5318,16 +5318,12 @@
       use ice_calendar, only: timesecs
       use ice_blocks, only: nx_block, ny_block, nghost
       use ice_flux, only: uatm, vatm, wind, rhoa, strax, stray
-      use ice_grid, only: grid_average_X2Y
       use ice_state, only: aice
 
       ! local parameters
 
       integer (kind=int_kind) :: &
          iblk, i,j           ! loop indices
-
-      real (kind=dbl_kind), dimension (nx_block,ny_block,max_blocks) :: &
-         aiu                 ! ice fraction on u-grid 
 
       real (kind=dbl_kind) :: &
           secday, pi , puny, period, pi2, tau
@@ -5338,12 +5334,6 @@
 
       call icepack_query_parameters(pi_out=pi, pi2_out=pi2, puny_out=puny)
       call icepack_query_parameters(secday_out=secday)
-
-      call grid_average_X2Y('F',aice,'T',aiu,'U')
-      call ice_timer_start(timer_bound)
-      call ice_HaloUpdate (aiu,               halo_info, &
-                           field_loc_center,  field_type_scalar)
-      call ice_timer_stop(timer_bound)
 
       period = c4*secday
 
@@ -5377,8 +5367,8 @@
          wind(i,j,iblk) = sqrt(uatm(i,j,iblk)**2 + vatm(i,j,iblk)**2)
          tau = rhoa(i,j,iblk) * 0.0012_dbl_kind * wind(i,j,iblk)
 
-         strax(i,j,iblk) = aiu(i,j,iblk) * tau * uatm(i,j,iblk)
-         stray(i,j,iblk) = aiu(i,j,iblk) * tau * vatm(i,j,iblk)
+         strax(i,j,iblk) = aice(i,j,iblk) * tau * uatm(i,j,iblk)
+         stray(i,j,iblk) = aice(i,j,iblk) * tau * vatm(i,j,iblk)
 
 ! initialization test
        ! Diagonal wind vectors 1
@@ -5467,10 +5457,6 @@
       use ice_blocks, only: nx_block, ny_block, nghost
       use ice_flux, only: uatm, vatm, wind, rhoa, strax, stray
       use ice_state, only: aice
-      use ice_grid, only: grid_average_X2Y
-
-      real (kind=dbl_kind), dimension (nx_block,ny_block,max_blocks) :: &
-         aiu                 ! ice fraction on u-grid 
 
       character(len=*), intent(in) :: dir
       real(kind=dbl_kind), intent(in), optional :: spd ! velocity
@@ -5516,12 +5502,6 @@
               file=__FILE__, line=__LINE__)
       endif
 
-      call grid_average_X2Y('F',aice,'T',aiu,'U')
-      call ice_timer_start(timer_bound)
-      call ice_HaloUpdate (aiu,               halo_info, &
-                           field_loc_center,  field_type_scalar)
-      call ice_timer_stop(timer_bound)
-
       do iblk = 1, nblocks
          do j = 1, ny_block   
          do i = 1, nx_block   
@@ -5529,8 +5509,8 @@
             ! wind stress
             wind(i,j,iblk) = sqrt(uatm(i,j,iblk)**2 + vatm(i,j,iblk)**2)
             tau = rhoa(i,j,iblk) * 0.0012_dbl_kind * wind(i,j,iblk)
-            strax(i,j,iblk) = aiu(i,j,iblk) * tau * uatm(i,j,iblk)
-            stray(i,j,iblk) = aiu(i,j,iblk) * tau * vatm(i,j,iblk)
+            strax(i,j,iblk) = aice(i,j,iblk) * tau * uatm(i,j,iblk)
+            stray(i,j,iblk) = aice(i,j,iblk) * tau * vatm(i,j,iblk)
             
          enddo
          enddo  
