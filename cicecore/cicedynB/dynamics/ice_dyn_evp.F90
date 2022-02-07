@@ -42,7 +42,8 @@
           field_type_scalar, field_type_vector
       use ice_constants, only: c0, p027, p055, p111, p166, &
           p222, p25, p333, p5, c1
-      use ice_dyn_shared, only: stepu, step_vel, dyn_prep1, dyn_prep2, dyn_finish, &
+      use ice_dyn_shared, only: stepu, step_vel, stepu_Cgrid, stepv_Cgrid, &
+          dyn_prep1, dyn_prep2, dyn_finish, &
           ndte, yield_curve, ecci, denom1, arlx1i, fcor_blk, fcorE_blk, fcorN_blk, &
           uvel_init, vvel_init, uvelE_init, vvelE_init, uvelN_init, vvelN_init, &
           seabed_stress_factor_LKD, seabed_stress_factor_prob, seabed_stress_method, &
