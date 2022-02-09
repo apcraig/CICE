@@ -529,7 +529,7 @@
          enddo
       enddo  ! iblk
       !$TCXOMP END PARALLEL DO
-      
+
       endif ! grid_ice
 
       call icepack_warnings_flush(nu_diag)
@@ -1084,8 +1084,10 @@
       do ij = 1, icellu(iblk)
          i = indxui(ij,iblk)
          j = indxuj(ij,iblk)
-         work1(i,j,iblk) = strocnx(i,j,iblk)/aiu(i,j,iblk)
-         work2(i,j,iblk) = strocny(i,j,iblk)/aiu(i,j,iblk)
+         if (aiu(i,j,iblk) /= c0) then
+            work1(i,j,iblk) = strocnx(i,j,iblk)/aiu(i,j,iblk)
+            work2(i,j,iblk) = strocny(i,j,iblk)/aiu(i,j,iblk)
+         endif
       enddo
       enddo
       !$OMP END PARALLEL DO
