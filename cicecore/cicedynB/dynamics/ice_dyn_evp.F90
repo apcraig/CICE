@@ -1611,7 +1611,8 @@
 
       use ice_dyn_shared, only: strain_rates_U, &
                                 viscous_coeffs_and_rep_pressure_T2U, &
-                                viscous_coeffs_and_rep_pressure_U
+                                viscous_coeffs_and_rep_pressure_U, &
+                                visc_coeff_method
         
       integer (kind=int_kind), intent(in) :: & 
          nx_block, ny_block, & ! block dimensions
@@ -1655,7 +1656,7 @@
       ! local variables
 
       integer (kind=int_kind) :: &
-         i, j, ij, method
+         i, j, ij
 
       real (kind=dbl_kind) :: &
         divU, tensionU, shearU, DeltaU, & ! strain rates at U point
@@ -1672,8 +1673,6 @@
          call abort_ice(error_message=subname, file=__FILE__, &
             line=__LINE__)
       end if
-
-      method=2
       
       do ij = 1, icellu
          i = indxui(ij)
@@ -1701,7 +1700,7 @@
       ! viscous coefficients and replacement pressure at U point
       !-----------------------------------------------------------------
 
-         if (method == 1) then
+         if (visc_coeff_method == 'avg_zeta') then
          
          call viscous_coeffs_and_rep_pressure_T2U (zetax2T(i  ,j  ), zetax2T(i  ,j+1), &
                                                    zetax2T(i+1,j+1), zetax2T(i+1,j  ), &
@@ -1713,7 +1712,7 @@
                                                    tarea  (i+1,j+1), tarea  (i+1,j  ), &
                                                    DeltaU,zetax2U, etax2U, rep_prsU)
 
-         elseif (method == 2) then
+         elseif (visc_coeff_method == 'avg_strength') then
 
          tinyareaU = puny*uarea(i,j)
             
