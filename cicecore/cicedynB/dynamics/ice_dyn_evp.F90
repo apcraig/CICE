@@ -554,6 +554,25 @@
          call grid_average_X2Y('S',uvelE,'E',uvel,'U')
          call grid_average_X2Y('S',vvelN,'N',vvel,'U')
 
+         if (grid_ice == 'C') then
+            call grid_average_X2Y('S',uvelE,'E',uvelN,'N')
+            call grid_average_X2Y('S',vvelN,'N',vvelE,'E')
+            uvelE(:,:,:) = uvelE(:,:,:)*epm(:,:,:)
+            vvelN(:,:,:) = vvelN(:,:,:)*npm(:,:,:)
+
+            call ice_timer_start(timer_bound)
+            call stack_velocity_field(uvelN, vvelN, fld2)
+            call ice_HaloUpdate (fld2,               halo_info, &
+                                 field_loc_Nface, field_type_vector)
+            call unstack_velocity_field(fld2, uvelN, vvelN)
+
+            call stack_velocity_field(uvelE, vvelE, fld2)
+            call ice_HaloUpdate (fld2,               halo_info, &
+                           field_loc_Eface, field_type_vector)
+            call unstack_velocity_field(fld2, uvelE, vvelE)
+            call ice_timer_stop(timer_bound)
+         endif
+
          uvel(:,:,:) = uvel(:,:,:)*uvm(:,:,:)
          vvel(:,:,:) = vvel(:,:,:)*uvm(:,:,:)
       endif
@@ -734,11 +753,6 @@
 
             case('CD','C')
 
-               if (grid_ice == 'C') then
-                  call grid_average_X2Y('A',uvelE,'E',uvelN,'N')
-                  call grid_average_X2Y('A',vvelN,'N',vvelE,'E')
-               endif
-               
                !$TCXOMP PARALLEL DO PRIVATE(iblk)
                do iblk = 1, nblocks
 
@@ -835,7 +849,7 @@
                                    stress12U (:,:,iblk),                       &
                                    strintxN  (:,:,iblk), strintyN  (:,:,iblk), &
                                    'N')
-                  
+                 
                enddo
                !$TCXOMP END PARALLEL DO
 
@@ -903,6 +917,11 @@
                                         vvelN_init(:,:,iblk),                       &
                                         uvelN     (:,:,iblk), vvelN     (:,:,iblk), &
                                         TbN       (:,:,iblk))
+
+                      call grid_average_X2Y('S',uvelE,'E',uvelN,'N')
+                      call grid_average_X2Y('S',vvelN,'N',vvelE,'E')
+                      uvelE(:,:,:) = uvelE(:,:,:)*epm(:,:,:)
+                      vvelN(:,:,:) = vvelN(:,:,:)*npm(:,:,:)
 
                   enddo
                !$TCXOMP END PARALLEL DO
