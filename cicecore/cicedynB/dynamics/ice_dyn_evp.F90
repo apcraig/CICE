@@ -1084,10 +1084,8 @@
       do ij = 1, icellu(iblk)
          i = indxui(ij,iblk)
          j = indxuj(ij,iblk)
-         if (aiu(i,j,iblk) /= c0) then
-            work1(i,j,iblk) = strocnx(i,j,iblk)/aiu(i,j,iblk)
-            work2(i,j,iblk) = strocny(i,j,iblk)/aiu(i,j,iblk)
-         endif
+         work1(i,j,iblk) = strocnx(i,j,iblk)/aiu(i,j,iblk)
+         work2(i,j,iblk) = strocny(i,j,iblk)/aiu(i,j,iblk)
       enddo
       enddo
       !$OMP END PARALLEL DO

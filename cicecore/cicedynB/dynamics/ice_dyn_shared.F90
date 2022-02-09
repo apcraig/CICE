@@ -913,13 +913,8 @@
              + massdti(i,j)*(brlx*uold + revp*uvel_init(i,j))
          cc2 = strinty(i,j) + forcey(i,j) + tauy &
              + massdti(i,j)*(brlx*vold + revp*vvel_init(i,j))
-         if (ab2 == c0) then
-            uvel(i,j) = c0
-            vvel(i,j) = c0
-         else
-            uvel(i,j) = (cca*cc1 + ccb*cc2) / ab2 ! m/s
-            vvel(i,j) = (cca*cc2 - ccb*cc1) / ab2
-         endif
+         uvel(i,j) = (cca*cc1 + ccb*cc2) / ab2 ! m/s
+         vvel(i,j) = (cca*cc2 - ccb*cc1) / ab2
 
          ! calculate seabed stress component for outputs
          if (ksub == ndte .and. seabed_stress) then ! on last subcycling iteration

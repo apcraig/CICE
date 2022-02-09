@@ -202,7 +202,12 @@
          work1, work2
 
       real (kind=dbl_kind), parameter :: &
-         maxval_spval = -0.9_dbl_kind*HUGE(0.0_dbl_kind)
+         maxval_spval = -0.9_dbl_kind*HUGE(0.0_dbl_kind)  ! spval to detect 
+                 ! undefined values returned from global_maxval.  if global_maxval
+                 ! is applied to a region that does not exist (for instance
+                 ! southern hemisphere in box cases), global_maxval
+                 ! returns -HUGE which we want to avoid writing.  The
+                 ! return value is checked against maxval_spval before writing.
 
 !     real (kind=dbl_kind), dimension (nx_block,ny_block,max_blocks) :: &
 !        uvelT, vvelT
