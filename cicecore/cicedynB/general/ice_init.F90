@@ -1599,7 +1599,7 @@
                endif
             endif
             if (grid_ice == 'C' .or. grid_ice == 'CD') then
-               write(nu_diag,1010) 'viscous coeff method (U point) = ', trim(visc_coeff_method)
+               write(nu_diag,1030) 'viscous coeff method (U point) = ', trim(visc_coeff_method)
             endif
             
             write(nu_diag,1002) ' Ktens            = ', Ktens, ' : tensile strength factor'
