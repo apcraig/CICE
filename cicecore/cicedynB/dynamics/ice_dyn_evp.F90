@@ -555,8 +555,8 @@
          call grid_average_X2Y('S',vvelN,'N',vvel,'U')
 
          if (grid_ice == 'C') then
-            call grid_average_X2Y('S',uvelE,'E',uvelN,'N')
-            call grid_average_X2Y('S',vvelN,'N',vvelE,'E')
+            call grid_average_X2Y('A',uvelE,'E',uvelN,'N')
+            call grid_average_X2Y('A',vvelN,'N',vvelE,'E')
             uvelN(:,:,:) = uvelN(:,:,:)*npm(:,:,:)
             vvelE(:,:,:) = vvelE(:,:,:)*epm(:,:,:)
 
@@ -918,8 +918,8 @@
                                         uvelN     (:,:,iblk), vvelN     (:,:,iblk), &
                                         TbN       (:,:,iblk))
 
-                      call grid_average_X2Y('S',uvelE,'E',uvelN,'N')
-                      call grid_average_X2Y('S',vvelN,'N',vvelE,'E')
+                      call grid_average_X2Y('A',uvelE,'E',uvelN,'N')
+                      call grid_average_X2Y('A',vvelN,'N',vvelE,'E')
                       uvelN(:,:,:) = uvelN(:,:,:)*npm(:,:,:)
                       vvelE(:,:,:) = vvelE(:,:,:)*epm(:,:,:)
 
