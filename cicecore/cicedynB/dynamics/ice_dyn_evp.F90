@@ -103,7 +103,7 @@
           dxe, dxn, dxt, dxu, dye, dyn, dyt, dyu, &
           ratiodxN, ratiodxNr, ratiodyE, ratiodyEr, & 
           dxhy, dyhx, cxp, cyp, cxm, cym, &
-          tarear, uarear, earear, narear, tinyarea, grid_average_X2Y, tarea, &
+          tarear, uarear, earear, narear, tinyarea, grid_average_X2Y, tarea, uarea, &
           grid_type, grid_ice, &
           grid_atm_dynu, grid_atm_dynv, grid_ocn_dynu, grid_ocn_dynv
       use ice_state, only: aice, vice, vsno, uvel, vvel, uvelN, vvelN, &
@@ -778,7 +778,7 @@
                                  uvel      (:,:,iblk), vvel      (:,:,iblk), &
                                  dxE       (:,:,iblk), dyN       (:,:,iblk), &
                                  dxU       (:,:,iblk), dyU       (:,:,iblk), &
-                                 tarea     (:,:,iblk), uarear    (:,:,iblk), &
+                                 tarea     (:,:,iblk), uarea     (:,:,iblk), &
                                  ratiodxN  (:,:,iblk), ratiodxNr (:,:,iblk), &
                                  ratiodyE  (:,:,iblk), ratiodyEr (:,:,iblk), &
                                  epm       (:,:,iblk), npm       (:,:,iblk), &
@@ -1600,7 +1600,7 @@
                              uvelU,      vvelU,     &
                              dxE,        dyN,       &
                              dxU,        dyU,       &
-                             tarea,      uarear,    &
+                             tarea,      uarea,     &
                              ratiodxN,   ratiodxNr, &
                              ratiodyE,   ratiodyEr, &
                              epm,  npm, hm, uvm,    &
@@ -1634,7 +1634,7 @@
          dxU      , & ! width  of U-cell through the middle (m)
          dyU      , & ! height of U-cell through the middle (m)
          tarea    , & ! area of T-cell (m^2)
-         uarear   , & ! 1/area of U-cell (m^2)
+         uarea    , & ! area of U-cell (m^2)
          ratiodxN , & ! -dxN(i+1,j)/dxN(i,j) factor for BCs across coastline
          ratiodxNr, & ! -dxN(i,j)/dxN(i+1,j) factor for BCs across coastline
          ratiodyE , & ! -dyE(i,j+1)/dyE(i,j) factor for BCs across coastline
@@ -1715,7 +1715,7 @@
 
          elseif (method == 2) then
 
-         tinyareaU = puny/uarear(i,j)
+         tinyareaU = puny*uarea(i,j)
             
          call viscous_coeffs_and_rep_pressure_U (strength(i  ,j  ), strength(i  ,j+1), &
                                                  strength(i+1,j+1), strength(i+1,j  ), &
