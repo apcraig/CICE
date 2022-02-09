@@ -1661,6 +1661,8 @@
         divU, tensionU, shearU, DeltaU, & ! strain rates at U point
         zetax2U, etax2U, rep_prsU,      & ! replacement pressure at U point
         puny, tinyareaU
+
+      real(kind=dbl_kind), parameter :: capping = c1 ! of the viscous coef
       
       character(len=*), parameter :: subname = '(stress_U)'
       
