@@ -557,8 +557,8 @@
          if (grid_ice == 'C') then
             call grid_average_X2Y('S',uvelE,'E',uvelN,'N')
             call grid_average_X2Y('S',vvelN,'N',vvelE,'E')
-            uvelE(:,:,:) = uvelE(:,:,:)*epm(:,:,:)
-            vvelN(:,:,:) = vvelN(:,:,:)*npm(:,:,:)
+            uvelN(:,:,:) = uvelN(:,:,:)*npm(:,:,:)
+            vvelE(:,:,:) = vvelE(:,:,:)*epm(:,:,:)
 
             call ice_timer_start(timer_bound)
             call stack_velocity_field(uvelN, vvelN, fld2)
@@ -920,8 +920,8 @@
 
                       call grid_average_X2Y('S',uvelE,'E',uvelN,'N')
                       call grid_average_X2Y('S',vvelN,'N',vvelE,'E')
-                      uvelE(:,:,:) = uvelE(:,:,:)*epm(:,:,:)
-                      vvelN(:,:,:) = vvelN(:,:,:)*npm(:,:,:)
+                      uvelN(:,:,:) = uvelN(:,:,:)*npm(:,:,:)
+                      vvelE(:,:,:) = vvelE(:,:,:)*epm(:,:,:)
 
                   enddo
                !$TCXOMP END PARALLEL DO
