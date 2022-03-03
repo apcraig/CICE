@@ -76,6 +76,7 @@
          epp2i    , & ! 1/(e_plasticpot)^2
          e_factor , & ! (e_yieldcurve)^2/(e_plasticpot)^4
          ecci     , & ! temporary for 1d evp
+         deltamin , & ! minimum delta for viscous coefficients 
          dtei     , & ! 1/dte, where dte is subcycling timestep (1/s)
 !         dte2T    , & ! dte/2T
          denom1       ! constants for stress equation
@@ -104,6 +105,9 @@
          uvelE_init, & ! x-component of velocity (m/s), beginning of timestep
          vvelE_init    ! y-component of velocity (m/s), beginning of timestep
 
+      real (kind=dbl_kind), allocatable, public :: & 
+         deltaminTarea(:,:,:)   ! deltamin * tarea (m^2/s)
+      
       ! ice isotropic tensile strength parameter
       real (kind=dbl_kind), public :: &
          Ktens        ! T=Ktens*P (tensile strength: see Konig and Holland, 2010)   
@@ -166,7 +170,7 @@
           stresspT, stressmT, stress12T, &
           stresspU, stressmU, stress12U
       use ice_state, only: uvel, vvel, uvelE, vvelE, uvelN, vvelN, divu, shear
-      use ice_grid, only: ULAT, NLAT, ELAT
+      use ice_grid, only: ULAT, NLAT, ELAT, tarea
 
       real (kind=dbl_kind), intent(in) :: &
          dt      ! time step
@@ -188,7 +192,8 @@
       endif
 
       allocate(fcor_blk(nx_block,ny_block,max_blocks))
-
+      allocate(deltaminTarea(nx_block,ny_block,max_blocks))
+      
       if (grid_ice == 'CD' .or. grid_ice == 'C') then
          allocate(fcorE_blk(nx_block,ny_block,max_blocks))
          allocate(fcorN_blk(nx_block,ny_block,max_blocks))
@@ -262,6 +267,9 @@
             stress12U (i,j,iblk) = c0
          endif
 
+         deltamin=1d-11
+         deltaminTarea(i,j,iblk) = deltamin*tarea(i,j,iblk) ! not needed for kdyn=2??
+         
          ! ice extent mask on velocity points
          iceumask(i,j,iblk) = .false.
 
