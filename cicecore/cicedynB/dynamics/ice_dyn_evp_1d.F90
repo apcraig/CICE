@@ -132,7 +132,7 @@ contains
       use ice_kinds_mod
       use ice_constants, only : p027, p055, p111, p166, p222, p25, &
           p333, p5, c1p5, c1
-      use ice_dyn_shared, only : ecci, denom1, arlx1i, Ktens, revp
+      use ice_dyn_shared, only : ecci, denom1, arlx1i, Ktens, revp, deltamin
 
       implicit none
 
@@ -152,7 +152,7 @@ contains
       ! local variables
 
       integer(kind=int_kind) :: iw, il, iu
-      real(kind=dbl_kind) :: puny, divune, divunw, divuse, divusw, &
+      real(kind=dbl_kind) :: divune, divunw, divuse, divusw, &
          tensionne, tensionnw, tensionse, tensionsw, shearne, shearnw, &
          shearse, shearsw, Deltane, Deltanw, Deltase, Deltasw, c0ne, &
          c0nw, c0se, c0sw, c1ne, c1nw, c1se, c1sw, ssigpn, ssigps, &
@@ -163,16 +163,9 @@ contains
          csig12se, csig12sw, str12ew, str12we, str12ns, str12sn, &
          strp_tmp, strm_tmp, tmp_uvel_ee, tmp_vvel_se, tmp_vvel_ee, &
          tmp_vvel_ne, tmp_uvel_ne, tmp_uvel_se, dxhy, dyhx, cxp, cyp, &
-         cxm, cym, tinyarea,tmparea
+         cxm, cym, tmparea, deltaminTarea
 
       character(len=*), parameter :: subname = '(stress_iter)'
-
-      call icepack_query_parameters(puny_out=puny)
-      call icepack_warnings_flush(nu_diag)
-      if (icepack_warnings_aborted()) then
-         call abort_ice(error_message=subname, file=__FILE__, &
-            line=__LINE__)
-      end if
 
 #ifdef _OPENACC
       !$acc parallel &
@@ -190,8 +183,8 @@ contains
 
          if (skiptcell(iw)) cycle
 
-         tmparea = dxt(iw) * dyt(iw) ! necessary to split calc of tinyarea. Otherwize not binary identical
-         tinyarea =  puny * tmparea
+         tmparea = dxt(iw) * dyt(iw) ! necessary to split calc of deltaminTarea. Otherwize not binary identical
+         deltaminTarea =  deltamin * tmparea
          dxhy     = p5 * (hte(iw) - htem1(iw))
          dyhx     = p5 * (htn(iw) - htnm1(iw))
          cxp      = c1p5 * htn(iw) - p5 * htnm1(iw)
@@ -252,10 +245,10 @@ contains
          ! save replacement pressure for principal stress calculation
          !--------------------------------------------------------------
 
-         c0ne = strength(iw) / max(Deltane, tinyarea)
-         c0nw = strength(iw) / max(Deltanw, tinyarea)
-         c0sw = strength(iw) / max(Deltasw, tinyarea)
-         c0se = strength(iw) / max(Deltase, tinyarea)
+         c0ne = strength(iw) / max(Deltane, deltaminTarea)
+         c0nw = strength(iw) / max(Deltanw, deltaminTarea)
+         c0sw = strength(iw) / max(Deltasw, deltaminTarea)
+         c0se = strength(iw) / max(Deltase, deltaminTarea)
 
          c1ne = c0ne * arlx1i
          c1nw = c0nw * arlx1i
@@ -408,7 +401,7 @@ contains
       use ice_kinds_mod
       use ice_constants, only : p027, p055, p111, p166, p222, p25, &
           p333, p5, c1p5, c1, c0
-      use ice_dyn_shared, only : ecci, denom1, arlx1i, Ktens, revp
+      use ice_dyn_shared, only : ecci, denom1, arlx1i, Ktens, revp, deltamin
 
       implicit none
 
@@ -429,7 +422,7 @@ contains
       ! local variables
 
       integer(kind=int_kind) :: iw, il, iu
-      real(kind=dbl_kind) :: puny, divune, divunw, divuse, divusw, &
+      real(kind=dbl_kind) :: divune, divunw, divuse, divusw, &
          tensionne, tensionnw, tensionse, tensionsw, shearne, shearnw, &
          shearse, shearsw, Deltane, Deltanw, Deltase, Deltasw, c0ne, &
          c0nw, c0se, c0sw, c1ne, c1nw, c1se, c1sw, ssigpn, ssigps, &
@@ -440,16 +433,9 @@ contains
          csig12se, csig12sw, str12ew, str12we, str12ns, str12sn, &
          strp_tmp, strm_tmp, tmp_uvel_ee, tmp_vvel_se, tmp_vvel_ee, &
          tmp_vvel_ne, tmp_uvel_ne, tmp_uvel_se, dxhy, dyhx, cxp, cyp, &
-         cxm, cym, tinyarea, tmparea
+         cxm, cym, tmparea, deltaminTarea
 
       character(len=*), parameter :: subname = '(stress_last)'
-
-      call icepack_query_parameters(puny_out=puny)
-      call icepack_warnings_flush(nu_diag)
-      if (icepack_warnings_aborted()) then
-         call abort_ice(error_message=subname, file=__FILE__, &
-            line=__LINE__)
-      end if
 
 #ifdef _OPENACC
       !$acc parallel &
@@ -468,8 +454,8 @@ contains
 
          if (skiptcell(iw)) cycle
 
-         tmparea = dxt(iw) * dyt(iw) ! necessary to split calc of tinyarea. Otherwize not binary identical
-         tinyarea = puny * tmparea
+         tmparea = dxt(iw) * dyt(iw) ! necessary to split calc of deltaminTarea. Otherwize not binary identical
+         deltaminTarea = deltamin * tmparea
          dxhy     = p5 * (hte(iw) - htem1(iw))
          dyhx     = p5 * (htn(iw) - htnm1(iw))
          cxp      = c1p5 * htn(iw) - p5 * htnm1(iw)
@@ -545,10 +531,10 @@ contains
          ! save replacement pressure for principal stress calculation
          !--------------------------------------------------------------
 
-         c0ne = strength(iw) / max(Deltane, tinyarea)
-         c0nw = strength(iw) / max(Deltanw, tinyarea)
-         c0sw = strength(iw) / max(Deltasw, tinyarea)
-         c0se = strength(iw) / max(Deltase, tinyarea)
+         c0ne = strength(iw) / max(Deltane, deltaminTarea)
+         c0nw = strength(iw) / max(Deltanw, deltaminTarea)
+         c0sw = strength(iw) / max(Deltasw, deltaminTarea)
+         c0se = strength(iw) / max(Deltase, deltaminTarea)
 
          c1ne = c0ne * arlx1i
          c1nw = c0nw * arlx1i

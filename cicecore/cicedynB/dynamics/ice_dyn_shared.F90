@@ -2061,7 +2061,7 @@
  ! by combining tensile strength and a parameterization for grounded ridges.
  ! J. Geophys. Res. Oceans, 121, 7354-7368.
       
-      subroutine viscous_coeffs_and_rep_pressure (strength,  tinyarea, &
+      subroutine viscous_coeffs_and_rep_pressure (strength,  deltaminTarea, &
                                                   Deltane,   Deltanw,  &
                                                   Deltasw,   Deltase,  &
                                                   zetax2ne,  zetax2nw, &
@@ -2073,7 +2073,7 @@
                                                   capping)
 
       real (kind=dbl_kind), intent(in)::  &
-        strength, tinyarea                  ! at the t-point
+        strength, deltaminTarea             ! at the t-point
         
       real (kind=dbl_kind), intent(in)::  &  
         Deltane, Deltanw, Deltasw, Deltase  ! Delta at each corner
@@ -2091,14 +2091,14 @@
 
       ! NOTE: for comp. efficiency 2 x zeta and 2 x eta are used in the code
        
-        tmpcalcne = capping     *(strength/max(Deltane, tinyarea))+ &
-                    (c1-capping)* strength/   (Deltane+ tinyarea)   
-        tmpcalcnw = capping     *(strength/max(Deltanw, tinyarea))+ &
-                    (c1-capping)* strength/   (Deltanw+ tinyarea)   
-        tmpcalcsw = capping     *(strength/max(Deltasw, tinyarea))+ &
-                    (c1-capping)* strength/   (Deltasw+ tinyarea)  
-        tmpcalcse = capping     *(strength/max(Deltase, tinyarea))+ &
-                    (c1-capping)* strength/   (Deltase+ tinyarea)
+        tmpcalcne = capping     *(strength/max(Deltane, deltaminTarea))+ &
+                    (c1-capping)* strength/   (Deltane+ deltaminTarea)   
+        tmpcalcnw = capping     *(strength/max(Deltanw, deltaminTarea))+ &
+                    (c1-capping)* strength/   (Deltanw+ deltaminTarea)   
+        tmpcalcsw = capping     *(strength/max(Deltasw, deltaminTarea))+ &
+                    (c1-capping)* strength/   (Deltasw+ deltaminTarea)  
+        tmpcalcse = capping     *(strength/max(Deltase, deltaminTarea))+ &
+                    (c1-capping)* strength/   (Deltase+ deltaminTarea)
 
         zetax2ne  = (c1+Ktens)*tmpcalcne ! northeast 
         rep_prsne = (c1-Ktens)*tmpcalcne*Deltane
@@ -2133,13 +2133,14 @@
  ! J. Geophys. Res. Oceans, 121, 7354-7368.
 ! capping must be 1 (c1) for evp and 0 for vp solver
 
-      subroutine viscous_coeffs_and_rep_pressure_T (strength, tinyarea, &
-                                                    Delta   , zetax2  , &
-                                                    etax2   , rep_prs , &
-                                                    capping)
+       subroutine viscous_coeffs_and_rep_pressure_T (strength,          &
+                                                     deltaminTarea,      &
+                                                     Delta   , zetax2  , &
+                                                     etax2   , rep_prs , &
+                                                     capping)
 
       real (kind=dbl_kind), intent(in)::  &
-        strength, tinyarea
+        strength, deltaminTarea
 
       real (kind=dbl_kind), intent(in)::  &
         Delta, capping
@@ -2155,8 +2156,8 @@
 
       ! NOTE: for comp. efficiency 2 x zeta and 2 x eta are used in the code
 
-      tmpcalc =     capping *(strength/max(Delta,tinyarea))+ &
-                (c1-capping)*(strength/(Delta + tinyarea))
+      tmpcalc =     capping *(strength/max(Delta,deltaminTarea))+ &
+                (c1-capping)*(strength/(Delta + deltaminTarea))
       zetax2 = (c1+Ktens)*tmpcalc
       rep_prs = (c1-Ktens)*tmpcalc*Delta
       etax2 = epp2i*zetax2
@@ -2220,7 +2221,7 @@
                                                       maskT_11,  maskT_10,      &
                                                       tarea_00,   tarea_01,     &
                                                       tarea_11,   tarea_10,     &
-                                                      tinyareaU,                &
+                                                      deltaminUarea,            &
                                                       deltaU, capping,          &
                                                       zetax2U, etax2U,          &
                                                       rep_prsU)
@@ -2230,7 +2231,7 @@
          strength_00,strength_10,strength_11,strength_01, &
          maskT_00, maskT_10, maskT_11, maskT_01, &
          tarea_00, tarea_10, tarea_11, tarea_01, &
-         tinyareaU, deltaU, capping
+         deltaminUarea, deltaU, capping
 
       real (kind=dbl_kind), intent(out):: zetax2U, etax2U, rep_prsU
 
@@ -2255,8 +2256,8 @@
       ! IMPROVE the calc below are the same as in the other viscous coeff...could reduce redundency
       ! we could have a strength_U subroutine and then calc the visc coeff
       
-      tmpcalc =     capping *(strength/max(deltaU,tinyareaU))+ &
-                (c1-capping)*(strength/(deltaU + tinyareaU))
+      tmpcalc =     capping *(strength/max(deltaU,deltaminUarea))+ &
+                (c1-capping)*(strength/(deltaU + deltaminUarea))
       zetax2U = (c1+Ktens)*tmpcalc
       rep_prsU = (c1-Ktens)*tmpcalc*deltaU
       etax2U = epp2i*zetax2U
