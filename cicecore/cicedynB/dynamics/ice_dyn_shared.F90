@@ -267,7 +267,6 @@
             stress12U (i,j,iblk) = c0
          endif
 
-         deltamin=1d-11
          deltaminTarea(i,j,iblk) = deltamin*tarea(i,j,iblk) ! not needed for kdyn=2??
          
          ! ice extent mask on velocity points

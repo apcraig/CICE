@@ -1552,7 +1552,7 @@
                     write(nu_diag,1002) ' e_plasticpot     = ', e_plasticpot, ' : aspect ratio of plastic potential'
             endif
 
-            write(nu_diag,1002) ' deltamin     = ', deltamin, ' : minimum delta for viscous coefficients'
+            write(nu_diag,1003) ' deltamin     = ', deltamin, ' : minimum delta for viscous coefficients'
             
             if (trim(coriolis) == 'latitude') then
                tmpstr2 = ' : latitude-dependent Coriolis parameter'
@@ -2214,6 +2214,7 @@
 
  1000    format (a20,1x,f13.6,1x,a) ! float
  1002    format (a20,5x,f9.2,1x,a)
+ 1003    format (a20,1x,f16.14,1x,a)
  1009    format (a20,1x,d13.6,1x,a)
  1010    format (a20,8x,l6,1x,a)  ! logical
  1011    format (a20,1x,l6)
