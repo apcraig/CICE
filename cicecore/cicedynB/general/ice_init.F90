@@ -110,7 +110,7 @@
                                 seabed_stress, seabed_stress_method,  &
                                 k1, k2, alphab, threshold_hw, Ktens,  &
                                 e_yieldcurve, e_plasticpot, coriolis, &
-                                ssh_stress, kridge, brlx, arlx
+                                ssh_stress, kridge, brlx, arlx, deltamin
 
       use ice_dyn_vp, only: maxits_nonlin, precond, dim_fgmres, dim_pgmres, maxits_fgmres, &
                             maxits_pgmres, monitor_nonlin, monitor_fgmres, &
@@ -224,7 +224,7 @@
         reltol_pgmres,  algo_nonlin,    dim_andacc,     reltol_andacc,  &
         damping_andacc, start_andacc,   fpfunc_andacc,  use_mean_vrel,  &
         ortho_type,     seabed_stress,  seabed_stress_method,           &
-        k1, k2,         alphab,         threshold_hw,                   &
+        k1, k2,         alphab,         threshold_hw,   deltamin,       &
         Cf,             Pstar,          Cstar,          Ktens
       
       namelist /shortwave_nml/ &
@@ -379,6 +379,7 @@
       e_yieldcurve = 2.0_dbl_kind ! VP aspect ratio of elliptical yield curve               
       e_plasticpot = 2.0_dbl_kind ! VP aspect ratio of elliptical plastic potential
       visc_coeff_method = 'avg_strength' ! calc visc coeff at U point: avg_strength, avg_zeta
+      deltamin = 1e-11_dbl_kind ! minimum delta for viscous coefficients
       maxits_nonlin = 4      ! max nb of iteration for nonlinear solver
       precond = 'pgmres'     ! preconditioner for fgmres: 'ident' (identity), 'diag' (diagonal), 'pgmres' (Jacobi-preconditioned GMRES)
       dim_fgmres = 50        ! size of fgmres Krylov subspace
@@ -747,6 +748,7 @@
       call broadcast_scalar(e_yieldcurve,         master_task)
       call broadcast_scalar(e_plasticpot,         master_task)
       call broadcast_scalar(visc_coeff_method,    master_task)
+      call broadcast_scalar(deltamin,             master_task)
       call broadcast_scalar(advection,            master_task)
       call broadcast_scalar(conserv_check,        master_task)
       call broadcast_scalar(shortwave,            master_task)
@@ -1549,6 +1551,8 @@
                     write(nu_diag,1002) ' e_yieldcurve     = ', e_yieldcurve, ' : aspect ratio of yield curve'
                     write(nu_diag,1002) ' e_plasticpot     = ', e_plasticpot, ' : aspect ratio of plastic potential'
             endif
+
+            write(nu_diag,1002) ' deltamin     = ', deltamin, ' : minimum delta for viscous coefficients'
             
             if (trim(coriolis) == 'latitude') then
                tmpstr2 = ' : latitude-dependent Coriolis parameter'

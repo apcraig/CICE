@@ -148,6 +148,7 @@
     e_yieldcurve    = 2.
     e_plasticpot    = 2.
     visc_coeff_method = 'avg_strength'
+    deltamin        = 1e-11
     seabed_stress   = .false.
     seabed_stress_method = 'LKD'
     k1              = 7.5
