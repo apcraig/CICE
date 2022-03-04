@@ -2236,7 +2236,7 @@
 
  1000    format (a20,1x,f13.6,1x,a) ! float
  1002    format (a20,5x,f9.2,1x,a)
- 1003    format (a20,1x,f16.14,1x,a)
+ 1003    format (a20,1x,G11.4,1x,a)
  1009    format (a20,1x,d13.6,1x,a)
  1010    format (a20,8x,l6,1x,a)  ! logical
  1011    format (a20,1x,l6)
