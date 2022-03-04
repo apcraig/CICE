@@ -111,7 +111,7 @@
                                 k1, k2, alphab, threshold_hw, Ktens,  &
                                 e_yieldcurve, e_plasticpot, coriolis, &
                                 ssh_stress, kridge, brlx, arlx,       &
-                                deltaminEVP, deltaminVP
+                                deltaminEVP, deltaminVP, capping
 
       use ice_dyn_vp, only: maxits_nonlin, precond, dim_fgmres, dim_pgmres, maxits_fgmres, &
                             maxits_pgmres, monitor_nonlin, monitor_fgmres, &
@@ -226,7 +226,7 @@
         damping_andacc, start_andacc,   fpfunc_andacc,  use_mean_vrel,  &
         ortho_type,     seabed_stress,  seabed_stress_method,           &
         k1, k2,         alphab,         threshold_hw,                   &
-        deltaminEVP,    deltaminVP,                                     &
+        deltaminEVP,    deltaminVP,     capping,                        &
         Cf,             Pstar,          Cstar,          Ktens
       
       namelist /shortwave_nml/ &
@@ -383,6 +383,7 @@
       visc_coeff_method = 'avg_strength' ! calc visc coeff at U point: avg_strength, avg_zeta
       deltaminEVP = 1e-11_dbl_kind ! minimum delta for viscous coeff (EVP, Hunke 2001)
       deltaminVP  = 2e-9_dbl_kind  ! minimum delta for viscous coeff (VP, Hibler 1979)
+      capping     = 1.0_dbl_kind   ! method for capping of visc coeff (1=Hibler 1979,0=Kreyscher2000)
       maxits_nonlin = 4      ! max nb of iteration for nonlinear solver
       precond = 'pgmres'     ! preconditioner for fgmres: 'ident' (identity), 'diag' (diagonal), 'pgmres' (Jacobi-preconditioned GMRES)
       dim_fgmres = 50        ! size of fgmres Krylov subspace
@@ -753,6 +754,7 @@
       call broadcast_scalar(visc_coeff_method,    master_task)
       call broadcast_scalar(deltaminEVP,          master_task)
       call broadcast_scalar(deltaminVP,           master_task)
+      call broadcast_scalar(capping,              master_task)
       call broadcast_scalar(advection,            master_task)
       call broadcast_scalar(conserv_check,        master_task)
       call broadcast_scalar(shortwave,            master_task)
@@ -1039,6 +1041,16 @@
             endif
             abort_list = trim(abort_list)//":44"
          endif
+      endif
+
+      if (kdyn == 1 .or. kdyn == 3) then
+      if (capping /= c0 .and. capping /= c1) then
+         if (my_task == master_task) then
+            write(nu_diag,*) subname//' ERROR: invalid method for capping viscous coefficients'
+            write(nu_diag,*) subname//' ERROR: capping should be equal to 0.0 or 1.0'
+         endif
+         abort_list = trim(abort_list)//":45"
+      endif
       endif
       
       rpcesm = 0
@@ -1558,8 +1570,10 @@
 
             if (kdyn == 1) then
                write(nu_diag,1003) ' deltamin     = ', deltaminEVP, ' : minimum delta for viscous coefficients'
+               write(nu_diag,1002) ' capping      = ', capping, ' : capping method for viscous coefficients'
             elseif (kdyn == 3) then
                write(nu_diag,1003) ' deltamin     = ', deltaminVP, ' : minimum delta for viscous coefficients'
+               write(nu_diag,1002) ' capping      = ', capping, ' : capping method for viscous coefficients'
             endif
                
             if (trim(coriolis) == 'latitude') then

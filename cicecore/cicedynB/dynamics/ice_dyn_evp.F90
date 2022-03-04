@@ -1146,7 +1146,8 @@
                          rdg_conv,   rdg_shear,  & 
                          str )
 
-      use ice_dyn_shared, only: strain_rates, deformations, viscous_coeffs_and_rep_pressure_T
+        use ice_dyn_shared, only: strain_rates, deformations, &
+                            viscous_coeffs_and_rep_pressure_T, capping
         
       integer (kind=int_kind), intent(in) :: & 
          nx_block, ny_block, & ! block dimensions
@@ -1209,8 +1210,6 @@
         csig12ne, csig12nw, csig12se, csig12sw    , &
         str12ew, str12we, str12ns, str12sn        , &
         strp_tmp, strm_tmp, tmp
-
-      real(kind=dbl_kind),parameter :: capping = c1 ! of the viscous coef
 
       character(len=*), parameter :: subname = '(stress)'
 
@@ -1476,7 +1475,7 @@
                              rdg_conv,   rdg_shear   )
 
         use ice_dyn_shared, only: strain_rates_T, deformations_T, &
-                                  viscous_coeffs_and_rep_pressure_T
+                            viscous_coeffs_and_rep_pressure_T, capping
         
       integer (kind=int_kind), intent(in) :: & 
          nx_block, ny_block, & ! block dimensions
@@ -1521,8 +1520,6 @@
       real (kind=dbl_kind) :: &
         divT, tensionT, shearT, DeltaT, & ! strain rates at T point
         rep_prsT                          ! replacement pressure at T point
-
-      real(kind=dbl_kind), parameter :: capping = c1 ! of the viscous coef
 
       character(len=*), parameter :: subname = '(stress_T)'
 
@@ -1622,7 +1619,7 @@
       use ice_dyn_shared, only: strain_rates_U, &
                                 viscous_coeffs_and_rep_pressure_T2U, &
                                 viscous_coeffs_and_rep_pressure_U, &
-                                visc_coeff_method, deltaminEVP
+                                visc_coeff_method, deltaminEVP, capping
         
       integer (kind=int_kind), intent(in) :: & 
          nx_block, ny_block, & ! block dimensions
@@ -1673,8 +1670,6 @@
         zetax2U, etax2U, rep_prsU,      & ! replacement pressure at U point
         DminUarea
 
-      real(kind=dbl_kind), parameter :: capping = c1 ! of the viscous coef
-      
       character(len=*), parameter :: subname = '(stress_U)'
       
       do ij = 1, icellu

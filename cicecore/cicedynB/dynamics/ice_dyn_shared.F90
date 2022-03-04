@@ -78,6 +78,7 @@
          ecci        , & ! temporary for 1d evp
          deltaminEVP , & ! minimum delta for viscous coefficients (EVP)
          deltaminVP  , & ! minimum delta for viscous coefficients (VP)
+         capping     , & ! capping of visc coeff (1=Hibler79, 0=Kreyscher2000)
          dtei        , & ! 1/dte, where dte is subcycling timestep (1/s)
 !         dte2T    , & ! dte/2T
          denom1       ! constants for stress equation
@@ -2136,7 +2137,6 @@
  ! Lemieux, J. F. et al. (2016). Improving the simulation of landfast ice
  ! by combining tensile strength and a parameterization for grounded ridges.
  ! J. Geophys. Res. Oceans, 121, 7354-7368.
-! capping must be 1 (c1) for evp and 0 for vp solver
 
        subroutine viscous_coeffs_and_rep_pressure_T (strength, DminTarea, &
                                                      Delta   , zetax2   , &

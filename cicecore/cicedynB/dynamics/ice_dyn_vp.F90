@@ -1157,7 +1157,8 @@
                                 zetax2  , etax2   , &
                                 rep_prs , stPr)
 
-      use ice_dyn_shared, only: strain_rates, viscous_coeffs_and_rep_pressure
+        use ice_dyn_shared, only: strain_rates, viscous_coeffs_and_rep_pressure, &
+                                  capping
 
       integer (kind=int_kind), intent(in) :: &
          nx_block, ny_block, & ! block dimensions
@@ -1204,11 +1205,9 @@
         stressp_1, stressp_2, stressp_3, stressp_4    , &
         strp_tmp
 
-      real(kind=dbl_kind) ,parameter :: capping = c0 ! of the viscous coef
       character(len=*), parameter :: subname = '(calc_zeta_dPr)'
 
       ! Initialize
-
       
       ! Initialize stPr, zetax2 and etax2 to zero
       ! (for cells where icetmask is false)
