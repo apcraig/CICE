@@ -810,7 +810,7 @@
       subroutine step_vel (nx_block,   ny_block, &
                            icell,      Cw,       &
                            indxi,      indxj,    &
-                           ksub,       aiu,      &
+                                       aiu,      &
                            uocn,       vocn,     &
                            waterx,     watery,   &
                            forcex,     forcey,   &
@@ -823,8 +823,7 @@
 
       integer (kind=int_kind), intent(in) :: &
          nx_block, ny_block, & ! block dimensions
-         icell,              & ! total count when ice[en]mask is true
-         ksub                  ! subcycling iteration
+         icell                 ! total count when ice[en]mask is true
 
       integer (kind=int_kind), dimension (nx_block*ny_block), intent(in) :: &
          indxi   , & ! compressed index in i-direction
@@ -914,10 +913,9 @@
          vvel(i,j) = (cca*cc2 - ccb*cc1) / ab2
 
          ! calculate seabed stress component for outputs
-         if (ksub == ndte .and. seabed_stress) then ! on last subcycling iteration
-            taubx(i,j) = -uvel(i,j)*Tb(i,j) / ccc
-            tauby(i,j) = -vvel(i,j)*Tb(i,j) / ccc
-         endif
+         ! only needed on last iteration.
+         taubx(i,j) = -uvel(i,j)*Cb
+         tauby(i,j) = -vvel(i,j)*Cb
 
       enddo                     ! ij
 
@@ -930,7 +928,7 @@
       subroutine stepu_Cgrid (nx_block,   ny_block, &
                               icell,      Cw,       &
                               indxi,      indxj,    &
-                              ksub,       aiu,      &
+                                          aiu,      &
                               uocn,       vocn,     &
                               waterx,     forcex,   &
                               massdti,    fm,       &
@@ -941,8 +939,7 @@
 
       integer (kind=int_kind), intent(in) :: &
          nx_block, ny_block, & ! block dimensions
-         icell,              & ! total count when ice[en]mask is true
-         ksub                  ! subcycling iteration
+         icell                 ! total count when ice[en]mask is true
 
       integer (kind=int_kind), dimension (nx_block*ny_block), intent(in) :: &
          indxi   , & ! compressed index in i-direction
@@ -1017,9 +1014,8 @@
          uvel(i,j) = (ccb*vold + cc1) / cca ! m/s
 
          ! calculate seabed stress component for outputs
-         if (ksub == ndte .and. seabed_stress) then ! on last subcycling iteration
-            taubx(i,j) = -uvel(i,j)*Tb(i,j) / ccc
-         endif
+         ! only needed on last iteration.
+         taubx(i,j) = -uvel(i,j)*Cb
 
       enddo                     ! ij
 
@@ -1032,7 +1028,7 @@
       subroutine stepv_Cgrid (nx_block,   ny_block, &
                               icell,      Cw,       &
                               indxi,      indxj,    &
-                              ksub,       aiu,      &
+                                          aiu,      &
                               uocn,       vocn,     &
                               watery,     forcey,   &
                               massdti,    fm,       &
@@ -1043,8 +1039,7 @@
 
       integer (kind=int_kind), intent(in) :: &
          nx_block, ny_block, & ! block dimensions
-         icell,              & ! total count when ice[en]mask is true
-         ksub                  ! subcycling iteration
+         icell                 ! total count when ice[en]mask is true
 
       integer (kind=int_kind), dimension (nx_block*ny_block), intent(in) :: &
          indxi   , & ! compressed index in i-direction
@@ -1119,9 +1114,8 @@
          vvel(i,j) = (-ccb*uold + cc2) / cca
           
          ! calculate seabed stress component for outputs
-         if (ksub == ndte .and. seabed_stress) then ! on last subcycling iteration
-            tauby(i,j) = -vvel(i,j)*Tb(i,j) / ccc
-         endif
+         ! only needed on last iteration.
+         tauby(i,j) = -vvel(i,j)*Cb
 
       enddo                     ! ij
 
