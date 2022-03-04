@@ -701,7 +701,7 @@
       use ice_flux, only:   fm, Tbu
       use ice_grid, only: dxt, dyt, dxhy, dyhx, cxp, cyp, cxm, cym, &
            uarear
-      use ice_dyn_shared, only: deltaminTarea
+      use ice_dyn_shared, only: DminTarea
       use ice_state, only: uvel, vvel, strength
       use ice_timers, only: ice_timer_start, ice_timer_stop, timer_bound
 
@@ -851,7 +851,7 @@
                                 dxhy     (:,:,iblk), dyhx    (:,:,iblk), &
                                 cxp      (:,:,iblk), cyp     (:,:,iblk), &
                                 cxm      (:,:,iblk), cym     (:,:,iblk), &
-                                deltaminTarea (:,:,iblk), strength (:,:,iblk),&
+                                DminTarea (:,:,iblk),strength (:,:,iblk),&
                                 zetax2 (:,:,iblk,:), etax2  (:,:,iblk,:),&
                                 rep_prs(:,:,iblk,:), stress_Pr  (:,:,:))
             
@@ -1153,7 +1153,7 @@
                                 dxhy    , dyhx    , &
                                 cxp     , cyp     , &
                                 cxm     , cym     , &
-                                deltaminTarea, strength, &
+                                DminTarea,strength, &
                                 zetax2  , etax2   , &
                                 rep_prs , stPr)
 
@@ -1179,7 +1179,7 @@
          cxp      , & ! 1.5*HTN - 0.5*HTS
          cym      , & ! 0.5*HTE - 1.5*HTW
          cxm      , & ! 0.5*HTN - 1.5*HTS
-         deltaminTarea ! deltamin*tarea
+         DminTarea ! deltamin*tarea
 
       real (kind=dbl_kind), dimension(nx_block,ny_block,4), intent(out) :: &
          zetax2   , & ! zetax2 = 2*zeta (bulk viscous coeff)
@@ -1243,7 +1243,7 @@
       ! viscous coefficients and replacement pressure                           
       !-----------------------------------------------------------------        
 
-         call viscous_coeffs_and_rep_pressure (strength(i,j),  deltaminTarea(i,j), &
+         call viscous_coeffs_and_rep_pressure (strength(i,j),  DminTarea(i,j), &
                                                Deltane,        Deltanw,        &
                                                Deltasw,        Deltase,        &
                                                zetax2(i,j,1),  zetax2(i,j,2),  &

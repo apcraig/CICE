@@ -163,7 +163,7 @@ contains
          csig12se, csig12sw, str12ew, str12we, str12ns, str12sn, &
          strp_tmp, strm_tmp, tmp_uvel_ee, tmp_vvel_se, tmp_vvel_ee, &
          tmp_vvel_ne, tmp_uvel_ne, tmp_uvel_se, dxhy, dyhx, cxp, cyp, &
-         cxm, cym, tmparea, deltaminTarea
+         cxm, cym, tmparea, DminTarea
 
       character(len=*), parameter :: subname = '(stress_iter)'
 
@@ -183,14 +183,14 @@ contains
 
          if (skiptcell(iw)) cycle
 
-         tmparea = dxt(iw) * dyt(iw) ! necessary to split calc of deltaminTarea. Otherwize not binary identical
-         deltaminTarea =  deltamin * tmparea
-         dxhy     = p5 * (hte(iw) - htem1(iw))
-         dyhx     = p5 * (htn(iw) - htnm1(iw))
-         cxp      = c1p5 * htn(iw) - p5 * htnm1(iw)
-         cyp      = c1p5 * hte(iw) - p5 * htem1(iw)
-         cxm      = -(c1p5 * htnm1(iw) - p5 * htn(iw))
-         cym      = -(c1p5 * htem1(iw) - p5 * hte(iw))
+         tmparea = dxt(iw) * dyt(iw) ! necessary to split calc of DminTarea. Otherwize not binary identical
+         DminTarea =  deltamin * tmparea
+         dxhy      = p5 * (hte(iw) - htem1(iw))
+         dyhx      = p5 * (htn(iw) - htnm1(iw))
+         cxp       = c1p5 * htn(iw) - p5 * htnm1(iw)
+         cyp       = c1p5 * hte(iw) - p5 * htem1(iw)
+         cxm       = -(c1p5 * htnm1(iw) - p5 * htn(iw))
+         cym       = -(c1p5 * htem1(iw) - p5 * hte(iw))
 
          !--------------------------------------------------------------
          ! strain rates
@@ -245,10 +245,10 @@ contains
          ! save replacement pressure for principal stress calculation
          !--------------------------------------------------------------
 
-         c0ne = strength(iw) / max(Deltane, deltaminTarea)
-         c0nw = strength(iw) / max(Deltanw, deltaminTarea)
-         c0sw = strength(iw) / max(Deltasw, deltaminTarea)
-         c0se = strength(iw) / max(Deltase, deltaminTarea)
+         c0ne = strength(iw) / max(Deltane, DminTarea)
+         c0nw = strength(iw) / max(Deltanw, DminTarea)
+         c0sw = strength(iw) / max(Deltasw, DminTarea)
+         c0se = strength(iw) / max(Deltase, DminTarea)
 
          c1ne = c0ne * arlx1i
          c1nw = c0nw * arlx1i
@@ -433,7 +433,7 @@ contains
          csig12se, csig12sw, str12ew, str12we, str12ns, str12sn, &
          strp_tmp, strm_tmp, tmp_uvel_ee, tmp_vvel_se, tmp_vvel_ee, &
          tmp_vvel_ne, tmp_uvel_ne, tmp_uvel_se, dxhy, dyhx, cxp, cyp, &
-         cxm, cym, tmparea, deltaminTarea
+         cxm, cym, tmparea, DminTarea
 
       character(len=*), parameter :: subname = '(stress_last)'
 
@@ -454,14 +454,14 @@ contains
 
          if (skiptcell(iw)) cycle
 
-         tmparea = dxt(iw) * dyt(iw) ! necessary to split calc of deltaminTarea. Otherwize not binary identical
-         deltaminTarea = deltamin * tmparea
-         dxhy     = p5 * (hte(iw) - htem1(iw))
-         dyhx     = p5 * (htn(iw) - htnm1(iw))
-         cxp      = c1p5 * htn(iw) - p5 * htnm1(iw)
-         cyp      = c1p5 * hte(iw) - p5 * htem1(iw)
-         cxm      = -(c1p5 * htnm1(iw) - p5 * htn(iw))
-         cym      = -(c1p5 * htem1(iw) - p5 * hte(iw))
+         tmparea = dxt(iw) * dyt(iw) ! necessary to split calc of DminTarea. Otherwize not binary identical
+         DminTarea = deltamin * tmparea
+         dxhy      = p5 * (hte(iw) - htem1(iw))
+         dyhx      = p5 * (htn(iw) - htnm1(iw))
+         cxp       = c1p5 * htn(iw) - p5 * htnm1(iw)
+         cyp       = c1p5 * hte(iw) - p5 * htem1(iw)
+         cxm       = -(c1p5 * htnm1(iw) - p5 * htn(iw))
+         cym       = -(c1p5 * htem1(iw) - p5 * hte(iw))
 
          !--------------------------------------------------------------
          ! strain rates
@@ -531,10 +531,10 @@ contains
          ! save replacement pressure for principal stress calculation
          !--------------------------------------------------------------
 
-         c0ne = strength(iw) / max(Deltane, deltaminTarea)
-         c0nw = strength(iw) / max(Deltanw, deltaminTarea)
-         c0sw = strength(iw) / max(Deltasw, deltaminTarea)
-         c0se = strength(iw) / max(Deltase, deltaminTarea)
+         c0ne = strength(iw) / max(Deltane, DminTarea)
+         c0nw = strength(iw) / max(Deltanw, DminTarea)
+         c0sw = strength(iw) / max(Deltasw, DminTarea)
+         c0se = strength(iw) / max(Deltase, DminTarea)
 
          c1ne = c0ne * arlx1i
          c1nw = c0nw * arlx1i
