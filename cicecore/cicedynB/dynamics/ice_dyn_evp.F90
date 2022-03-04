@@ -759,7 +759,7 @@
 
             case('CD','C')
 
-               !$TCXOMP PARALLEL DO PRIVATE(iblk)
+               !$OMP PARALLEL DO PRIVATE(iblk)
                do iblk = 1, nblocks
                   call stress_T (nx_block,             ny_block,             &
                                                        icellt(iblk),         &
@@ -790,6 +790,7 @@
                                           rdg_conv(:,:,iblk), rdg_shear(:,:,iblk))
                   endif
                enddo
+               !$OMP END PARALLEL DO
 
                ! Need to update the halos for the stress components
                call ice_timer_start(timer_bound)
@@ -799,7 +800,7 @@
                                     field_loc_center, field_type_scalar)
                call ice_timer_stop(timer_bound)
 
-               !$TCXOMP PARALLEL DO PRIVATE(iblk)
+               !$OMP PARALLEL DO PRIVATE(iblk)
                do iblk = 1, nblocks
                   call stress_U (nx_block,             ny_block,             &
                                                        icellu(iblk),         &
@@ -819,7 +820,7 @@
                                  stresspU  (:,:,iblk), stressmU  (:,:,iblk), &
                                  stress12U (:,:,iblk))                   
                enddo
-               !$TCXOMP END PARALLEL DO
+               !$OMP END PARALLEL DO
 
                ! Need to update the halos for the stress components
                call ice_timer_start(timer_bound)
@@ -837,7 +838,7 @@
                                     field_loc_NEcorner,  field_type_scalar)
                call ice_timer_stop(timer_bound)
 
-               !$TCXOMP PARALLEL DO PRIVATE(iblk)
+               !$OMP PARALLEL DO PRIVATE(iblk)
                do iblk = 1, nblocks
 
                   call div_stress (nx_block,             ny_block,             & ! E point
@@ -853,7 +854,7 @@
                                    strintxE  (:,:,iblk), strintyE  (:,:,iblk), &
                                    'E')
 
-                   call div_stress (nx_block,             ny_block,            & ! N point
+                   call div_stress (nx_block,            ny_block,             & ! N point
                                                          icelln(iblk),         &
                                    indxni      (:,iblk), indxnj      (:,iblk), &
                                    dxN       (:,:,iblk), dyN       (:,:,iblk), &
@@ -867,11 +868,11 @@
                                    'N')
                  
                enddo
-               !$TCXOMP END PARALLEL DO
+               !$OMP END PARALLEL DO
 
                if (grid_ice == 'CD') then
                
-                  !$TCXOMP PARALLEL DO PRIVATE(iblk)
+                  !$OMP PARALLEL DO PRIVATE(iblk)
                   do iblk = 1, nblocks
 
                      call step_vel (nx_block,             ny_block,             & ! E point
@@ -903,11 +904,11 @@
                                     TbN       (:,:,iblk))
 
                   enddo
-                  !$TCXOMP END PARALLEL DO
+                  !$OMP END PARALLEL DO
 
                elseif (grid_ice == 'C') then
 
-                  !$TCXOMP PARALLEL DO PRIVATE(iblk)
+                  !$OMP PARALLEL DO PRIVATE(iblk)
                   do iblk = 1, nblocks
 
                       call stepu_Cgrid (nx_block,            ny_block,              & ! u, E point
@@ -935,7 +936,7 @@
                                         TbN       (:,:,iblk))
 
                   enddo
-                  !$TCXOMP END PARALLEL DO
+                  !$OMP END PARALLEL DO
                   
                endif
                   
