@@ -1170,7 +1170,7 @@
          cym      , & ! 0.5*HTE - 1.5*HTW
          cxm      , & ! 0.5*HTN - 1.5*HTS
          tarear   , & ! 1/tarea
-         DminTarea    ! deltamin*tarea
+         DminTarea    ! deltaminEVP*tarea
 
       real (kind=dbl_kind), dimension (nx_block,ny_block), intent(inout) :: &
          stressp_1, stressp_2, stressp_3, stressp_4 , & ! sigma11+sigma22
@@ -1498,7 +1498,7 @@
          dyT      , & ! height of T-cell through the middle (m)
          strength , & ! ice strength (N/m)
          tarear   , & ! 1/tarea
-         DminTarea    ! deltamin*tarea
+         DminTarea    ! deltaminEVP*tarea
 
       real (kind=dbl_kind), dimension (nx_block,ny_block), intent(inout) :: &
          zetax2T  , & ! zetax2 = 2*zeta (bulk viscous coeff)
@@ -1622,7 +1622,7 @@
       use ice_dyn_shared, only: strain_rates_U, &
                                 viscous_coeffs_and_rep_pressure_T2U, &
                                 viscous_coeffs_and_rep_pressure_U, &
-                                visc_coeff_method, deltamin
+                                visc_coeff_method, deltaminEVP
         
       integer (kind=int_kind), intent(in) :: & 
          nx_block, ny_block, & ! block dimensions
@@ -1717,7 +1717,7 @@
 
          elseif (visc_coeff_method == 'avg_strength') then
 
-         DminUarea = deltamin*uarea(i,j)
+         DminUarea = deltaminEVP*uarea(i,j)
          
          call viscous_coeffs_and_rep_pressure_U (strength(i  ,j  ), strength(i  ,j+1), &
                                                  strength(i+1,j+1), strength(i+1,j  ), &

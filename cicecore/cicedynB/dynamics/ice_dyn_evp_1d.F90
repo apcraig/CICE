@@ -132,7 +132,8 @@ contains
       use ice_kinds_mod
       use ice_constants, only : p027, p055, p111, p166, p222, p25, &
           p333, p5, c1p5, c1
-      use ice_dyn_shared, only : ecci, denom1, arlx1i, Ktens, revp, deltamin
+      use ice_dyn_shared, only : ecci, denom1, arlx1i, Ktens, revp, &
+          deltaminEVP
 
       implicit none
 
@@ -184,7 +185,7 @@ contains
          if (skiptcell(iw)) cycle
 
          tmparea = dxt(iw) * dyt(iw) ! necessary to split calc of DminTarea. Otherwize not binary identical
-         DminTarea =  deltamin * tmparea
+         DminTarea =  deltaminEVP * tmparea
          dxhy      = p5 * (hte(iw) - htem1(iw))
          dyhx      = p5 * (htn(iw) - htnm1(iw))
          cxp       = c1p5 * htn(iw) - p5 * htnm1(iw)
@@ -401,7 +402,8 @@ contains
       use ice_kinds_mod
       use ice_constants, only : p027, p055, p111, p166, p222, p25, &
           p333, p5, c1p5, c1, c0
-      use ice_dyn_shared, only : ecci, denom1, arlx1i, Ktens, revp, deltamin
+      use ice_dyn_shared, only : ecci, denom1, arlx1i, Ktens, revp,&
+          deltaminEVP
 
       implicit none
 
@@ -455,7 +457,7 @@ contains
          if (skiptcell(iw)) cycle
 
          tmparea = dxt(iw) * dyt(iw) ! necessary to split calc of DminTarea. Otherwize not binary identical
-         DminTarea = deltamin * tmparea
+         DminTarea = deltaminEVP * tmparea
          dxhy      = p5 * (hte(iw) - htem1(iw))
          dyhx      = p5 * (htn(iw) - htnm1(iw))
          cxp       = c1p5 * htn(iw) - p5 * htnm1(iw)

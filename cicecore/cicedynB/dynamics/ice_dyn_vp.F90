@@ -1179,7 +1179,7 @@
          cxp      , & ! 1.5*HTN - 0.5*HTS
          cym      , & ! 0.5*HTE - 1.5*HTW
          cxm      , & ! 0.5*HTN - 1.5*HTS
-         DminTarea ! deltamin*tarea
+         DminTarea    ! deltaminVP*tarea
 
       real (kind=dbl_kind), dimension(nx_block,ny_block,4), intent(out) :: &
          zetax2   , & ! zetax2 = 2*zeta (bulk viscous coeff)

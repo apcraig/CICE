@@ -70,14 +70,15 @@
          m_min = p01              ! minimum ice mass (kg/m^2)
 
       real (kind=dbl_kind), public :: &
-         revp     , & ! 0 for classic EVP, 1 for revised EVP
+         revp        , & ! 0 for classic EVP, 1 for revised EVP
          e_yieldcurve, & ! VP aspect ratio of elliptical yield curve
          e_plasticpot, & ! VP aspect ratio of elliptical plastic potential
-         epp2i    , & ! 1/(e_plasticpot)^2
-         e_factor , & ! (e_yieldcurve)^2/(e_plasticpot)^4
-         ecci     , & ! temporary for 1d evp
-         deltamin , & ! minimum delta for viscous coefficients 
-         dtei     , & ! 1/dte, where dte is subcycling timestep (1/s)
+         epp2i       , & ! 1/(e_plasticpot)^2
+         e_factor    , & ! (e_yieldcurve)^2/(e_plasticpot)^4
+         ecci        , & ! temporary for 1d evp
+         deltaminEVP , & ! minimum delta for viscous coefficients (EVP)
+         deltaminVP  , & ! minimum delta for viscous coefficients (VP)
+         dtei        , & ! 1/dte, where dte is subcycling timestep (1/s)
 !         dte2T    , & ! dte/2T
          denom1       ! constants for stress equation
 
@@ -267,7 +268,11 @@
             stress12U (i,j,iblk) = c0
          endif
 
-         DminTarea(i,j,iblk) = deltamin*tarea(i,j,iblk) ! not needed for kdyn=2??
+         if (kdyn == 1) then 
+            DminTarea(i,j,iblk) = deltaminEVP*tarea(i,j,iblk)
+         elseif (kdyn == 3) then 
+            DminTarea(i,j,iblk) = deltaminVP*tarea(i,j,iblk)
+         endif
 
          ! ice extent mask on velocity points
          iceumask(i,j,iblk) = .false.
