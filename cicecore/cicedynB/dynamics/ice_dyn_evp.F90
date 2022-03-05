@@ -1167,7 +1167,8 @@
                          stress12_3, stress12_4, & 
                          str )
 
-      use ice_dyn_shared, only: strain_rates, viscous_coeffs_and_rep_pressure_T
+      use ice_dyn_shared, only: strain_rates, viscous_coeffs_and_rep_pressure_T, &
+          capping
         
       integer (kind=int_kind), intent(in) :: & 
          nx_block, ny_block, & ! block dimensions
