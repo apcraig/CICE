@@ -4228,6 +4228,7 @@
             depth(k) = depth(k-1) + thick(k)
          enddo
 
+         bathymetry = 0._dbl_kind
          do iblk = 1, nblocks
             do j = 1, ny_block
             do i = 1, nx_block
