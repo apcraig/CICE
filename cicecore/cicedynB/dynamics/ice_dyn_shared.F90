@@ -52,6 +52,10 @@
       character (len=char_len), public :: &
          evp_algorithm  ! standard_2d = 2D org version (standard)
                         ! shared_mem_1d = 1d without mpi call and refactorization to 1d 
+
+      real (kind=dbl_kind), public :: &
+         elasticDamp    ! coefficient for calculating the parameter E, elastic damping parameter
+
       ! other EVP parameters
 
       character (len=char_len), public :: & 
@@ -62,7 +66,6 @@
       
                                                                       
       real (kind=dbl_kind), parameter, public :: &
-         eyc   = 0.36_dbl_kind, & ! coefficient for calculating the parameter E
          u0    = 5e-5_dbl_kind, & ! residual velocity for seabed stress (m/s)
          cosw  = c1           , & ! cos(ocean turning angle)  ! turning angle = 0
          sinw  = c0           , & ! sin(ocean turning angle)  ! turning angle = 0
@@ -190,7 +193,7 @@
       if (my_task == master_task) then
          write(nu_diag,*) 'dt  = ',dt
          write(nu_diag,*) 'dte = ',dt/real(ndte,kind=dbl_kind)
-         write(nu_diag,*) 'tdamp =', eyc*dt
+         write(nu_diag,*) 'tdamp =', elasticDamp * dt
       endif
 
       allocate(fcor_blk(nx_block,ny_block,max_blocks))
@@ -318,8 +321,8 @@
       ecci = c1/e_yieldcurve**2 ! temporary for 1d evp
 
       ! constants for stress equation
-      !tdamp2 = c2*eyc*dt                    ! s
-      !dte2T = dte/tdamp2    or c1/(c2*eyc*real(ndte,kind=dbl_kind))               ! ellipse (unitless)
+      !tdamp2 = c2 * elasticDamp * dt                 ! s
+      !dte2T = dte/tdamp2    or c1/(c2*elasticDamp*real(ndte,kind=dbl_kind))               ! ellipse (unitless)
 
       if (revised_evp) then       ! Bouillon et al, Ocean Mod 2013
          revp   = c1
@@ -330,7 +333,7 @@
          !arlx1i = dte2T
          !arlx   = c1/arlx1i
          !brlx   = dt*dtei
-         arlx   = c2*eyc*real(ndte,kind=dbl_kind)
+         arlx   = c2 * elasticDamp * real(ndte,kind=dbl_kind)
          arlx1i   = c1/arlx
          brlx   = real(ndte,kind=dbl_kind)
          denom1 = c1/(c1+arlx1i)
