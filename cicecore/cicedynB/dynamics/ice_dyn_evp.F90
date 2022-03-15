@@ -837,12 +837,11 @@
                                    dxE       (:,:,iblk), dyE       (:,:,iblk), &
                                    dxU       (:,:,iblk), dyT       (:,:,iblk), &
                                    earear    (:,:,iblk),                       &
-                                   stresspT  (:,:,iblk), stressmT  (:,:,iblk), &
-                                   stress12U (:,:,iblk),                       &
-                                   stresspU  (:,:,iblk), stressmU  (:,:,iblk), &
-                                   stress12T (:,:,iblk),                       &
-                                   strintxE  (:,:,iblk), strintyE  (:,:,iblk), &
-                                   'E')
+                                   stresspF1  = stresspT  (:,:,iblk), &
+                                   stressmF1  = stressmT  (:,:,iblk), &
+                                   stress12F1 = stress12U (:,:,iblk), &
+                                   F1         = strintxE  (:,:,iblk), &
+                                   grid_location = 'E')
 
                    call div_stress (nx_block,            ny_block,             & ! N point
                                                          icelln(iblk),         &
@@ -850,12 +849,11 @@
                                    dxN       (:,:,iblk), dyN       (:,:,iblk), &
                                    dxT       (:,:,iblk), dyU       (:,:,iblk), &
                                    narear    (:,:,iblk),                       &
-                                   stresspU  (:,:,iblk), stressmU  (:,:,iblk), &
-                                   stress12T (:,:,iblk),                       &
-                                   stresspT  (:,:,iblk), stressmT  (:,:,iblk), &
-                                   stress12U (:,:,iblk),                       &
-                                   strintxN  (:,:,iblk), strintyN  (:,:,iblk), &
-                                   'N')
+                                   stresspF2  = stresspT  (:,:,iblk), &
+                                   stressmF2  = stressmT  (:,:,iblk), &
+                                   stress12F2 = stress12U (:,:,iblk), &
+                                   F2         = strintyN  (:,:,iblk), &
+                                   grid_location = 'N')
                  
                enddo
                !$OMP END PARALLEL DO
@@ -1572,7 +1570,7 @@
 
       use ice_dyn_shared, only: strain_rates_T, capping, &
                                 visccoeff_replpress
-        
+
       integer (kind=int_kind), intent(in) :: & 
          nx_block, ny_block, & ! block dimensions
          icellt                ! no. of cells where icetmask = 1
@@ -1641,7 +1639,7 @@
                                    DeltaT       , zetax2T  (i,j), &
                                    etax2T  (i,j), rep_prsT      , &
                                    capping)
-         
+
          !-----------------------------------------------------------------
          ! the stresses                            ! kg/s^2
          !-----------------------------------------------------------------
@@ -1755,7 +1753,7 @@
                               epm,  npm,  uvm,       &
                               divU,       tensionU,  &
                               shearU,     DeltaU     )
-         
+
          !-----------------------------------------------------------------
          ! viscous coefficients and replacement pressure at U point
          !-----------------------------------------------------------------
@@ -2091,7 +2089,9 @@
          dyE_N , & ! height of E or N-cell through the middle (m)
          dxT_U , & ! width of T or U-cell through the middle (m)
          dyT_U , & ! height of T or U-cell through the middle (m)
-         arear , & ! earear or narear
+         arear     ! earear or narear
+
+      real (kind=dbl_kind), optional, dimension (nx_block,ny_block), intent(in) :: &
          stresspF1  , & ! stressp  (U or T) used for F1 calculation
          stressmF1  , & ! stressm  (U or T) used for F1 calculation 
          stress12F1 , & ! stress12 (U or T) used for F1 calculation 
@@ -2102,7 +2102,7 @@
       character(len=*), intent(in) :: &
          grid_location ! E (East) or N (North) ! TO BE IMPROVED!!!!
       
-      real (kind=dbl_kind), dimension (nx_block,ny_block), intent(out) :: &
+      real (kind=dbl_kind), optional, dimension (nx_block,ny_block), intent(out) :: &
          F1      , & ! div of stress tensor for u component
          F2          ! div of stress tensor for v component
 
@@ -2115,54 +2115,79 @@
 
 !!! Instead of having the if statements below we could define for example
 !    i+ci, j+cj where ci, cj would change with grid_position
-      
-      do ij = 1, icell
-         i = indxi(ij)
-         j = indxj(ij)
+
+      if (grid_location /= "E" .and. grid_location /= "N") then
+         call abort_ice(subname // ' ERROR: unknown grid_location: ' // grid_location)
+      endif
+
+      if (present(F1) .and. &
+         (.not.present(stresspF1) .or. .not.present(stressmF1) .or. .not.present(stress12F1))) then
+         call abort_ice(subname // ' ERROR: F1 passing arguments ')
+      endif
+
+      if (present(F2) .and. &
+         (.not.present(stresspF2) .or. .not.present(stressmF2) .or. .not.present(stress12F2))) then
+         call abort_ice(subname // ' ERROR: F2 passing arguments ')
+      endif
 
       !-----------------------------------------------------------------
       ! F1,F2 : div of stress tensor for u,v components
       !-----------------------------------------------------------------
 
-         if (grid_location == "E") then
-            
+      if (grid_location == "E" .and. present(F1)) then
+         do ij = 1, icell
+            i = indxi(ij)
+            j = indxj(ij)
             F1(i,j) = arear(i,j) * &
                  ( p5 * dyE_N(i,j) * ( stresspF1(i+1,j)-stresspF1(i,j) )     &
                  + (p5/dyE_N(i,j)) * ( (dyT_U(i+1,j)**2) * stressmF1(i+1,j)  &
                                       -(dyT_U(i,j)**2)*stressmF1(i,j) )      &
                  + (c1/dxE_N(i,j)) * ( (dxT_U(i,j)**2) * stress12F1(i,j)     &
                                       -(dxT_U(i,j-1)**2)*stress12F1(i,j-1) ) )
+         enddo
+      endif
 
+      if (grid_location == "E" .and. present(F2)) then
+         do ij = 1, icell
+            i = indxi(ij)
+            j = indxj(ij)
             F2(i,j) = arear(i,j) * &
                  ( p5 * dxE_N(i,j) * ( stresspF2(i,j)-stresspF2(i,j-1) )     &
                  - (p5/dxE_N(i,j)) * ( (dxT_U(i,j)**2) * stressmF2(i,j)      &
                                       -(dxT_U(i,j-1)**2)*stressmF2(i,j-1) )  &
                  + (c1/dyE_N(i,j)) * ( (dyT_U(i+1,j)**2) * stress12F2(i+1,j) &
                                       -(dyT_U(i,j)**2)*stress12F2(i,j) ) )
+         enddo
+      endif
 
-         elseif (grid_location == "N") then
-
+      if (grid_location == "N" .and. present(F1)) then
+         do ij = 1, icell
+            i = indxi(ij)
+            j = indxj(ij)
             F1(i,j) = arear(i,j) * &
                  ( p5 * dyE_N(i,j) * ( stresspF1(i,j)-stresspF1(i-1,j) )     &
                  + (p5/dyE_N(i,j)) * ( (dyT_U(i,j)**2) * stressmF1(i,j)      &
                                       -(dyT_U(i-1,j)**2)*stressmF1(i-1,j) )  &
                  + (c1/dxE_N(i,j)) * ( (dxT_U(i,j+1)**2) * stress12F1(i,j+1) &
                                       -(dxT_U(i,j)**2)*stress12F1(i,j) ) )
+         enddo
+      endif
 
+      if (grid_location == "N" .and. present(F2)) then
+         do ij = 1, icell
+            i = indxi(ij)
+            j = indxj(ij)
             F2(i,j) = arear(i,j) * &
                  ( p5 * dxE_N(i,j) * ( stresspF2(i,j+1)-stresspF2(i,j) )     &
                  - (p5/dxE_N(i,j)) * ( (dxT_U(i,j+1)**2) * stressmF2(i,j+1)  &
                                       -(dxT_U(i,j)**2)*stressmF2(i,j) )      &
                  + (c1/dyE_N(i,j)) * ( (dyT_U(i,j)**2) * stress12F2(i,j)     &
                                       -(dyT_U(i-1,j)**2)*stress12F2(i-1,j) ) )
-         else
-            call abort_ice(subname // ' unknown grid_location: ' // grid_location)
-         endif
+         enddo
+      endif
 
-      enddo                     ! ij
+      end subroutine div_stress
 
-    end subroutine div_stress
-    
 !=======================================================================
 
       end module ice_dyn_evp
