@@ -2115,7 +2115,8 @@
             area1,   area2,   area3,   area4, &
          deltaU
 
-      real (kind=dbl_kind), intent(out):: zetax2U, etax2U, rep_prsU
+      real (kind=dbl_kind), optional, intent(out):: &
+         zetax2U, etax2U, rep_prsU
 
       ! local variables
 
@@ -2131,17 +2132,23 @@
                  mask3 * area3   + &
                  mask2 * area2)
 
-!      zetax2U = (mask1 * area1 * zetax2T1  + &
-!                 mask4 * area4 * zetax2T4  + &
-!                 mask3 * area3 * zetax2T3  + &
-!                 mask2 * area2 * zetax2T2) / areatmp
+      if (present(rep_prsU) .or. present(zetax2U)) then
+         zetax2U = (mask1 * area1 * zetax2T1  + &
+                    mask4 * area4 * zetax2T4  + &
+                    mask3 * area3 * zetax2T3  + &
+                    mask2 * area2 * zetax2T2) / areatmp
+      endif
 
-      etax2U  = (mask1 * area1 * etax2T1  + &
-                 mask4 * area4 * etax2T4  + &
-                 mask3 * area3 * etax2T3  + &
-                 mask2 * area2 * etax2T2) / areatmp
+      if (present(etax2U)) then
+         etax2U  = (mask1 * area1 * etax2T1  + &
+                    mask4 * area4 * etax2T4  + &
+                    mask3 * area3 * etax2T3  + &
+                    mask2 * area2 * etax2T2) / areatmp
+      endif
 
-!      rep_prsU = (c1-Ktens)/(c1+Ktens)*zetax2U*deltaU
+      if (present(rep_prsU)) then
+         rep_prsU = (c1-Ktens)/(c1+Ktens)*zetax2U*deltaU
+      endif
 
       end subroutine visccoeff_replpress_avgzeta
 

@@ -1767,7 +1767,7 @@
                                               hm      (i+1,j+1), hm      (i+1,j  ), &
                                               tarea   (i  ,j  ), tarea   (i  ,j+1), &
                                               tarea   (i+1,j+1), tarea   (i+1,j  ), &
-                                              DeltaU, zetax2U, etax2U, rep_prsU)
+                                              DeltaU, etax2U=etax2U)
 
          elseif (visc_coeff_method == 'avg_strength') then
             DminUarea = deltaminEVP*uarea(i,j)
