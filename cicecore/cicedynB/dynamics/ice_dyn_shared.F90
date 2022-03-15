@@ -2091,10 +2091,10 @@
                                  deltaU, zetax2U, etax2U, rep_prsU)
 
       real (kind=dbl_kind), intent(in):: &
-         zetax2T1,zetax2T4,zetax2T3,zetax2T2, &
-          etax2T1, etax2T4, etax2T3, etax2T2, & ! 2 x viscous coeffs, replacement pressure
-            mask1,   mask4,   mask3,   mask2, &
-            area1,   area4,   area3,   area2, &
+         zetax2T1,zetax2T2,zetax2T3,zetax2T4, &
+          etax2T1, etax2T2, etax2T3, etax2T4, & ! 2 x viscous coeffs, replacement pressure
+            mask1,   mask2,   mask3,   mask4, &
+            area1,   area2,   area3,   area4, &
          deltaU
 
       real (kind=dbl_kind), intent(out):: zetax2U, etax2U, rep_prsU
