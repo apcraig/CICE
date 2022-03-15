@@ -757,7 +757,7 @@
 
             elseif (grid_ice == "C") then
 
-               !$OMP PARALLEL DO PRIVATE(iblk)
+!               !$OMP PARALLEL DO PRIVATE(iblk)
 !               do iblk = 1, nblocks
 !                  call shear_strain_rate_U (nx_block,             ny_block,             &
 !                                            icellu    (iblk)    ,                       &
@@ -772,7 +772,7 @@
 !                                            uvm       (:,:,iblk),                       &
 !                                            shrU (:,:,iblk))   
 !               enddo
-               !$OMP END PARALLEL DO
+!               !$OMP END PARALLEL DO
 
 !               call ice_timer_start(timer_bound)
 !               call ice_HaloUpdate (shrU,          halo_info, &
