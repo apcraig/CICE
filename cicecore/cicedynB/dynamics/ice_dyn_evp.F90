@@ -759,7 +759,7 @@
 
                !$OMP PARALLEL DO PRIVATE(iblk)
                do iblk = 1, nblocks
-                  call stress_T (nx_block,             ny_block,             &
+                  call stressC_T (nx_block,             ny_block,             &
                                                        icellt(iblk),         &
                                  indxti      (:,iblk), indxtj      (:,iblk), &
                                  uvelE     (:,:,iblk), vvelE     (:,:,iblk), &
@@ -769,8 +769,7 @@
                                                        DminTarea (:,:,iblk), &
                                  strength  (:,:,iblk),                       &
                                  zetax2T   (:,:,iblk), etax2T    (:,:,iblk), &
-                                 stresspT  (:,:,iblk), stressmT  (:,:,iblk), &
-                                 stress12T (:,:,iblk) )
+                                 stresspT  (:,:,iblk), stressmT  (:,:,iblk))
 
                   !-----------------------------------------------------------------
                   ! on last subcycle, save quantities for mechanical redistribution
@@ -800,7 +799,7 @@
 
                !$OMP PARALLEL DO PRIVATE(iblk)
                do iblk = 1, nblocks
-                  call stress_U (nx_block,             ny_block,             &
+                  call stressC_U (nx_block,             ny_block,             &
                                                        icellu(iblk),         &
                                  indxui      (:,iblk), indxuj      (:,iblk), &
                                  uvelE     (:,:,iblk), vvelE     (:,:,iblk), &
@@ -815,7 +814,6 @@
                                  hm        (:,:,iblk), uvm       (:,:,iblk), &
                                  zetax2T   (:,:,iblk), etax2T    (:,:,iblk), &
                                  strength  (:,:,iblk),                       &
-                                 stresspU  (:,:,iblk), stressmU  (:,:,iblk), &
                                  stress12U (:,:,iblk))                   
                enddo
                !$OMP END PARALLEL DO
@@ -826,12 +824,6 @@
                                     field_loc_center,  field_type_scalar)
                call ice_HaloUpdate (stressmT,          halo_info, &
                                     field_loc_center,  field_type_scalar)
-               call ice_HaloUpdate (stress12T,          halo_info, &
-                                    field_loc_center,  field_type_scalar)
-               call ice_HaloUpdate (stresspU,          halo_info, &
-                                    field_loc_NEcorner,  field_type_scalar)
-               call ice_HaloUpdate (stressmU,          halo_info, &
-                                    field_loc_NEcorner,  field_type_scalar)
                call ice_HaloUpdate (stress12U,          halo_info, &
                                     field_loc_NEcorner,  field_type_scalar)
                call ice_timer_stop(timer_bound)
