@@ -1767,6 +1767,12 @@
 ! author: JF Lemieux, ECCC
 ! Nov 2021      
 
+! Bouillon, S., T. Fichefet, V. Legat and G. Madec (2013). The 
+! elastic-viscous-plastic method revisited. Ocean Model., 71, 2-12.
+
+! Kimmritz, M., S. Danilov and M. Losch (2016). The adaptive EVP method
+! for solving the sea ice momentum equation. Ocean Model., 101, 59-67.
+      
       subroutine stressC_U  (nx_block, ny_block,  & 
                                        icellu,    &  
                              indxui  , indxuj,    &
