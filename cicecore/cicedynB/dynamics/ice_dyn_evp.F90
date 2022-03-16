@@ -2194,6 +2194,15 @@
 ! author: JF Lemieux, ECCC
 ! Nov 2021      
 
+! Hunke, E. C., and J. K. Dukowicz (2002).  The Elastic-Viscous-Plastic
+! Sea Ice Dynamics Model in General Orthogonal Curvilinear Coordinates
+! on a Sphere - Incorporation of Metric Terms. Mon. Weather Rev.,
+! 130, 1848-1865.
+      
+! Bouillon, S., M. Morales Maqueda, V. Legat and T. Fichefet (2009). An 
+! elastic-viscous-plastic sea ice model formulated on Arakawa B and C grids.
+! Ocean Model., 27, 174-184.
+      
       subroutine div_stress  (nx_block,   ny_block,   & 
                                           icell,      & 
                               indxi,     indxj,       &
