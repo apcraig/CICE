@@ -1720,6 +1720,12 @@
                               dxT,        dyT,        &
                               divT = divT,            &
                               tensionT = tensionT     )
+
+         !-----------------------------------------------------------------
+         ! Square of shear strain rate at T obtained from interpolation of
+         ! U point values (Bouillon et al., 2013, Kimmritz et al., 2016
+         !-----------------------------------------------------------------
+        
          call calc_shearT_DeltaT (shrU(i,j),     shrU(i,j-1), &
                                   shrU(i-1,j-1), shrU(i-1,j), &
                                   divT(i,j),     tensionT(i,j),    &
@@ -1848,13 +1854,9 @@
          j = indxuj(ij)
 
          !-----------------------------------------------------------------
-         ! strain rates at U point
-         ! NOTE these are actually strain rates * area  (m^2/s)
-         !-----------------------------------------------------------------
-
-
-         !-----------------------------------------------------------------
-         ! viscous coefficients and replacement pressure at U point
+         ! viscosities and replacement pressure at U point
+         ! avg_zeta: Bouillon et al. 2013, C1 method of Kimmritz et al. 2016
+         ! avg_strength: C2 method of Kimmritz et al. 2016
          !-----------------------------------------------------------------
 
          if (visc_coeff_method == 'avg_zeta') then
