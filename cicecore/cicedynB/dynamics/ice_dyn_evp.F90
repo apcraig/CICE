@@ -791,7 +791,7 @@
                                  dxN       (:,:,iblk), dyE       (:,:,iblk), &
                                  dxT       (:,:,iblk), dyT       (:,:,iblk), &
                                                        DminTarea (:,:,iblk), &
-                                 strength  (:,:,iblk),                       &
+                                 strength  (:,:,iblk), shrU      (:,:,iblk), &
                                  zetax2T   (:,:,iblk), etax2T    (:,:,iblk), &
                                  stresspT  (:,:,iblk), stressmT  (:,:,iblk))
 
@@ -1580,17 +1580,17 @@
 ! updated: D. Bailey, NCAR
 ! Nov 2021      
 
-      subroutine stressC_T  (nx_block,   ny_block,   & 
-                                         icellt,     & 
-                             indxti,     indxtj,     &
-                             uvelE,      vvelE,      &
-                             uvelN,      vvelN,      &
-                             dxN,        dyE,        &
-                             dxT,        dyT,        &
-                                         DminTarea,  & 
-                             strength,               &
-                             zetax2T,    etax2T,     &
-                             stressp,   stressm)
+      subroutine stressC_T  (nx_block, ny_block , & 
+                                       icellt   , & 
+                             indxti  , indxtj   , &
+                             uvelE   , vvelE    , &
+                             uvelN   , vvelN    , &
+                             dxN     , dyE      , &
+                             dxT     , dyT      , &
+                                       DminTarea, & 
+                             strength, shrU     , &
+                             zetax2T , etax2T   , &
+                             stressp , stressm    )
 
       use ice_dyn_shared, only: strain_rates_T, capping, &
                                 visccoeff_replpress, &
@@ -1614,6 +1614,7 @@
          dxT      , & ! width of T-cell through the middle (m)
          dyT      , & ! height of T-cell through the middle (m)
          strength , & ! ice strength (N/m)
+         shrU     , & ! shearU
          DminTarea    ! deltaminEVP*tarea
 
       real (kind=dbl_kind), dimension (nx_block,ny_block), intent(inout) :: &
@@ -1706,21 +1707,21 @@
 ! author: JF Lemieux, ECCC
 ! Nov 2021      
 
-      subroutine stressC_U  (nx_block,   ny_block,  & 
-                                         icellu,    &  
-                             indxui,     indxuj,    &
-                             uvelE,      vvelE,     &
-                             uvelN,      vvelN,     &
-                             uvelU,      vvelU,     &
-                             dxE,        dyN,       &
-                             dxU,        dyU,       &
-                             tarea,      uarea,     &
-                             ratiodxN,   ratiodxNr, &
-                             ratiodyE,   ratiodyEr, &
-                             epm,  npm, hm, uvm,    &
-                             zetax2T,    etax2T,    &
-                             strength,   shrU,      &
-                             stress12            )
+      subroutine stressC_U  (nx_block, ny_block,  & 
+                                       icellu,    &  
+                             indxui  , indxuj,    &
+                             uvelE   , vvelE,     &
+                             uvelN   , vvelN,     &
+                             uvelU   , vvelU,     &
+                             dxE     , dyN,       &
+                             dxU     , dyU,       &
+                             tarea   , uarea,     &
+                             ratiodxN, ratiodxNr, &
+                             ratiodyE, ratiodyEr, &
+                             epm, npm, hm, uvm,   &
+                             zetax2T , etax2T,    &
+                             strength, shrU,      &
+                             stress12             )
 
       use ice_dyn_shared, only: strain_rates_U, &
                                 visccoeff_replpress_avgstr, &
