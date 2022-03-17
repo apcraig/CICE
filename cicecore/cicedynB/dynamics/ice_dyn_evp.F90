@@ -1795,7 +1795,6 @@
 
          if (visc_coeff_method == 'avg_zeta') then
             DeltaU(i,j) = c0   ! not needed in avgzeta just computing etax2U
-!            shearU = shrU(i,j)
             call visc_replpress_avgzeta (zetax2T (i  ,j  ), zetax2T (i  ,j+1), &
                                          zetax2T (i+1,j+1), zetax2T (i+1,j  ), &
                                          etax2T  (i  ,j  ), etax2T  (i  ,j+1), &
@@ -1807,7 +1806,6 @@
                                          DeltaU  (i  ,j  ), etax2U=etax2U)
 
          elseif (visc_coeff_method == 'avg_strength') then
-!            shearU = shrU(i,j)
             DminUarea = deltaminEVP*uarea(i,j)
             ! only need etax2U here, but other terms are calculated with etax2U
             ! minimal extra calculations here even though it seems like there is
