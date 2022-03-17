@@ -187,8 +187,8 @@
 
       real (kind=dbl_kind), allocatable :: &
          shrU   (:,:,:), &  ! shearU array for gridC
-         zetax2T(:,:,:), &  ! zetax2 = 2*zeta (bulk viscous coeff)
-         etax2T (:,:,:)     ! etax2  = 2*eta  (shear viscous coeff)
+         zetax2T(:,:,:), &  ! zetax2 = 2*zeta (bulk viscosity)
+         etax2T (:,:,:)     ! etax2  = 2*eta  (shear viscosity)
       
       real (kind=dbl_kind), dimension(nx_block,ny_block,8):: &
          strtmp       ! stress combinations for momentum equation
@@ -774,7 +774,7 @@
                                        dxU     (:,:,iblk), dyU      (:,:,iblk), &
                                        ratiodxN(:,:,iblk), ratiodxNr(:,:,iblk), &
                                        ratiodyE(:,:,iblk), ratiodyEr(:,:,iblk), &
-                                       epm(:,:,iblk), npm(:,:,iblk), uvm(:,:,iblk), &
+                                       epm(:,:,iblk)     , npm(:,:,iblk)      , &
                                        shearU=shrU(:,:,iblk)                    )
 
                enddo  ! iblk
@@ -839,7 +839,7 @@
                                  ratiodxN  (:,:,iblk), ratiodxNr (:,:,iblk), &
                                  ratiodyE  (:,:,iblk), ratiodyEr (:,:,iblk), &
                                  epm       (:,:,iblk), npm       (:,:,iblk), &
-                                 hm        (:,:,iblk), uvm       (:,:,iblk), &
+                                 hm        (:,:,iblk),                       &
                                  zetax2T   (:,:,iblk), etax2T    (:,:,iblk), &
                                  strength  (:,:,iblk), shrU      (:,:,iblk), &
                                  stress12U (:,:,iblk))                   
@@ -997,7 +997,7 @@
                                    ratiodxN  (:,:,iblk), ratiodxNr (:,:,iblk), &
                                    ratiodyE  (:,:,iblk), ratiodyEr (:,:,iblk), &
                                    epm       (:,:,iblk), npm       (:,:,iblk), &
-                                   hm        (:,:,iblk), uvm       (:,:,iblk), &
+                                   hm        (:,:,iblk),                       &
                                    zetax2T   (:,:,iblk), etax2T    (:,:,iblk), &
                                    strength  (:,:,iblk),                       &
                                    stresspU  (:,:,iblk), stressmU  (:,:,iblk), &
@@ -1347,8 +1347,8 @@
         tensionne, tensionnw, tensionse, tensionsw, & ! tension
         shearne, shearnw, shearse, shearsw        , & ! shearing
         Deltane, Deltanw, Deltase, Deltasw        , & ! Delt
-        zetax2ne, zetax2nw, zetax2se, zetax2sw    , & ! 2 x zeta (visc coeff) 
-        etax2ne, etax2nw, etax2se, etax2sw        , & ! 2 x eta (visc coeff)
+        zetax2ne, zetax2nw, zetax2se, zetax2sw    , & ! 2 x zeta (bulk visc) 
+        etax2ne, etax2nw, etax2se, etax2sw        , & ! 2 x eta (shear visc)
         rep_prsne, rep_prsnw, rep_prsse, rep_prssw, & ! replacement pressure
 !        puny                                      , & ! puny
         ssigpn, ssigps, ssigpe, ssigpw            , &
@@ -1394,7 +1394,7 @@
                             Deltase,    Deltasw     )
 
       !-----------------------------------------------------------------
-      ! viscous coefficients and replacement pressure
+      ! viscosities and replacement pressure
       !-----------------------------------------------------------------
 
          call visc_replpress (strength(i,j), DminTarea(i,j), Deltane, &
@@ -1584,6 +1584,12 @@
 ! updated: D. Bailey, NCAR
 ! Nov 2021      
 
+! Bouillon, S., T. Fichefet, V. Legat and G. Madec (2013). The 
+! elastic-viscous-plastic method revisited. Ocean Model., 71, 2-12.
+      
+! Kimmritz, M., S. Danilov and M. Losch (2016). The adaptive EVP method
+! for solving the sea ice momentum equation. Ocean Model., 101, 59-67.
+      
       subroutine stressC_T  (nx_block, ny_block , & 
                                        icellt   , & 
                              indxti  , indxtj   , &
@@ -1622,8 +1628,8 @@
          DminTarea    ! deltaminEVP*tarea
 
       real (kind=dbl_kind), dimension (nx_block,ny_block), intent(inout) :: &
-         zetax2T  , & ! zetax2 = 2*zeta (bulk viscous coeff)
-         etax2T   , & ! etax2  = 2*eta  (shear viscous coeff)
+         zetax2T  , & ! zetax2 = 2*zeta (bulk viscosity)
+         etax2T   , & ! etax2  = 2*eta  (shear viscosity)
          stressp  , & ! sigma11+sigma22
          stressm      ! sigma11-sigma22
 
@@ -1659,13 +1665,19 @@
          i = indxti(ij)
          j = indxtj(ij)
 
+         !-----------------------------------------------------------------
+         ! Square of shear strain rate at T obtained from interpolation of
+         ! U point values (Bouillon et al., 2013, Kimmritz et al., 2016
+         !-----------------------------------------------------------------
+
          shearTsqr = (shrU(i,j)   **2 * uarea(i,j)    + shrU(i,j-1)**2*uarea(i,j-1)  & 
                    + shrU(i-1,j-1)**2 * uarea(i-1,j-1)+ shrU(i-1,j)**2*uarea(i-1,j)) &
                    / (uarea(i,j)+uarea(i,j-1)+uarea(i-1,j-1)+uarea(i-1,j))
+
          DeltaT = sqrt(divT(i,j)**2 + e_factor*(tensionT(i,j)**2 + shearTsqr))
          
          !-----------------------------------------------------------------
-         ! viscous coefficients and replacement pressure at T point
+         ! viscosities and replacement pressure at T point
          !-----------------------------------------------------------------
 
          call visc_replpress (strength(i,j), DminTarea(i,j), &
@@ -1696,6 +1708,12 @@
 ! author: JF Lemieux, ECCC
 ! Nov 2021      
 
+! Bouillon, S., T. Fichefet, V. Legat and G. Madec (2013). The 
+! elastic-viscous-plastic method revisited. Ocean Model., 71, 2-12.
+
+! Kimmritz, M., S. Danilov and M. Losch (2016). The adaptive EVP method
+! for solving the sea ice momentum equation. Ocean Model., 101, 59-67.
+      
       subroutine stressC_U  (nx_block, ny_block,  & 
                                        icellu,    &  
                              indxui  , indxuj,    &
@@ -1707,7 +1725,7 @@
                              tarea   , uarea,     &
                              ratiodxN, ratiodxNr, &
                              ratiodyE, ratiodyEr, &
-                             epm, npm, hm, uvm,   &
+                             epm, npm, hm,        &
                              zetax2T , etax2T,    &
                              strength, shrU,      &
                              stress12             )
@@ -1715,7 +1733,7 @@
       use ice_dyn_shared, only: strain_rates_U, &
                                 visc_replpress_avgstr, &
                                 visc_replpress_avgzeta, &
-                                visc_coeff_method, deltaminEVP, capping
+                                visc_method, deltaminEVP, capping
 
       integer (kind=int_kind), intent(in) :: & 
          nx_block, ny_block, & ! block dimensions
@@ -1745,7 +1763,6 @@
          epm      , & ! E-cell mask
          npm      , & ! N-cell mask
          hm       , & ! T-cell mask
-         uvm      , & ! U-cell mask
          zetax2T  , & ! 2*zeta at the T point
          etax2T   , & ! 2*eta at the T point
          shrU     , & ! shearU array
@@ -1773,7 +1790,7 @@
       ! NOTE these are actually strain rates * area  (m^2/s)
       !-----------------------------------------------------------------
 
-      if (visc_coeff_method == 'avg_strength') then
+      if (visc_method == 'avg_strength') then
          call strain_rates_U (nx_block     ,   ny_block    , &
                               icellu       ,                 &
                               indxui  (:)  , indxuj   (:)  , &
@@ -1784,7 +1801,7 @@
                               dxU     (:,:), dyU      (:,:), &
                               ratiodxN(:,:), ratiodxNr(:,:), &
                               ratiodyE(:,:), ratiodyEr(:,:), &
-                              epm(:,:), npm(:,:),  uvm(:,:), &
+                              epm(:,:)     , npm(:,:)      , &
                               DeltaU = DeltaU(:,:)           )
       endif
 
@@ -1793,10 +1810,12 @@
          j = indxuj(ij)
 
          !-----------------------------------------------------------------
-         ! viscous coefficients and replacement pressure at U point
+         ! viscosities and replacement pressure at U point
+         ! avg_zeta: Bouillon et al. 2013, C1 method of Kimmritz et al. 2016
+         ! avg_strength: C2 method of Kimmritz et al. 2016
          !-----------------------------------------------------------------
 
-         if (visc_coeff_method == 'avg_zeta') then
+         if (visc_method == 'avg_zeta') then
             DeltaU(i,j) = c0   ! not needed in avgzeta just computing etax2U
             call visc_replpress_avgzeta (zetax2T (i  ,j  ), zetax2T (i  ,j+1), &
                                          zetax2T (i+1,j+1), zetax2T (i+1,j  ), &
@@ -1808,7 +1827,7 @@
                                          tarea   (i+1,j+1), tarea   (i+1,j  ), &
                                          DeltaU  (i  ,j  ), etax2U=etax2U)
 
-         elseif (visc_coeff_method == 'avg_strength') then
+         elseif (visc_method == 'avg_strength') then
             DminUarea = deltaminEVP*uarea(i,j)
             ! only need etax2U here, but other terms are calculated with etax2U
             ! minimal extra calculations here even though it seems like there is
@@ -1880,8 +1899,8 @@
          DminTarea    ! deltaminEVP*tarea
 
       real (kind=dbl_kind), dimension (nx_block,ny_block), intent(inout) :: &
-         zetax2T  , & ! zetax2 = 2*zeta (bulk viscous coeff)
-         etax2T   , & ! etax2  = 2*eta  (shear viscous coeff)
+         zetax2T  , & ! zetax2 = 2*zeta (bulk viscosity)
+         etax2T   , & ! etax2  = 2*eta  (shear viscosity)
          stresspT , & ! sigma11+sigma22
          stressmT , & ! sigma11-sigma22
          stress12T    ! sigma12
@@ -1919,7 +1938,7 @@
          j = indxtj(ij)
 
          !-----------------------------------------------------------------
-         ! viscous coefficients and replacement pressure at T point
+         ! viscosities and replacement pressure at T point
          !-----------------------------------------------------------------
 
          call visc_replpress (strength(i,j), DminTarea(i,j), &
@@ -1964,7 +1983,7 @@
                              tarea,      uarea,     &
                              ratiodxN,   ratiodxNr, &
                              ratiodyE,   ratiodyEr, &
-                             epm,  npm, hm, uvm,    &
+                             epm,  npm, hm,         &
                              zetax2T,    etax2T,    &
                              strength,              &
                              stresspU,   stressmU,  & 
@@ -1973,7 +1992,7 @@
       use ice_dyn_shared, only: strain_rates_U, &
                                 visc_replpress_avgstr, &
                                 visc_replpress_avgzeta, &
-                                visc_coeff_method, deltaminEVP, capping
+                                visc_method, deltaminEVP, capping
 
       integer (kind=int_kind), intent(in) :: & 
          nx_block, ny_block, & ! block dimensions
@@ -2003,7 +2022,6 @@
          epm      , & ! E-cell mask
          npm      , & ! N-cell mask
          hm       , & ! T-cell mask
-         uvm      , & ! U-cell mask
          zetax2T  , & ! 2*zeta at the T point
          etax2T   , & ! 2*eta at the T point
          strength     ! ice strength at the T point
@@ -2042,7 +2060,7 @@
                            dxU     (:,:), dyU(:,:)      , &
                            ratiodxN(:,:), ratiodxNr(:,:), &
                            ratiodyE(:,:), ratiodyEr(:,:), &
-                           epm(:,:), npm(:,:),  uvm(:,:), &
+                           epm(:,:)     , npm(:,:)      , &
                            divU    (:,:), tensionU (:,:), &
                            shearU  (:,:), DeltaU   (:,:)  )
 
@@ -2051,10 +2069,10 @@
          j = indxuj(ij)
 
          !-----------------------------------------------------------------
-         ! viscous coefficients and replacement pressure at U point
+         ! viscosities and replacement pressure at U point
          !-----------------------------------------------------------------
 
-         if (visc_coeff_method == 'avg_zeta') then
+         if (visc_method == 'avg_zeta') then
             call visc_replpress_avgzeta (zetax2T (i  ,j  ), zetax2T (i  ,j+1), &
                                          zetax2T (i+1,j+1), zetax2T (i+1,j  ), &
                                          etax2T  (i  ,j  ), etax2T  (i  ,j+1), &
@@ -2066,7 +2084,7 @@
                                          DeltaU  (i  ,j  ),                    &
                                          zetax2U, etax2U, rep_prsU)
 
-         elseif (visc_coeff_method == 'avg_strength') then
+         elseif (visc_method == 'avg_strength') then
             DminUarea = deltaminEVP*uarea(i,j)
             call visc_replpress_avgstr  (strength(i  ,j  ), strength(i  ,j+1), &
                                          strength(i+1,j+1), strength(i+1,j  ), &
@@ -2104,6 +2122,15 @@
 ! author: JF Lemieux, ECCC
 ! Nov 2021      
 
+! Hunke, E. C., and J. K. Dukowicz (2002).  The Elastic-Viscous-Plastic
+! Sea Ice Dynamics Model in General Orthogonal Curvilinear Coordinates
+! on a Sphere - Incorporation of Metric Terms. Mon. Weather Rev.,
+! 130, 1848-1865.
+      
+! Bouillon, S., M. Morales Maqueda, V. Legat and T. Fichefet (2009). An 
+! elastic-viscous-plastic sea ice model formulated on Arakawa B and C grids.
+! Ocean Model., 27, 174-184.
+      
       subroutine div_stress  (nx_block,   ny_block,   & 
                                           icell,      & 
                               indxi,     indxj,       &

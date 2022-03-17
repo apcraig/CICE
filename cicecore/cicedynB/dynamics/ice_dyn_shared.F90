@@ -59,7 +59,7 @@
 
       character (len=char_len), public :: & 
          yield_curve , &      ! 'ellipse' ('teardrop' needs further testing)
-         visc_coeff_method, & ! method for visc coeff at U points (C, CD grids)  
+         visc_method, & ! method for viscosity calc at U points (C, CD grids)  
          seabed_stress_method ! method for seabed stress calculation
                               ! LKD: Lemieux et al. 2015, probabilistic: Dupont et al. in prep.
       
@@ -78,9 +78,9 @@
          epp2i       , & ! 1/(e_plasticpot)^2
          e_factor    , & ! (e_yieldcurve)^2/(e_plasticpot)^4
          ecci        , & ! temporary for 1d evp
-         deltaminEVP , & ! minimum delta for viscous coefficients (EVP)
-         deltaminVP  , & ! minimum delta for viscous coefficients (VP)
-         capping     , & ! capping of visc coeff (1=Hibler79, 0=Kreyscher2000)
+         deltaminEVP , & ! minimum delta for viscosities (EVP)
+         deltaminVP  , & ! minimum delta for viscosities (VP)
+         capping     , & ! capping of viscosities (1=Hibler79, 0=Kreyscher2000)
          dtei        , & ! 1/dte, where dte is subcycling timestep (1/s)
 !         dte2T    , & ! dte/2T
          denom1       ! constants for stress equation
@@ -1995,7 +1995,7 @@
                                  dxU,        dyU,       &
                                  ratiodxN,   ratiodxNr, &
                                  ratiodyE,   ratiodyEr, &
-                                 epm,  npm,  uvm,       &
+                                 epm,        npm,       &
                                  divU,       tensionU,  &
                                  shearU,     DeltaU     )
 
@@ -2023,8 +2023,7 @@
          ratiodyE , & ! -dyE(i,j+1)/dyE(i,j) for BCs
          ratiodyEr, & ! -dyE(i,j)/dyE(i,j+1) for BCs
          epm      , & ! E-cell mask
-         npm      , & ! N-cell mask
-         uvm          ! U-cell mask
+         npm          ! N-cell mask
          
       real (kind=dbl_kind), dimension (nx_block,ny_block), optional, intent(out):: &
          divU     , &
@@ -2071,22 +2070,21 @@
             vEij   = vvelE(i,j) * epm(i,j) &
                    +(epm(i,j+1)-epm(i,j)) * epm(i,j+1) * ratiodyEr(i,j) * vvelE(i,j+1)
 
- ! MIGHT NOT NEED TO mult by uvm...if done before in calc of uvelU...
       
             ! divergence  =  e_11 + e_22
             ldivU    = dyU(i,j) * ( uNip1j - uNij ) &
-                     + uvelU(i,j) * uvm(i,j) * ( dyN(i+1,j) - dyN(i,j) ) &
+                     + uvelU(i,j) * ( dyN(i+1,j) - dyN(i,j) ) &
                      + dxU(i,j) * ( vEijp1 - vEij ) &
-                     + vvelU(i,j) * uvm(i,j) * ( dxE(i,j+1) - dxE(i,j) )
+                     + vvelU(i,j) * ( dxE(i,j+1) - dxE(i,j) )
             if (present(divU)) then
                divU(i,j) = ldivU
             endif
 
             ! tension strain rate  =  e_11 - e_22
             ltensionU = dyU(i,j) * ( uNip1j - uNij ) &
-                      - uvelU(i,j) * uvm(i,j) * ( dyN(i+1,j) - dyN(i,j) ) &
+                      - uvelU(i,j) * ( dyN(i+1,j) - dyN(i,j) ) &
                       - dxU(i,j) * ( vEijp1 - vEij ) &
-                      + vvelU(i,j) * uvm(i,j) * ( dxE(i,j+1) - dxE(i,j) )
+                      + vvelU(i,j) * ( dxE(i,j+1) - dxE(i,j) )
             if (present(tensionU)) then
                tensionU(i,j) = ltensionU
             endif
@@ -2104,9 +2102,9 @@
                
             ! shearing strain rate  =  2*e_12
             lshearU   = dxU(i,j) * ( uEijp1 - uEij ) &
-                      - uvelU(i,j) * uvm(i,j) * ( dxE(i,j+1) - dxE(i,j) ) &
+                      - uvelU(i,j) * ( dxE(i,j+1) - dxE(i,j) ) &
                       + dyU(i,j) * ( vNip1j - vNij ) &
-                      - vvelU(i,j) * uvm(i,j) * ( dyN(i+1,j) - dyN(i,j) )
+                      - vvelU(i,j) * ( dyN(i+1,j) - dyN(i,j) )
             if (present(shearU)) then
                shearU(i,j) = lshearU
             endif
@@ -2122,7 +2120,7 @@
       end subroutine strain_rates_U
 
 !=======================================================================
-! Computes viscous coefficients and replacement pressure for stress 
+! Computes viscosities and replacement pressure for stress 
 ! calculations. Note that tensile strength is included here.
 !
 ! Hibler, W. D. (1979). A dynamic thermodynamic sea ice model. J. Phys.
@@ -2145,7 +2143,7 @@
         Delta, capping
 
       real (kind=dbl_kind), intent(out):: &
-        zetax2, etax2, rep_prs ! 2 x visous coeffs, replacement pressure
+        zetax2, etax2, rep_prs ! 2 x viscosities, replacement pressure
 
       ! local variables
       real (kind=dbl_kind) :: &
@@ -2165,6 +2163,14 @@
 
 !=======================================================================
 
+! Bouillon, S., T. Fichefet, V. Legat and G. Madec (2013). The 
+! elastic-viscous-plastic method revisited. Ocean Model., 71, 2-12.
+
+! Kimmritz, M., S. Danilov and M. Losch (2016). The adaptive EVP method
+! for solving the sea ice momentum equation. Ocean Model., 101, 59-67.
+
+! avg_zeta: Bouillon et al. 2013, C1 method of Kimmritz et al. 2016
+      
       subroutine visc_replpress_avgzeta (zetax2T1, zetax2T2, &
                                          zetax2T3, zetax2T4, &
                                           etax2T1,  etax2T2, &
@@ -2177,13 +2183,13 @@
 
       real (kind=dbl_kind), intent(in):: &
          zetax2T1,zetax2T2,zetax2T3,zetax2T4, &
-          etax2T1, etax2T2, etax2T3, etax2T4, & ! 2 x viscous coeffs, replacement pressure
+          etax2T1, etax2T2, etax2T3, etax2T4, &
             mask1,   mask2,   mask3,   mask4, &
             area1,   area2,   area3,   area4, &
          deltaU
 
       real (kind=dbl_kind), optional, intent(out):: &
-         zetax2U, etax2U, rep_prsU
+         zetax2U, etax2U, rep_prsU ! 2 x viscosities, replacement pressure
 
       ! local variables
 
@@ -2225,6 +2231,11 @@
 
 !=======================================================================
 
+! Kimmritz, M., S. Danilov and M. Losch (2016). The adaptive EVP method
+! for solving the sea ice momentum equation. Ocean Model., 101, 59-67.
+      
+! avg_strength: C2 method of Kimmritz et al. 2016
+      
       subroutine visc_replpress_avgstr (strength1, strength2, &
                                         strength3, strength4, &
                                             mask1,     mask2, &
