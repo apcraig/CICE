@@ -32,7 +32,7 @@
                 visc_replpress, &
                 visc_replpress_avgstr, &
                 visc_replpress_avgzeta, &
-                stack_velocity_field, unstack_velocity_field
+                stack_fields, unstack_fields
 
       ! namelist parameters
 
@@ -126,6 +126,20 @@
          alphab      , & ! alphab=Cb factor in Lemieux et al 2015
          threshold_hw    ! max water depth for grounding
                          ! see keel data from Amundrud et al. 2004 (JGR)
+
+      interface stack_fields
+         module procedure stack_fields2
+         module procedure stack_fields3
+         module procedure stack_fields4
+         module procedure stack_fields5
+      end interface
+
+      interface unstack_fields
+         module procedure unstack_fields2
+         module procedure unstack_fields3
+         module procedure unstack_fields4
+         module procedure unstack_fields5
+      end interface
 
 !=======================================================================
 
@@ -2278,68 +2292,268 @@
       end subroutine visc_replpress_avgstr
 
 !=======================================================================
+! Load fields into array for boundary updates
 
-! Load velocity components into array for boundary updates
-
-      subroutine stack_velocity_field(uvel, vvel, fld2)
+      subroutine stack_fields2(fld1, fld2, fldsbundle)
 
       use ice_domain, only: nblocks
 
-      real (kind=dbl_kind), dimension (nx_block,ny_block,max_blocks), intent(in) :: &
-         uvel    , & ! u components of velocity vector
-         vvel        ! v components of velocity vector
+      real (kind=dbl_kind), dimension (:,:,:), intent(in) :: &
+         fld1    , & !
+         fld2        !
 
-      real (kind=dbl_kind), dimension (nx_block,ny_block,2,max_blocks), intent(out) :: &
-         fld2        ! work array for boundary updates
+      real (kind=dbl_kind), dimension (:,:,:,:), intent(out) :: &
+         fldsbundle        ! work array for boundary updates (i,j,n,iblk)
 
       ! local variables
 
       integer (kind=int_kind) :: &
          iblk        ! block index
 
-      character(len=*), parameter :: subname = '(stack_velocity_field)'
+      character(len=*), parameter :: subname = '(stack_fields2)'
 
-      ! load velocity into array for boundary updates
       !$OMP PARALLEL DO PRIVATE(iblk) SCHEDULE(runtime)
       do iblk = 1, nblocks
-         fld2(:,:,1,iblk) = uvel(:,:,iblk)
-         fld2(:,:,2,iblk) = vvel(:,:,iblk)
+         fldsbundle(:,:,1,iblk) = fld1(:,:,iblk)
+         fldsbundle(:,:,2,iblk) = fld2(:,:,iblk)
       enddo
       !$OMP END PARALLEL DO
 
-      end subroutine stack_velocity_field
+      end subroutine stack_fields2
 
 !=======================================================================
+! Load fields into array for boundary updates
 
-! Unload velocity components from array after boundary updates
-
-      subroutine unstack_velocity_field(fld2, uvel, vvel)
+      subroutine stack_fields3(fld1, fld2, fld3, fldsbundle)
 
       use ice_domain, only: nblocks
 
-      real (kind=dbl_kind), dimension (nx_block,ny_block,2,max_blocks), intent(in) :: &
-         fld2        ! work array for boundary updates
+      real (kind=dbl_kind), dimension (:,:,:), intent(in) :: &
+         fld1    , & !
+         fld2    , & ! 
+         fld3        ! 
 
-      real (kind=dbl_kind), dimension (nx_block,ny_block,max_blocks), intent(out) :: &
-         uvel    , & ! u components of velocity vector
-         vvel        ! v components of velocity vector
+      real (kind=dbl_kind), dimension (:,:,:,:), intent(out) :: &
+         fldsbundle        ! work array for boundary updates (i,j,n,iblk)
 
       ! local variables
 
       integer (kind=int_kind) :: &
          iblk        ! block index
 
-      character(len=*), parameter :: subname = '(unstack_velocity_field)'
+      character(len=*), parameter :: subname = '(stack_fields3)'
 
-      ! Unload velocity from array after boundary updates
       !$OMP PARALLEL DO PRIVATE(iblk) SCHEDULE(runtime)
       do iblk = 1, nblocks
-         uvel(:,:,iblk) = fld2(:,:,1,iblk)
-         vvel(:,:,iblk) = fld2(:,:,2,iblk)
+         fldsbundle(:,:,1,iblk) = fld1(:,:,iblk)
+         fldsbundle(:,:,2,iblk) = fld2(:,:,iblk)
+         fldsbundle(:,:,3,iblk) = fld3(:,:,iblk)
       enddo
       !$OMP END PARALLEL DO
 
-      end subroutine unstack_velocity_field
+      end subroutine stack_fields3
+
+!=======================================================================
+! Load fields into array for boundary updates
+
+      subroutine stack_fields4(fld1, fld2, fld3, fld4, fldsbundle)
+
+      use ice_domain, only: nblocks
+
+      real (kind=dbl_kind), dimension (:,:,:), intent(in) :: &
+         fld1    , & !
+         fld2    , & ! 
+         fld3    , & ! 
+         fld4        ! 
+
+      real (kind=dbl_kind), dimension (:,:,:,:), intent(out) :: &
+         fldsbundle        ! work array for boundary updates (i,j,n,iblk)
+
+      ! local variables
+
+      integer (kind=int_kind) :: &
+         iblk        ! block index
+
+      character(len=*), parameter :: subname = '(stack_fields4)'
+
+      !$OMP PARALLEL DO PRIVATE(iblk) SCHEDULE(runtime)
+      do iblk = 1, nblocks
+         fldsbundle(:,:,1,iblk) = fld1(:,:,iblk)
+         fldsbundle(:,:,2,iblk) = fld2(:,:,iblk)
+         fldsbundle(:,:,3,iblk) = fld3(:,:,iblk)
+         fldsbundle(:,:,4,iblk) = fld4(:,:,iblk)
+      enddo
+      !$OMP END PARALLEL DO
+
+      end subroutine stack_fields4
+
+!=======================================================================
+! Load fields into array for boundary updates
+
+      subroutine stack_fields5(fld1, fld2, fld3, fld4, fld5, fldsbundle)
+
+      use ice_domain, only: nblocks
+
+      real (kind=dbl_kind), dimension (:,:,:), intent(in) :: &
+         fld1    , & ! 
+         fld2    , & ! 
+         fld3    , & ! 
+         fld4    , & ! 
+         fld5        ! 
+
+      real (kind=dbl_kind), dimension (:,:,:,:), intent(out) :: &
+         fldsbundle        ! work array for boundary updates (i,j,n,iblk)
+
+      ! local variables
+
+      integer (kind=int_kind) :: &
+         iblk        ! block index
+
+      character(len=*), parameter :: subname = '(stack_fields5)'
+
+      !$OMP PARALLEL DO PRIVATE(iblk) SCHEDULE(runtime)
+      do iblk = 1, nblocks
+         fldsbundle(:,:,1,iblk) = fld1(:,:,iblk)
+         fldsbundle(:,:,2,iblk) = fld2(:,:,iblk)
+         fldsbundle(:,:,3,iblk) = fld3(:,:,iblk)
+         fldsbundle(:,:,4,iblk) = fld4(:,:,iblk)
+         fldsbundle(:,:,5,iblk) = fld5(:,:,iblk)
+      enddo
+      !$OMP END PARALLEL DO
+
+      end subroutine stack_fields5
+
+!=======================================================================
+! Unload fields from array after boundary updates
+
+      subroutine unstack_fields2(fldsbundle, fld1, fld2)
+
+      use ice_domain, only: nblocks
+
+      real (kind=dbl_kind), dimension (:,:,:,:), intent(in) :: &
+         fldsbundle        ! work array for boundary updates (i,j,n,iblk)
+
+      real (kind=dbl_kind), dimension (:,:,:), intent(out) :: &
+         fld1    , & !
+         fld2        !
+
+      ! local variables
+
+      integer (kind=int_kind) :: &
+         iblk        ! block index
+
+      character(len=*), parameter :: subname = '(unstack_fields2)'
+
+      !$OMP PARALLEL DO PRIVATE(iblk) SCHEDULE(runtime)
+      do iblk = 1, nblocks
+         fld1(:,:,iblk) = fldsbundle(:,:,1,iblk)
+         fld2(:,:,iblk) = fldsbundle(:,:,2,iblk)
+      enddo
+      !$OMP END PARALLEL DO
+
+      end subroutine unstack_fields2
+
+!=======================================================================
+! Unload fields from array after boundary updates
+
+      subroutine unstack_fields3(fldsbundle, fld1, fld2, fld3)
+
+      use ice_domain, only: nblocks
+
+      real (kind=dbl_kind), dimension (:,:,:,:), intent(in) :: &
+         fldsbundle        ! work array for boundary updates (i,j,n,iblk)
+
+      real (kind=dbl_kind), dimension (:,:,:), intent(out) :: &
+         fld1    , & !
+         fld2    , & !
+         fld3        !
+
+      ! local variables
+
+      integer (kind=int_kind) :: &
+         iblk        ! block index
+
+      character(len=*), parameter :: subname = '(unstack_fields3)'
+
+      !$OMP PARALLEL DO PRIVATE(iblk) SCHEDULE(runtime)
+      do iblk = 1, nblocks
+         fld1(:,:,iblk) = fldsbundle(:,:,1,iblk)
+         fld2(:,:,iblk) = fldsbundle(:,:,2,iblk)
+         fld3(:,:,iblk) = fldsbundle(:,:,3,iblk)
+      enddo
+      !$OMP END PARALLEL DO
+
+      end subroutine unstack_fields3
+
+!=======================================================================
+! Unload fields from array after boundary updates
+
+      subroutine unstack_fields4(fldsbundle, fld1, fld2, fld3, fld4)
+
+      use ice_domain, only: nblocks
+
+      real (kind=dbl_kind), dimension (:,:,:,:), intent(in) :: &
+         fldsbundle        ! work array for boundary updates (i,j,n,iblk)
+
+      real (kind=dbl_kind), dimension (:,:,:), intent(out) :: &
+         fld1    , & !
+         fld2    , & !
+         fld3    , & !
+         fld4        !
+
+      ! local variables
+
+      integer (kind=int_kind) :: &
+         iblk        ! block index
+
+      character(len=*), parameter :: subname = '(unstack_fields4)'
+
+      !$OMP PARALLEL DO PRIVATE(iblk) SCHEDULE(runtime)
+      do iblk = 1, nblocks
+         fld1(:,:,iblk) = fldsbundle(:,:,1,iblk)
+         fld2(:,:,iblk) = fldsbundle(:,:,2,iblk)
+         fld3(:,:,iblk) = fldsbundle(:,:,3,iblk)
+         fld4(:,:,iblk) = fldsbundle(:,:,4,iblk)
+      enddo
+      !$OMP END PARALLEL DO
+
+      end subroutine unstack_fields4
+
+!=======================================================================
+! Unload fields from array after boundary updates
+
+      subroutine unstack_fields5(fldsbundle, fld1, fld2, fld3, fld4, fld5)
+
+      use ice_domain, only: nblocks
+
+      real (kind=dbl_kind), dimension (:,:,:,:), intent(in) :: &
+         fldsbundle        ! work array for boundary updates (i,j,n,iblk)
+
+      real (kind=dbl_kind), dimension (:,:,:), intent(out) :: &
+         fld1    , & !
+         fld2    , & !
+         fld3    , & !
+         fld4    , & !
+         fld5        !
+
+      ! local variables
+
+      integer (kind=int_kind) :: &
+         iblk        ! block index
+
+      character(len=*), parameter :: subname = '(unstack_fields5)'
+
+      !$OMP PARALLEL DO PRIVATE(iblk) SCHEDULE(runtime)
+      do iblk = 1, nblocks
+         fld1(:,:,iblk) = fldsbundle(:,:,1,iblk)
+         fld2(:,:,iblk) = fldsbundle(:,:,2,iblk)
+         fld3(:,:,iblk) = fldsbundle(:,:,3,iblk)
+         fld4(:,:,iblk) = fldsbundle(:,:,4,iblk)
+         fld5(:,:,iblk) = fldsbundle(:,:,5,iblk)
+      enddo
+      !$OMP END PARALLEL DO
+
+      end subroutine unstack_fields5
 
 !=======================================================================
       
