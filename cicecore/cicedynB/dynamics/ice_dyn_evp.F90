@@ -36,7 +36,7 @@
       module ice_dyn_evp
 
       use ice_kinds_mod
-      use ice_communicate, only: my_task, master_task
+      use ice_communicate, only: my_task, master_task, get_num_procs
       use ice_constants, only: field_loc_center, field_loc_NEcorner, &
           field_loc_Nface, field_loc_Eface, &
           field_type_scalar, field_type_vector
@@ -114,7 +114,7 @@
       use ice_dyn_evp_1d, only: ice_dyn_evp_1d_copyin, ice_dyn_evp_1d_kernel, &
           ice_dyn_evp_1d_copyout
       use ice_dyn_shared, only: evp_algorithm, stack_fields, unstack_fields, DminTarea
-      use ice_dyn_shared, only: deformations, deformations_T, strain_rates_U
+      use ice_dyn_shared, only: deformations, deformations_T, strain_rates_U, dyn_haloUpdate
 
       real (kind=dbl_kind), intent(in) :: &
          dt      ! time step
@@ -807,15 +807,10 @@
                enddo  ! iblk
                !$OMP END PARALLEL DO
 
-               call ice_timer_start(timer_bound)
-               if (maskhalo_dyn) then
-                  call ice_HaloUpdate (shrU,                halo_info_mask, &
-                                       field_loc_NEcorner,  field_type_scalar)
-               else
-                  call ice_HaloUpdate (shrU,                halo_info     , &
-                                       field_loc_NEcorner,  field_type_scalar)
-               endif
-               call ice_timer_stop(timer_bound)
+               ! calls ice_haloUpdate, controls bundles and masks
+               call dyn_HaloUpdate (halo_info, halo_info_mask, &
+                                    field_loc_NEcorner,  field_type_scalar, &
+                                    shrU)
                
                !$OMP PARALLEL DO PRIVATE(iblk)
                do iblk = 1, nblocks
@@ -849,18 +844,10 @@
                enddo
                !$OMP END PARALLEL DO
 
-               ! Need to update the halos for the stress components
-               call ice_timer_start(timer_bound)
-               call stack_fields(zetax2T, etax2T, stresspT, stressmT, fld4)
-               if (maskhalo_dyn) then
-                  call ice_HaloUpdate (fld4,             halo_info_mask, &
-                                       field_loc_center, field_type_scalar)
-               else
-                  call ice_HaloUpdate (fld4,             halo_info     , &
-                                       field_loc_center, field_type_scalar)
-               endif
-               call unstack_fields(fld4, zetax2T, etax2T, stresspT, stressmT)
-               call ice_timer_stop(timer_bound)
+               ! calls ice_haloUpdate, controls bundles and masks
+               call dyn_HaloUpdate (halo_info,        halo_info_mask, &
+                                    field_loc_center, field_type_scalar, &
+                                    zetax2T, etax2T, stresspT, stressmT)
 
                !$OMP PARALLEL DO PRIVATE(iblk)
                do iblk = 1, nblocks
@@ -883,16 +870,10 @@
                enddo
                !$OMP END PARALLEL DO
 
-               ! Need to update the halos for the stress components
-               call ice_timer_start(timer_bound)
-               if (maskhalo_dyn) then
-                  call ice_HaloUpdate (stress12U,           halo_info_mask, &
-                                       field_loc_NEcorner,  field_type_scalar)
-               else
-                  call ice_HaloUpdate (stress12U,           halo_info     , &
-                                       field_loc_NEcorner,  field_type_scalar)
-               endif
-               call ice_timer_stop(timer_bound)
+               ! calls ice_haloUpdate, controls bundles and masks
+               call dyn_HaloUpdate (halo_info         ,  halo_info_mask, &
+                                    field_loc_NEcorner,  field_type_scalar, &
+                                    stress12U)
 
                !$OMP PARALLEL DO PRIVATE(iblk)
                do iblk = 1, nblocks
@@ -953,38 +934,26 @@
                enddo
                !$OMP END PARALLEL DO
 
-               call ice_timer_start(timer_bound)
-               if (maskhalo_dyn) then
-                  call ice_HaloUpdate (uvelE,           halo_info_mask, &
-                                       field_loc_Eface, field_type_vector)
-                  call ice_HaloUpdate (vvelN,           halo_info_mask, &
-                                       field_loc_Nface, field_type_vector)
-               else
-                  call ice_HaloUpdate (uvelE,           halo_info     , &
-                                       field_loc_Eface, field_type_vector)
-                  call ice_HaloUpdate (vvelN,           halo_info     , &
-                                       field_loc_Nface, field_type_vector)
-               endif
-               call ice_timer_stop(timer_bound)
+               ! calls ice_haloUpdate, controls bundles and masks
+               call dyn_HaloUpdate (halo_info,       halo_info_mask, &
+                                    field_loc_Eface, field_type_vector, &
+                                    uvelE)
+               call dyn_HaloUpdate (halo_info,       halo_info_mask, &
+                                    field_loc_Nface, field_type_vector, &
+                                    vvelN)
 
                call grid_average_X2Y('A',uvelE,'E',uvelN,'N')
                call grid_average_X2Y('A',vvelN,'N',vvelE,'E')
                uvelN(:,:,:) = uvelN(:,:,:)*npm(:,:,:)
                vvelE(:,:,:) = vvelE(:,:,:)*epm(:,:,:)
 
-               call ice_timer_start(timer_bound)
-               if (maskhalo_dyn) then
-                  call ice_HaloUpdate (uvelN,           halo_info_mask, &
-                                       field_loc_Nface, field_type_vector)
-                  call ice_HaloUpdate (vvelE,           halo_info_mask, &   
-                                       field_loc_Eface, field_type_vector)   
-               else
-                  call ice_HaloUpdate (uvelN,           halo_info     , &
-                                       field_loc_Nface, field_type_vector)
-                  call ice_HaloUpdate (vvelE,           halo_info     , & 
-                                       field_loc_Eface, field_type_vector) 
-               endif
-               call ice_timer_stop(timer_bound)
+               ! calls ice_haloUpdate, controls bundles and masks
+               call dyn_HaloUpdate (halo_info,       halo_info_mask, &
+                                    field_loc_Nface, field_type_vector, &
+                                    uvelN)
+               call dyn_HaloUpdate (halo_info,       halo_info_mask, &
+                                    field_loc_Eface, field_type_vector, &
+                                    vvelE)
 
                call grid_average_X2Y('S',uvelE,'E',uvel,'U')
                call grid_average_X2Y('S',vvelN,'N',vvel,'U')
@@ -1027,18 +996,10 @@
                enddo
                !$OMP END PARALLEL DO
 
-               ! Need to update the halos for the stress components
-               call ice_timer_start(timer_bound)
-               call stack_fields(zetax2T, etax2T, fld2)
-               if (maskhalo_dyn) then
-                  call ice_HaloUpdate (fld2,             halo_info_mask, &
-                                       field_loc_center, field_type_scalar)
-               else
-                  call ice_HaloUpdate (fld2,             halo_info     , &
-                                       field_loc_center, field_type_scalar)
-               endif
-               call unstack_fields(fld2, zetax2T, etax2T)
-               call ice_timer_stop(timer_bound)
+               ! calls ice_haloUpdate, controls bundles and masks
+               call dyn_HaloUpdate (halo_info,        halo_info_mask, &
+                                    field_loc_center, field_type_scalar, &
+                                    zetax2T, etax2T)
 
                !$OMP PARALLEL DO PRIVATE(iblk)
                do iblk = 1, nblocks
@@ -1062,32 +1023,13 @@
                enddo
                !$OMP END PARALLEL DO
 
-               ! Need to update the halos for the stress components
-               call ice_timer_start(timer_bound)
-
-               ! T fields at center
-               call stack_fields(stresspT, stressmT, stress12T, fld3)
-               if (maskhalo_dyn) then
-                  call ice_HaloUpdate (fld3,              halo_info_mask, &
-                                       field_loc_center,  field_type_scalar)
-               else
-                  call ice_HaloUpdate (fld3,              halo_info     , &
-                                       field_loc_center,  field_type_scalar)
-               endif
-               call unstack_fields(fld3, stresspT, stressmT, stress12T)
-
-               ! U fields at corner
-               call stack_fields(stresspU, stressmU, stress12U, fld3)
-               if (maskhalo_dyn) then
-                  call ice_HaloUpdate (fld3,              halo_info_mask, &
-                                       field_loc_NEcorner,field_type_scalar)
-               else
-                  call ice_HaloUpdate (fld3,              halo_info     , &
-                                       field_loc_NEcorner,field_type_scalar)
-               endif
-               call unstack_fields(fld3, stresspU, stressmU, stress12U)
-
-               call ice_timer_stop(timer_bound)
+               ! calls ice_haloUpdate, controls bundles and masks
+               call dyn_HaloUpdate (halo_info,         halo_info_mask, &
+                                    field_loc_center,  field_type_scalar, &
+                                    stresspT, stressmT, stress12T)
+               call dyn_HaloUpdate (halo_info,         halo_info_mask, &
+                                    field_loc_NEcorner,field_type_scalar, &
+                                    stresspU, stressmU, stress12U)
 
                !$OMP PARALLEL DO PRIVATE(iblk)
                do iblk = 1, nblocks
@@ -1154,31 +1096,13 @@
                enddo
                !$OMP END PARALLEL DO
 
-               call ice_timer_start(timer_bound)
-
-               ! E fields at Eface
-               call stack_fields(uvelE, vvelE, fld2)
-               if (maskhalo_dyn) then
-                  call ice_HaloUpdate (fld2,            halo_info_mask, &
-                                       field_loc_Eface, field_type_vector)
-               else
-                  call ice_HaloUpdate (fld2,            halo_info     , &
-                                       field_loc_Eface, field_type_vector)
-               endif
-               call unstack_fields(fld2, uvelE, vvelE)
-
-               ! N fields at Nface
-               call stack_fields(uvelN, vvelN, fld2)
-               if (maskhalo_dyn) then
-                  call ice_HaloUpdate (fld2,            halo_info_mask, &
-                                       field_loc_Nface, field_type_vector)
-               else
-                  call ice_HaloUpdate (fld2,            halo_info     , &
-                                       field_loc_Nface, field_type_vector)
-               endif
-               call unstack_fields(fld2, uvelN, vvelN)
-
-               call ice_timer_stop(timer_bound)
+               ! calls ice_haloUpdate, controls bundles and masks
+               call dyn_HaloUpdate (halo_info,       halo_info_mask, &
+                                    field_loc_Eface, field_type_vector, &
+                                    uvelE, vvelE)
+               call dyn_HaloUpdate (halo_info,       halo_info_mask, &
+                                    field_loc_Nface, field_type_vector, &
+                                    uvelN, vvelN)
 
                call grid_average_X2Y('S',uvelE,'E',uvel,'U')
                call grid_average_X2Y('S',vvelN,'N',vvel,'U')
@@ -1188,18 +1112,11 @@
 
             endif   ! grid_ice
 
-            call ice_timer_start(timer_bound)
             ! U fields at NE corner
-            call stack_fields(uvel, vvel, fld2)
-            if (maskhalo_dyn) then
-               call ice_HaloUpdate (fld2,               halo_info_mask, &
-                                    field_loc_NEcorner, field_type_vector)
-            else
-               call ice_HaloUpdate (fld2,               halo_info     , &
-                                    field_loc_NEcorner, field_type_vector)
-            endif
-            call unstack_fields(fld2, uvel, vvel)
-            call ice_timer_stop(timer_bound)
+            ! calls ice_haloUpdate, controls bundles and masks
+            call dyn_HaloUpdate (halo_info,          halo_info_mask, &
+                                 field_loc_NEcorner, field_type_vector, &
+                                 uvel, vvel)
          
          enddo                     ! subcycling
          call ice_timer_stop(timer_evp_2d)
