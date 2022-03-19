@@ -36,7 +36,7 @@
       module ice_dyn_evp
 
       use ice_kinds_mod
-      use ice_communicate, only: my_task, master_task, get_num_procs
+      use ice_communicate, only: my_task, master_task
       use ice_constants, only: field_loc_center, field_loc_NEcorner, &
           field_loc_Nface, field_loc_Eface, &
           field_type_scalar, field_type_vector
@@ -576,7 +576,7 @@
       call ice_HaloUpdate (strength,           halo_info, &
                            field_loc_center,   field_type_scalar)
 
-      ! velocities may have changed in dyn_prep2,could this use maskhalo?
+      ! velocities may have changed in dyn_prep2
       call stack_fields(uvel, vvel, fld2)
       call ice_HaloUpdate (fld2,               halo_info, &
                            field_loc_NEcorner, field_type_vector)
