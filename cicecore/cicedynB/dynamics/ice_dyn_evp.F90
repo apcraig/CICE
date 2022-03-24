@@ -190,10 +190,10 @@
 
       real (kind=dbl_kind), allocatable :: &
          strengthU(:,:,:), & ! strength averaged to U points
-         divUx    (:,:,:), & ! divU array for gridC, x added to differentiate with divu
-         tensionU (:,:,:), & ! tensionU array for gridC
-         shearU   (:,:,:), & ! shearU array for gridC
-         deltaU   (:,:,:), & ! deltaU array for gridC
+         divergU  (:,:,:), & ! div array on U points, differentiate from divu
+         tensionU (:,:,:), & ! tension array on U points
+         shearU   (:,:,:), & ! shear array on U points
+         deltaU   (:,:,:), & ! delta array on U points
          zetax2T  (:,:,:), & ! zetax2 = 2*zeta (bulk viscosity)
          zetax2U  (:,:,:), & ! zetax2T averaged to U points
          etax2T   (:,:,:), & ! etax2  = 2*eta  (shear viscosity)
@@ -237,7 +237,7 @@
       if (grid_ice == 'CD' .or. grid_ice == 'C') then
 
          allocate(strengthU(nx_block,ny_block,max_blocks))
-         allocate(divUx    (nx_block,ny_block,max_blocks))
+         allocate(divergU  (nx_block,ny_block,max_blocks))
          allocate(tensionU (nx_block,ny_block,max_blocks))
          allocate(shearU   (nx_block,ny_block,max_blocks))
          allocate(deltaU   (nx_block,ny_block,max_blocks))
@@ -246,7 +246,7 @@
          allocate(etax2T   (nx_block,ny_block,max_blocks))
          allocate(etax2U   (nx_block,ny_block,max_blocks))
          strengthU(:,:,:) = c0
-         divUx    (:,:,:) = c0
+         divergU  (:,:,:) = c0
          tensionU (:,:,:) = c0
          shearU   (:,:,:) = c0
          deltaU   (:,:,:) = c0
@@ -824,7 +824,7 @@
                                        ratiodxN(:,:,iblk), ratiodxNr(:,:,iblk), &
                                        ratiodyE(:,:,iblk), ratiodyEr(:,:,iblk), &
                                        epm     (:,:,iblk), npm      (:,:,iblk), &
-                                       divUx   (:,:,iblk), tensionU (:,:,iblk), &
+                                       divergU (:,:,iblk), tensionU (:,:,iblk), &
                                        shearU  (:,:,iblk), deltaU   (:,:,iblk)  )
 
                enddo  ! iblk
@@ -1039,7 +1039,7 @@
                                        ratiodxN (:,:,iblk), ratiodxNr(:,:,iblk), &
                                        ratiodyE (:,:,iblk), ratiodyEr(:,:,iblk), &
                                        epm      (:,:,iblk), npm      (:,:,iblk), &
-                                       divUx    (:,:,iblk), tensionU (:,:,iblk), &
+                                       divergU  (:,:,iblk), tensionU (:,:,iblk), &
                                        shearU   (:,:,iblk), DeltaU   (:,:,iblk)  )
 
                   call stressCD_U     (nx_block           , ny_block           , &
@@ -1048,7 +1048,7 @@
                                        uarea    (:,:,iblk),                      &
                                        zetax2U  (:,:,iblk), etax2U   (:,:,iblk), &
                                        strengthU(:,:,iblk),                      &
-                                       divUx    (:,:,iblk), tensionU (:,:,iblk), &
+                                       divergU  (:,:,iblk), tensionU (:,:,iblk), &
                                        shearU   (:,:,iblk), DeltaU   (:,:,iblk), &
                                        stresspU (:,:,iblk), stressmU (:,:,iblk), &
                                        stress12U(:,:,iblk))
@@ -1166,7 +1166,7 @@
 
       deallocate(fld2,fld3,fld4)
       if (grid_ice == 'CD' .or. grid_ice == 'C') then
-         deallocate(strengthU, divUx, tensionU, shearU, deltaU)
+         deallocate(strengthU, divergU, tensionU, shearU, deltaU)
          deallocate(zetax2T, zetax2U, etax2T, etax2U)
       endif
 
@@ -1950,7 +1950,7 @@
                              uarea,                 &
                              zetax2U,    etax2U,    &
                              strengthU,             &
-                             divU,       tensionU,  &
+                             divergU,    tensionU,  &
                              shearU,     DeltaU,    &
                              stresspU,   stressmU,  &
                              stress12U            )
@@ -1972,7 +1972,7 @@
          zetax2U  , & ! 2*zeta at U point
          etax2U   , & ! 2*eta at U point
          strengthU, & ! ice strength at U point
-         divU     , & ! div at U point
+         divergU  , & ! div at U point
          tensionU , & ! tension at U point
          shearU   , & ! shear at U point
          deltaU       ! delt at U point
@@ -2025,7 +2025,7 @@
          ! NOTE: for comp. efficiency 2 x zeta and 2 x eta are used in the code
 
          stresspU(i,j)  = (stresspU (i,j)*(c1-arlx1i*revp) &
-                          + arlx1i*(lzetax2U*divU(i,j) - lrep_prsU)) * denom1
+                          + arlx1i*(lzetax2U*divergU(i,j) - lrep_prsU)) * denom1
 
          stressmU(i,j)  = (stressmU (i,j)*(c1-arlx1i*revp) &
                           + arlx1i*letax2U*tensionU(i,j)) * denom1

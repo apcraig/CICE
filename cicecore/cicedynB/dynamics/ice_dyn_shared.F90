@@ -1912,7 +1912,7 @@
       end subroutine strain_rates
 
 !=======================================================================
-! Compute strain rates at the T point
+! Compute dtsd (div, tension, shear, delta) strain rates at the T point
 !
 ! author: JF Lemieux, ECCC
 ! Nov 2021
@@ -1992,7 +1992,7 @@
       end subroutine strain_rates_Tdtsd
 
 !=======================================================================
-! Compute strain rates at the T point
+! Compute the dt (div, tension) strain rates at the T point
 !
 ! author: JF Lemieux, ECCC
 ! Nov 2021
@@ -2076,7 +2076,7 @@
                                  ratiodxN,   ratiodxNr, &
                                  ratiodyE,   ratiodyEr, &
                                  epm,        npm,       &
-                                 divU,       tensionU,  &
+                                 divergU,    tensionU,  &
                                  shearU,     DeltaU     )
 
       integer (kind=int_kind), intent(in) :: &
@@ -2106,7 +2106,7 @@
          npm          ! N-cell mask
 
       real (kind=dbl_kind), dimension (nx_block,ny_block), intent(out):: &
-         divU     , & ! divergence at U point
+         divergU  , & ! divergence at U point
          tensionU , & ! tension at U point
          shearU   , & ! shear at U point
          DeltaU       ! delt at the U point
@@ -2126,7 +2126,7 @@
       ! NOTE these are actually strain rates * area  (m^2/s)
       !-----------------------------------------------------------------
 
-      divU    (:,:) = c0
+      divergU (:,:) = c0
       tensionU(:,:) = c0
       shearU  (:,:) = c0
       deltaU  (:,:) = c0
@@ -2145,7 +2145,7 @@
                 +(epm(i,j+1)-epm(i,j)) * epm(i,j+1) * ratiodyEr(i,j) * vvelE(i,j+1)
 
          ! divergence  =  e_11 + e_22
-         divU    (i,j) = dyU(i,j) * ( uNip1j - uNij ) &
+         divergU (i,j) = dyU(i,j) * ( uNip1j - uNij ) &
                        + uvelU(i,j) * ( dyN(i+1,j) - dyN(i,j) ) &
                        + dxU(i,j) * ( vEijp1 - vEij ) &
                        + vvelU(i,j) * ( dxE(i,j+1) - dxE(i,j) )
@@ -2172,7 +2172,7 @@
                        - vvelU(i,j) * ( dyN(i+1,j) - dyN(i,j) )
 
          ! Delta (in the denominator of zeta, eta)
-         DeltaU(i,j)   = sqrt(divU(i,j)**2 + e_factor*(tensionU(i,j)**2 + shearU(i,j)**2))
+         DeltaU(i,j)   = sqrt(divergU(i,j)**2 + e_factor*(tensionU(i,j)**2 + shearU(i,j)**2))
 
       enddo
 
