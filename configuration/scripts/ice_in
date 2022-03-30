@@ -265,6 +265,8 @@
     bgc_data_type   = 'default'
     fe_data_type    = 'default'
     ice_data_type   = 'default'
+    ice_data_conc   = 'default'
+    ice_data_dist   = 'default'
     fyear_init      = 2005
     ycycle          = 1
     atm_data_format = 'bin'
