@@ -113,7 +113,8 @@
       use ice_dyn_evp_1d, only: ice_dyn_evp_1d_copyin, ice_dyn_evp_1d_kernel, &
           ice_dyn_evp_1d_copyout
       use ice_dyn_shared, only: evp_algorithm, stack_fields, unstack_fields, &
-          DminTarea, visc_method, deformations, deformations_T, strain_rates_U, &
+          DminTarea, visc_method, deformations, deformations_T, deformations_T2, &
+          strain_rates_U, &
           dyn_haloUpdate
 
       real (kind=dbl_kind), intent(in) :: &
@@ -125,7 +126,8 @@
          ksub           , & ! subcycle step
          iblk           , & ! block index
          ilo,ihi,jlo,jhi, & ! beginning and end of physical domain
-         i, j, ij           ! local indices
+         i, j, ij,        & ! local indices
+         deform_option
 
       integer (kind=int_kind), dimension(max_blocks) :: &
          icellt   , & ! no. of cells where icetmask = 1
@@ -223,6 +225,8 @@
          first_time = .true. ! first time logical
 
       character(len=*), parameter :: subname = '(evp)'
+
+      deform_option = 1
 
       call ice_timer_start(timer_dynamics) ! dynamics
 
@@ -853,6 +857,9 @@
                   ! on last subcycle, save quantities for mechanical redistribution
                   !-----------------------------------------------------------------
                   if (ksub == ndte) then
+
+                     if (deform_option == 1) then
+
                      call deformations_T (nx_block          , ny_block           , &
                                           icellt      (iblk),                      &
                                           indxti    (:,iblk), indxtj     (:,iblk), &
@@ -863,6 +870,23 @@
                                           tarear  (:,:,iblk),                      &
                                           shear   (:,:,iblk), divu     (:,:,iblk), &
                                           rdg_conv(:,:,iblk), rdg_shear(:,:,iblk))
+                     
+                     elseif (deform_option == 2) then
+
+                     call deformations_T2 (nx_block          , ny_block           , &
+                                          icellt      (iblk),                      &
+                                          indxti    (:,iblk), indxtj     (:,iblk), &
+                                          uvelE   (:,:,iblk), vvelE    (:,:,iblk), &
+                                          uvelN   (:,:,iblk), vvelN    (:,:,iblk), &
+                                          dxN     (:,:,iblk), dyE      (:,:,iblk), &
+                                          dxT     (:,:,iblk), dyT      (:,:,iblk), &
+                                          tarear  (:,:,iblk), uarea    (:,:,iblk), &
+                                          shearU    (:,:,iblk),                    &
+                                          shear   (:,:,iblk), divu     (:,:,iblk), &
+                                          rdg_conv(:,:,iblk), rdg_shear(:,:,iblk))
+                     
+                     endif
+
                   endif
                enddo
                !$OMP END PARALLEL DO
