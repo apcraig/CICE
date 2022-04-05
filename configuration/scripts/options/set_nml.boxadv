@@ -1,6 +1,6 @@
 grid_ocn = 'B'
 nilyr = 1
-ice_ic = 'default'
+ice_ic = 'internal'
 restart_ext = .false.
 kcatbound = 2
 ew_boundary_type = 'cyclic'

@@ -1,6 +1,6 @@
 grid_ocn = 'B'
 nilyr =	1
-ice_ic = 'default'
+ice_ic = 'internal'
 restart_ext = .true.
 use_leap_years = .false.
 ndtd = 2

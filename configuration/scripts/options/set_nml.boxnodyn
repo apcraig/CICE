@@ -1,5 +1,5 @@
 nilyr =	1
-ice_ic = 'default'
+ice_ic = 'internal'
 days_per_year = 360
 use_leap_years = .false.
 npt            = 72

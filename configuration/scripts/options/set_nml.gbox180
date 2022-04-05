@@ -1,4 +1,4 @@
-ice_ic = 'default'
+ice_ic = 'internal'
 grid_type = 'rectangular'
 kmt_type      = 'default'
 atm_data_type = 'box2001'

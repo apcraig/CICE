@@ -38,7 +38,7 @@
 
       character(len=char_len_long), public :: &
          ice_ic      ! method of ice cover initialization
-                     ! 'default'  => latitude and sst dependent
+                     ! 'internal' => set from ice_data_ namelist
                      ! 'none'     => no ice
                      ! filename   => read file
 
@@ -751,7 +751,9 @@
             open(nu_diag,file=tmpstr)
          endif
       end if
-      if (trim(ice_ic) /= 'default' .and. trim(ice_ic) /= 'none') then
+      if (trim(ice_ic) /= 'default' .and. &
+          trim(ice_ic) /= 'none'    .and. &
+          trim(ice_ic) /= 'internal') then
          restart = .true.
       end if
 #else
@@ -1031,6 +1033,15 @@
 #endif
 
       !-----------------------------------------------------------------
+      ! update defaults
+      !-----------------------------------------------------------------
+
+      if (trim(ice_ic)        == 'default') ice_ic        = 'internal'
+      if (trim(ice_data_conc) == 'default') ice_data_conc = 'parabolic'
+      if (trim(ice_data_dist) == 'default') ice_data_dist = 'uniform'
+      if (trim(ice_data_type) == 'default') ice_data_type = 'latsst'
+
+      !-----------------------------------------------------------------
       ! verify inputs
       !-----------------------------------------------------------------
 
@@ -1056,11 +1067,11 @@
          restart = .true.
          use_restart_time = .true.
       elseif (trim(runtype) == 'initial') then
-         if (ice_ic == 'none' .or. ice_ic == 'default') then
+         if (ice_ic == 'none' .or. ice_ic == 'internal') then
             if (my_task == master_task) then
-               write(nu_diag,*) subname//'NOTE: ice_ic = none or default, setting restart flags to .false.'
+               write(nu_diag,*) subname//'NOTE: ice_ic = none or internal, setting restart flags to .false.'
                if (.not. use_restart_time) &
-                  write(nu_diag,*) subname//'NOTE: ice_ic = none or default, setting use_restart_time=.false.'
+                  write(nu_diag,*) subname//'NOTE: ice_ic = none or internal, setting use_restart_time=.false.'
                write(nu_diag,*) ' '
             endif
             use_restart_time = .false.
@@ -1079,7 +1090,7 @@
 !            restart_ext =  .false.
          else
             if (my_task == master_task) then
-               write(nu_diag,*) subname//'NOTE: ice_ic /= none or default, setting restart=.true.'
+               write(nu_diag,*) subname//'NOTE: ice_ic /= none or internal, setting restart=.true.'
                write(nu_diag,*) ' '
             endif
             restart = .true.
@@ -2795,7 +2806,7 @@
          indxi, indxj    ! compressed indices for cells with aicen > puny
 
       real (kind=dbl_kind) :: &
-         Tsfc, sum, hbar, puny, rhos, Lfresh, rad_to_deg, rsnw_fall, dist_ratio
+         Tsfc, sum, hbar, abar, puny, rhos, Lfresh, rad_to_deg, rsnw_fall, dist_ratio
 
       real (kind=dbl_kind), dimension(ncat) :: &
          ainit, hinit    ! initial area, thickness
@@ -2878,61 +2889,41 @@
          enddo
       enddo
 
-      if (trim(ice_ic) == 'default') then
+      if (trim(ice_ic) == 'internal') then
 
          !---------------------------------------------------------
          ! ice concentration/thickness
          !---------------------------------------------------------
 
-         if (trim(ice_data_conc) == 'p5') then
+         if (trim(ice_data_conc) == 'p5' .or. &
+             trim(ice_data_conc) == 'p8' .or. &
+             trim(ice_data_conc) == 'p9' .or. &
+             trim(ice_data_conc) == 'c1') then
 
-            hbar = c2  ! initial ice thickness
+            if (trim(ice_data_conc) == 'p5') then
+               hbar = c2  ! initial ice thickness
+               abar = p5  ! initial ice concentration
+            elseif (trim(ice_data_conc) == 'p8') then
+               hbar = c1  ! initial ice thickness
+               abar = 0.8_dbl_kind  ! initial ice concentration
+            elseif (trim(ice_data_conc) == 'p9') then
+               hbar = c1  ! initial ice thickness
+               abar = 0.9_dbl_kind  ! initial ice concentration
+            elseif (trim(ice_data_conc) == 'c1') then
+               hbar = c1  ! initial ice thickness
+               abar = c1  ! initial ice concentration
+            endif
+
             do n = 1, ncat
                hinit(n) = c0
                ainit(n) = c0
-               if (hbar > hin_max(n-1) .and. hbar < hin_max(n)) then
+               if (hbar > hin_max(n-1) .and. hbar <= hin_max(n)) then
                   hinit(n) = hbar
-                  ainit(n) = p5
+                  ainit(n) = abar
                endif
             enddo
 
-         elseif (trim(ice_data_conc) == 'p8') then
-
-            hbar = c2  ! initial ice thickness
-            do n = 1, ncat
-               hinit(n) = c0
-               ainit(n) = c0
-               if (hbar > hin_max(n-1) .and. hbar < hin_max(n)) then
-                  hinit(n) = hbar
-                  ainit(n) = 0.8_dbl_kind
-               endif
-            enddo
-
-         elseif (trim(ice_data_conc) == 'p9') then
-
-            hbar = c2  ! initial ice thickness
-            do n = 1, ncat
-               hinit(n) = c0
-               ainit(n) = c0
-               if (hbar > hin_max(n-1) .and. hbar < hin_max(n)) then
-                  hinit(n) = hbar
-                  ainit(n) = 0.9_dbl_kind
-               endif
-            enddo
-
-         elseif (trim(ice_data_conc) == 'c1') then
-         
-            hbar = c1  ! initial ice thickness (1 m)
-            do n = 1, ncat
-               hinit(n) = c0
-               ainit(n) = c0
-               if (hbar > hin_max(n-1) .and. hbar < hin_max(n)) then
-                  hinit(n) = hbar
-                  ainit(n) = c1
-               endif
-            enddo
-         
-         elseif (trim(ice_data_conc) == 'default') then
+         elseif (trim(ice_data_conc) == 'parabolic') then
 
             ! initial category areas in cells with ice
             hbar = c3  ! initial ice thickness with greatest area
@@ -3112,7 +3103,7 @@
             enddo
             enddo
 
-         elseif (trim(ice_data_type) == 'default') then
+         elseif (trim(ice_data_type) == 'latsst') then
 
             !-----------------------------------------------------------------
             ! Place ice where ocean surface is cold.
@@ -3188,8 +3179,7 @@
                      aicen(i,j,n) = ainit(n) * exp(-dist_ratio)
                   endif
 
-               elseif (trim(ice_data_dist) == 'default' .or. &
-                       trim(ice_data_dist) == 'uniform') then
+               elseif (trim(ice_data_dist) == 'uniform') then
 
                   ! nothing extra to do
 
