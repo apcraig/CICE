@@ -21,7 +21,7 @@
       use ice_constants, only: c0, c1
       use ice_constants, only: field_loc_center, field_type_scalar
       use ice_exit, only: abort_ice
-      use ice_memory, only: ice_memory_print
+      use ice_memusage, only: ice_memusage_print
       use icepack_intfc, only: icepack_warnings_flush, icepack_warnings_aborted
       use icepack_intfc, only: icepack_max_iso, icepack_max_aero
       use icepack_intfc, only: icepack_query_parameters
@@ -381,7 +381,7 @@
             if (skl_bgc .or. z_tracers)  call bgc_diags
             if (tr_brine) call hbrine_diags
             if (my_task == master_task) then
-               call ice_memory_print(nu_diag,subname)
+               call ice_memusage_print(nu_diag,subname)
             endif
          endif
          call ice_timer_stop(timer_diags)   ! diagnostics

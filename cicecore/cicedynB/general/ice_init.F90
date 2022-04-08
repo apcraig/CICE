@@ -122,7 +122,7 @@
       use ice_transport_driver, only: advection, conserv_check
       use ice_restoring, only: restore_ice
       use ice_timers, only: timer_stats
-      use ice_memory, only: memory_stats
+      use ice_memusage, only: memory_stats
 #ifdef CESMCOUPLED
       use shr_file_mod, only: shr_file_setIO
 #endif

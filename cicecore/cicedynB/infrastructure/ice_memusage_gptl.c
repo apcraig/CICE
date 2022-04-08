@@ -15,10 +15,44 @@
 **                 -1 = failure
 */
 
+#define _NO_CHANGE      0
+#define _UPPER_CASE     1
+#define _ADD_UNDERSCORE 2
+#define _ADD_TWO_UNDERSCORES 3
+
+#ifdef FORTRANUNDERSCORE
+#define NAMING _ADD_UNDERSCORE
+#endif
+
+#ifdef FORTRANDOUBLEUNDERSCORE
+#define NAMING _ADD_TWO_UNDERSCORES
+#endif
+
+#ifdef FORTRANCAPS
+#define NAMING _UPPER_CASE
+#endif
+
+#ifndef NAMING
+#define NAMING _NO_CHANGE
+#endif
+
+#if (NAMING == _ADD_UNDERSCORE)
+#define ice_memusage_gptl ice_memusage_gptl_
+#endif
+
+#if (NAMING == _ADD_TWO_UNDERSCORES)
+#define ice_memusage_gptl ice_memusage_gptl__
+#endif
+
+#if (NAMING == _UPPER_CASE)
+#define ice_memusage_gptl ICE_MEMUSAGE_GPTL
+#endif
+
+
 #include <sys/resource.h>
 
 /*#include "gptl.h" */   /* additional cpp defs and function prototypes */
-/* extern int gptlget_memusage_ (int *, int *, int *, int *, int *);  */
+/* extern int ice_memusage_gptl (int *, int *, int *, int *, int *);  */
 
 /* _AIX is automatically defined when using the AIX C compilers */
 #ifdef _AIX
@@ -61,7 +95,7 @@
 
 #endif
 
-int gptlget_memusage_ (int *size, int *rss, int *share, int *text, int *datastack)
+int ice_memusage_gptl (int *size, int *rss, int *share, int *text, int *datastack)
 {
 #if defined (BGP) || defined(BGQ)
 
