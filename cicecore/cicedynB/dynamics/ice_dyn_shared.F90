@@ -27,7 +27,7 @@
                 principal_stress, init_dyn, dyn_prep1, dyn_prep2, dyn_finish, &
                 seabed_stress_factor_LKD, seabed_stress_factor_prob, &
                 alloc_dyn_shared, &
-                deformations, deformations_T, deformations_T2, &
+                deformations, deformationsC_T, deformationsCD_T, &
                 strain_rates, strain_rates_T, strain_rates_U, &
                 visc_replpress, &
                 dyn_haloUpdate, &
@@ -1733,16 +1733,16 @@
 ! author: JF Lemieux, ECCC
 ! Nov 2021
 
-      subroutine deformations_T (nx_block,   ny_block,   &
-                                 icellt,                 &
-                                 indxti,     indxtj,     &
-                                 uvelE,      vvelE,      &
-                                 uvelN,      vvelN,      &
-                                 dxN,        dyE,        &
-                                 dxT,        dyT,        &
-                                 tarear,                 &
-                                 shear,      divu,       &
-                                 rdg_conv,   rdg_shear )
+      subroutine deformationsCD_T (nx_block,   ny_block,   &
+                                   icellt,                 &
+                                   indxti,     indxtj,     &
+                                   uvelE,      vvelE,      &
+                                   uvelN,      vvelN,      &
+                                   dxN,        dyE,        &
+                                   dxT,        dyT,        &
+                                   tarear,                 &
+                                   shear,      divu,       &
+                                   rdg_conv,   rdg_shear )
 
       use ice_constants, only: p5
 
@@ -1820,7 +1820,7 @@
 
       enddo                     ! ij
 
-      end subroutine deformations_T
+    end subroutine deformationsCD_T
 
 
 !=======================================================================
@@ -1829,17 +1829,17 @@
 ! author: JF Lemieux, ECCC
 ! Nov 2021
 
-      subroutine deformations_T2 (nx_block,   ny_block,  &
-                                 icellt,                 &
-                                 indxti,     indxtj,     &
-                                 uvelE,      vvelE,      &
-                                 uvelN,      vvelN,      &
-                                 dxN,        dyE,        &
-                                 dxT,        dyT,        &
-                                 tarear,     uarea,      &
-                                 shearU,                 &
-                                 shear,      divu,       &
-                                 rdg_conv,   rdg_shear )
+    subroutine deformationsC_T (nx_block,   ny_block,   &
+                                icellt,                 &
+                                indxti,     indxtj,     &
+                                uvelE,      vvelE,      &
+                                uvelN,      vvelN,      &
+                                dxN,        dyE,        &
+                                dxT,        dyT,        &
+                                tarear,     uarea,      &
+                                shearU,                 &
+                                shear,      divu,       &
+                                rdg_conv,   rdg_shear )
 
       use ice_constants, only: p5
 
@@ -1911,7 +1911,6 @@
          !-----------------------------------------------------------------
          ! deformations for mechanical redistribution
          !-----------------------------------------------------------------
-
          
          shearTsqr = (shearU(i  ,j  )**2 * uarea(i  ,j  )  &
                     + shearU(i  ,j-1)**2 * uarea(i  ,j-1)  &
@@ -1932,7 +1931,7 @@
 
       enddo                     ! ij
 
-      end subroutine deformations_T2
+    end subroutine deformationsC_T
 
 !=======================================================================
 ! Compute strain rates
