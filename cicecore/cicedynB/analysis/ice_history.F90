@@ -584,6 +584,15 @@
       call broadcast_scalar (f_sig1, master_task)
       call broadcast_scalar (f_sig2, master_task)
       call broadcast_scalar (f_sigP, master_task)
+      call broadcast_scalar (f_stresspT, master_task)
+      call broadcast_scalar (f_stressmT, master_task)
+      call broadcast_scalar (f_stress12T, master_task)
+      call broadcast_scalar (f_stresspU, master_task)
+      call broadcast_scalar (f_stressmU, master_task)
+      call broadcast_scalar (f_stress12U, master_task)
+      call broadcast_scalar (f_stressp_1, master_task)
+      call broadcast_scalar (f_stressm_1, master_task)
+      call broadcast_scalar (f_stress12_1, master_task)
       call broadcast_scalar (f_dvidtt, master_task)
       call broadcast_scalar (f_dvidtd, master_task)
       call broadcast_scalar (f_daidtt, master_task)
@@ -1325,6 +1334,51 @@
              "ice pressure",                       &
              "sigP is instantaneous" // trim(description), c1, c0, &
              ns1, f_sigP)
+      
+         call define_hist_field(n_stresspT,"stresspT","N/m",tstr2D, tcstr, &
+             " ",                       &
+             "stresspT is instantaneous" // trim(description), c1, c0, &
+             ns1, f_stresspT)
+      
+         call define_hist_field(n_stressmT,"stressmT","N/m",tstr2D, tcstr, &
+             " ",                       &
+             "stressmT is instantaneous" // trim(description), c1, c0, &
+             ns1, f_stressmT)
+      
+         call define_hist_field(n_stress12T,"stress12T","N/m",tstr2D, tcstr, &
+             " ",                       &
+             "stress12T is instantaneous" // trim(description), c1, c0, &
+             ns1, f_stress12T)
+      
+         call define_hist_field(n_stresspU,"stresspU","N/m",ustr2D, ucstr, &
+             " ",                       &
+             "stresspU is instantaneous" // trim(description), c1, c0, &
+             ns1, f_stresspU)
+      
+         call define_hist_field(n_stressmU,"stressmU","N/m",ustr2D, ucstr, &
+             " ",                       &
+             "stressmU is instantaneous" // trim(description), c1, c0, &
+             ns1, f_stressmU)
+      
+         call define_hist_field(n_stress12U,"stress12U","N/m",ustr2D, ucstr, &
+             " ",                       &
+             "stress12U is instantaneous" // trim(description), c1, c0, &
+             ns1, f_stress12U)
+      
+         call define_hist_field(n_stressp_1,"stressp_1","N/m",ustr2D, ucstr, &
+             " ",                       &
+             "stressp_1 is instantaneous" // trim(description), c1, c0, &
+             ns1, f_stressp_1)
+      
+         call define_hist_field(n_stressm_1,"stressm_1","N/m",ustr2D, ucstr, &
+             " ",                       &
+             "stressm_1 is instantaneous" // trim(description), c1, c0, &
+             ns1, f_stressm_1)
+      
+         call define_hist_field(n_stress12_1,"stress12_1","N/m",ustr2D, ucstr, &
+             " ",                       &
+             "stress12_1 is instantaneous" // trim(description), c1, c0, &
+             ns1, f_stress12_1)
       
          call define_hist_field(n_dvidtt,"dvidtt","cm/day",tstr2D, tcstr, &
              "volume tendency thermo",                                  &
@@ -2114,6 +2168,7 @@
           fcondtop, fcondbot, fsurfn, fcondtopn, flatn, fsensn, albcnt, snwcnt, &
           stressp_1, stressm_1, stress12_1, &
           stresspT, stressmT, stress12T, &
+          stresspU, stressmU, stress12U, &
           stressp_2, &
           stressp_3, &
           stressp_4, sig1, sig2, sigP, &
@@ -4412,9 +4467,9 @@
                                       sigP      (:,:,iblk))
             case('CD','C')
                call principal_stress (nx_block,  ny_block,  &
-                                      stresspT  (:,:,iblk), &
-                                      stressmT  (:,:,iblk), &
-                                      stress12T (:,:,iblk), &
+                                      stresspU  (:,:,iblk), &
+                                      stressmU  (:,:,iblk), &
+                                      stress12U (:,:,iblk), &
                                       strength  (:,:,iblk), &
                                       sig1      (:,:,iblk), &
                                       sig2      (:,:,iblk), &
@@ -4429,6 +4484,15 @@
                  if (n_sig1     (ns) /= 0) a2D(i,j,n_sig1(ns),     iblk) = spval_dbl
                  if (n_sig2     (ns) /= 0) a2D(i,j,n_sig2(ns),     iblk) = spval_dbl
                  if (n_sigP     (ns) /= 0) a2D(i,j,n_sigP(ns),     iblk) = spval_dbl
+                 if (n_stresspT     (ns) /= 0) a2D(i,j,n_stresspT(ns),     iblk) = spval_dbl
+                 if (n_stressmT     (ns) /= 0) a2D(i,j,n_stressmT(ns),     iblk) = spval_dbl
+		 if (n_stress12T     (ns) /= 0) a2D(i,j,n_stress12T(ns),     iblk) = spval_dbl
+		 if (n_stresspU     (ns) /= 0) a2D(i,j,n_stresspU(ns),     iblk) = spval_dbl
+		 if (n_stressmU     (ns) /= 0) a2D(i,j,n_stressmU(ns),     iblk) = spval_dbl
+                 if (n_stress12U     (ns) /= 0) a2D(i,j,n_stress12U(ns),     iblk) = spval_dbl
+		 if (n_stressp_1     (ns) /= 0) a2D(i,j,n_stressp_1(ns),     iblk) = spval_dbl
+		 if (n_stressm_1     (ns) /= 0) a2D(i,j,n_stressm_1(ns),     iblk) = spval_dbl
+                 if (n_stress12_1     (ns) /= 0) a2D(i,j,n_stress12_1(ns),     iblk) = spval_dbl
                  if (n_sistreave(ns) /= 0) a2D(i,j,n_sistreave(ns),iblk) = spval_dbl
                  if (n_sistremax(ns) /= 0) a2D(i,j,n_sistremax(ns),iblk) = spval_dbl
                  if (n_mlt_onset(ns) /= 0) a2D(i,j,n_mlt_onset(ns),iblk) = spval_dbl
@@ -4461,6 +4525,24 @@
                        sig2 (i,j,iblk)*avail_hist_fields(n_sig2(ns))%cona
                  if (n_sigP     (ns) /= 0) a2D(i,j,n_sigP(ns),iblk)      = &
                        sigP (i,j,iblk)*avail_hist_fields(n_sigP(ns))%cona      
+                 if (n_stresspT     (ns) /= 0) a2D(i,j,n_stresspT(ns),iblk)      = &
+                       stresspT (i,j,iblk)*avail_hist_fields(n_stresspT(ns))%cona
+                 if (n_stressmT     (ns) /= 0) a2D(i,j,n_stressmT(ns),iblk)      = &
+                       stressmT (i,j,iblk)*avail_hist_fields(n_stressmT(ns))%cona
+                 if (n_stress12T     (ns) /= 0) a2D(i,j,n_stress12T(ns),iblk)      = &
+                       stress12T (i,j,iblk)*avail_hist_fields(n_stress12T(ns))%cona
+                 if (n_stresspU     (ns) /= 0) a2D(i,j,n_stresspU(ns),iblk)      = &
+                       stresspU (i,j,iblk)*avail_hist_fields(n_stresspU(ns))%cona
+                 if (n_stressmU     (ns) /= 0) a2D(i,j,n_stressmU(ns),iblk)      = &
+                       stressmU (i,j,iblk)*avail_hist_fields(n_stressmU(ns))%cona
+                 if (n_stress12U     (ns) /= 0) a2D(i,j,n_stress12U(ns),iblk)      = &
+                       stress12U (i,j,iblk)*avail_hist_fields(n_stress12U(ns))%cona
+                 if (n_stressp_1     (ns) /= 0) a2D(i,j,n_stressp_1(ns),iblk)      = &
+                       stressp_1 (i,j,iblk)*avail_hist_fields(n_stressp_1(ns))%cona
+                 if (n_stressm_1     (ns) /= 0) a2D(i,j,n_stressm_1(ns),iblk)      = &
+                       stressm_1 (i,j,iblk)*avail_hist_fields(n_stressm_1(ns))%cona
+                 if (n_stress12_1     (ns) /= 0) a2D(i,j,n_stress12_1(ns),iblk)      = &
+                       stress12_1 (i,j,iblk)*avail_hist_fields(n_stress12_1(ns))%cona
                  if (n_sistreave(ns) /= 0) a2D(i,j,n_sistreave(ns),iblk) = &
                        p5*(sig1(i,j,iblk)+sig2(i,j,iblk))*avail_hist_fields(n_sistreave(ns))%cona
                  if (n_sistremax(ns) /= 0) a2D(i,j,n_sistremax(ns),iblk) = &

@@ -296,6 +296,12 @@
            f_divu      = 'm', f_shear      = 'm', &
            f_sig1      = 'm', f_sig2       = 'm', &
            f_sigP      = 'm', &
+           f_stresspT  = 'm', f_stressmT   = 'm', &
+           f_stress12T = 'm', &
+           f_stresspU  = 'm', f_stressmU   = 'm', &
+           f_stress12U = 'm', &
+           f_stressp_1  = 'm', f_stressm_1   = 'm', &
+           f_stress12_1 = 'm', &
            f_dvidtt    = 'm', f_dvidtd     = 'm', &
            f_daidtt    = 'm', f_daidtd     = 'm', &
            f_dagedtt   = 'm', f_dagedtd    = 'm', &
@@ -463,6 +469,12 @@
            f_divu,      f_shear    , &
            f_sig1,      f_sig2     , &
            f_sigP,      &
+           f_stresspT,  f_stressmT , &
+           f_stress12T, &
+           f_stresspU,  f_stressmU , &
+           f_stress12U, &
+           f_stressp_1,  f_stressm_1 , &
+           f_stress12_1, &
            f_dvidtt,    f_dvidtd   , &
            f_daidtt,    f_daidtd   , &
            f_dagedtt,   f_dagedtd  , &
@@ -655,6 +667,12 @@
            n_divu       , n_shear      , &
            n_sig1       , n_sig2       , &
            n_sigP       , &
+           n_stresspT   , n_stressmT   , &
+           n_stress12T  , &
+           n_stresspU   , n_stressmU   , &
+           n_stress12U  , &
+           n_stressp_1   , n_stressm_1   , &
+           n_stress12_1  , &
            n_dvidtt     , n_dvidtd     , &
            n_daidtt     , n_daidtd     , &
            n_dagedtt    , n_dagedtd    , &
