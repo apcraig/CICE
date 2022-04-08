@@ -296,12 +296,12 @@
            f_divu      = 'm', f_shear      = 'm', &
            f_sig1      = 'm', f_sig2       = 'm', &
            f_sigP      = 'm', &
-           f_stresspT  = 'm', f_stressmT   = 'm', &
-           f_stress12T = 'm', &
-           f_stresspU  = 'm', f_stressmU   = 'm', &
-           f_stress12U = 'm', &
-           f_stressp_1  = 'm', f_stressm_1   = 'm', &
-           f_stress12_1 = 'm', &
+           f_stresspT  = 'x', f_stressmT   = 'x', &
+           f_stress12T = 'x', &
+           f_stresspU  = 'x', f_stressmU   = 'x', &
+           f_stress12U = 'x', &
+           f_stressp_1  = 'x', f_stressm_1   = 'x', &
+           f_stress12_1 = 'x', &
            f_dvidtt    = 'm', f_dvidtd     = 'm', &
            f_daidtt    = 'm', f_daidtd     = 'm', &
            f_dagedtt   = 'm', f_dagedtd    = 'm', &
