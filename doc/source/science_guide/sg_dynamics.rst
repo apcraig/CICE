@@ -6,10 +6,9 @@ Dynamics
 ========
 
 There are different approaches in the CICE code for representing sea ice
-rheology and for solving the sea ice momentum equation. The viscous-plastic (VP) originally developed by :cite:`Hibler79`,
-the elastic-viscous-plastic (EVP) :cite:`Hunke97` model represents a modification of the
-standard viscous-plastic (VP) model for sea ice dynamics. The elastic-anisotropic-plastic (EAP) model,
-on the other hand, explicitly accounts for the observed sub-continuum
+rheology and for solving the sea ice momentum equation: the viscous-plastic (VP) rheology :cite:`Hibler79` with an implicit method,
+the elastic-viscous-plastic (EVP) :cite:`Hunke97` model which represents a modification of the
+VP model and the elastic-anisotropic-plastic (EAP) model which explicitly accounts for the sub-continuum
 anisotropy of the sea ice cover :cite:`Wilchinsky06,Weiss09`. If
 ``kdyn`` = 1 in the namelist then the EVP model is used (module
 **ice\_dyn\_evp.F90**), while ``kdyn`` = 2 is associated with the EAP
@@ -45,6 +44,8 @@ The VP solver implementation mostly follows :cite:`Lemieux08`, with
 FGMRES :cite:`Saad93` as the linear solver and GMRES as the preconditioner.
 Note that the VP solver has not yet been tested on the ``tx1`` grid or with
 threading enabled.
+
+The EVP, EAP and VP approaches are all available with the B grid. However, at the moment, the EVP model is the only possibility with the C grid.
 
 Here we summarize the equations and
 direct the reader to the above references for details.
