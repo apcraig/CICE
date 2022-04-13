@@ -94,18 +94,20 @@ For clarity, the two components of Equation :eq:`vpmom` are
      -C_bv-mfu - mg{\partial H_\circ\over\partial y}. \end{aligned}
    :label: momsys
 
+On the B grid, the equations above are solved at the U point for the collocated u and v components (see figure :ref:`fig-Bgrid`). On the C grid, however. the two components are not collocated: the u component is at the E point while the v component is at the N point.
 
-A bilinear discretization is used for the stress terms
+The B grid spatial discretization is based on a variational method described in :cite:`Hunke02`. A bilinear discretization is used for the stress terms
 :math:`\partial\sigma_{ij}/\partial x_j`,
 which enables the discrete equations to be derived from the
 continuous equations written in curvilinear coordinates. In this
 manner, metric terms associated with the curvature of the grid are
-incorporated into the discretization explicitly. Details pertaining to
-the spatial discretization are found in :cite:`Hunke02`.
+incorporated into the discretization explicitly.
+
+On the C grid, however, a finite difference approach is used for the spatial discretization. The C grid discretization is based on :cite:`Bouillon09, Bouillon13, Kimmritz16`.
 
 .. _evp-momentum:
 
-Elastic-Viscous-Plastic
+EVP time discretization and solution
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 The momentum equation is discretized in time as follows, for the classic
@@ -119,24 +121,23 @@ variables used in the code.
 
 .. math::
    \underbrace{\left({m\over\Delta t_e}+{\tt vrel} \cos\theta\ + C_b \right)}_{\tt cca} u^{k+1}
-   - \underbrace{\left(mf+{\tt vrel}\sin\theta\right)}_{\tt ccb}v^{k+1}
+   - \underbrace{\left(mf+{\tt vrel}\sin\theta\right)}_{\tt ccb}v^{l}
     =  &\underbrace{{\partial\sigma_{1j}^{k+1}\over\partial x_j}}_{\tt strintx}
     + \underbrace{\tau_{ax} - mg{\partial H_\circ\over\partial x} }_{\tt forcex} \\
      &+ {\tt vrel}\underbrace{\left(U_w\cos\theta-V_w\sin\theta\right)}_{\tt waterx}  + {m\over\Delta t_e}u^k,
    :label: umom
 
 .. math::
-    \underbrace{\left(mf+{\tt vrel}\sin\theta\right)}_{\tt ccb} u^{k+1}
+    \underbrace{\left(mf+{\tt vrel}\sin\theta\right)}_{\tt ccb} u^{l}
    + \underbrace{\left({m\over\Delta t_e}+{\tt vrel} \cos\theta + C_b \right)}_{\tt cca}v^{k+1}
     =  &\underbrace{{\partial\sigma_{2j}^{k+1}\over\partial x_j}}_{\tt strinty}
     + \underbrace{\tau_{ay} - mg{\partial H_\circ\over\partial y} }_{\tt forcey} \\
      &+ {\tt vrel}\underbrace{\left(U_w\sin\theta+V_w\cos\theta\right)}_{\tt watery}  + {m\over\Delta t_e}v^k,
    :label: vmom
 
-and :math:`{\tt vrel}\ \cdot\ {\tt waterx(y)}= {\tt taux(y)}`.
+where :math:`{\tt vrel}\ \cdot\ {\tt waterx(y)}= {\tt taux(y)}` and the treatment of :math:`u^{l}` and :math:`v^{l}` vary depending of the grid.
 
-We solve this system of equations analytically for :math:`u^{k+1}` and
-:math:`v^{k+1}`. Define
+As :math:`u` and :math:`v` are collocated on the B grid, :math:`u^{l}` and :math:`v^{l}` are respectively :math:`u^{k+1}` and :math:`v^{k+1}` such that this system of equations can be solved as follows. Define
 
 .. math::
    \hat{u} = F_u + \tau_{ax} - mg{\partial H_\circ\over\partial x} + {\tt vrel} \left(U_w\cos\theta - V_w\sin\theta\right) + {m\over\Delta t_e}u^k
@@ -170,9 +171,18 @@ where
    b = mf + {\tt vrel}\sin\theta.
    :label: cevpb
 
+Note that the time discretization and solution method for the EAP is exactly the same as for the B grid EVP. More details on the EAP model are given in Section :ref:`stress-eap`.
+
+However, on the C grid, :math:`u` and :math:`v` are not collocated. When solving the :math:`u` momentum equation for :math:`u^{k+1}` (at the E point), :math:`v^{l}=v^{k}_{int}` where :math:`v^{k}_{int}` is :math:`v^{k}` from the surrounding N points interpolated to the E point. The same approach is used for the :math:`v` momentum equation. With this explicit treatment of the off-diagonal terms :cite:`Kimmritz16`, :math:`u^{k+1}` and :math:`v^{k+1}` are obtained by solving
+
+.. math::
+   \begin{aligned}
+   u^{k+1} = {\hat{u} + b v^{k}_{int} \over a} \\
+   v^{k+1} = {\hat{v} - b u^{k}_{int} \over a}. \end{aligned}
+
 .. _vp-momentum:
 
-Viscous-Plastic
+Implicit (VP) time discretization and solution
 ~~~~~~~~~~~~~~~
 
 In the VP approach, equation :eq:`momsys` is discretized implicitly using a Backward Euler approach,
@@ -262,39 +272,56 @@ This parameterization for the seabed stress is described in
 :cite:`Lemieux16`. It assumes that the largest keel draft varies linearly with the mean thickness in a grid cell (i.e. sea ice volume). The :math:`C_b` coefficients are expressed as
 
 .. math::
-   C_b= k_2 \max [0,(h_u - h_{cu})]  e^{-\alpha_b * (1 - a_u)} (\sqrt{u^2+v^2}+u_0)^{-1}, \\
+   C_b= k_2 \max [0,(h - h_{c})]  e^{-\alpha_b * (1 - a)} (\sqrt{u^2+v^2}+u_0)^{-1}, \\
    :label: Cb
 
 where :math:`k_2` determines the maximum seabed stress that can be sustained by the grounded parameterized ridge(s), :math:`u_0`
 is a small residual velocity and :math:`\alpha_b` is a parameter to ensure that the seabed stress quickly drops when
-the ice concentration is smaller than 1. In the code, :math:`k_2 \max [0,(h_u - h_{cu})]  e^{-\alpha_b * (1 - a_u)}` is defined as
-:math:`T_b`. The quantities :math:`h_u`, :math:`a_{u}` and :math:`h_{cu}` are calculated at
-the 'u' point based on local ice conditions (surrounding tracer points). They are respectively given by
+the ice concentration is smaller than 1. In the code, :math:`k_2 \max [0,(h - h_{c})]  e^{-\alpha_b * (1 - a)}` is defined as
+:math:`T_b`. 
+
+On the B grid, the quantities :math:`h`, :math:`a` and :math:`h_{c}` are calculated at
+the U point and are referred to as :math:`h_u`, :math:`a_{u}` and :math:`h_{cu}`. They are respectively given by
 
 .. math::
    h_u=\max[v_i(i,j),v_i(i+1,j),v_i(i,j+1),v_i(i+1,j+1)], \\
    :label: hu
 
 .. math::
-   a_u=\max[a_i(i,j),a_i(i+1,j),a_i(i,j+1),a_i(i+1,j+1)]. \\
+   a_u=\max[a_i(i,j),a_i(i+1,j),a_i(i,j+1),a_i(i+1,j+1)], \\
    :label: au
 
 .. math::
    h_{cu}=a_u h_{wu} / k_1, \\
    :label: hcu
 
-where the :math:`a_i` and :math:`v_i` are the total ice concentrations and ice volumes around the :math:`u` point :math:`i,j` and
+where the :math:`a_i` and :math:`v_i` are the total ice concentrations and ice volumes around the U point :math:`i,j` and
 :math:`k_1` is a parameter that defines the critical ice thickness :math:`h_{cu}` at which the parameterized
 ridge(s) reaches the seafloor for a water depth :math:`h_{wu}=\min[h_w(i,j),h_w(i+1,j),h_w(i,j+1),h_w(i+1,j+1)]`. Given the formulation of :math:`C_b` in equation :eq:`Cb`, the seabed stress components are non-zero only
 when :math:`h_u > h_{cu}`.
 
+As :math:`u` and :math:`v` are not collocated on the C grid, :math:`T_b` is calculated at E and N points. For example, at the E point, :math:`h_e`, :math:`a_{e}` and :math:`h_{ce}` are respectively
+
+.. math::
+   h_e=\max[v_i(i,j),v_i(i+1,j)], \\
+   :label: he
+
+.. math::
+   a_e=\max[a_i(i,j),a_i(i+1,j)], \\
+   :label: ae
+
+.. math::
+   h_{ce}=a_e h_{we} / k_1, \\
+   :label: hce
+
+where :math:`h_{we}=\min[h_w(i,j),h_w(i+1,j)]`. Similar calculations are done at the N points. 
+
+To prevent unrealistic grounding, :math:`T_b` is set to zero when :math:`h_{wu}`
+is larger than 30 m (same idea on the C grid depending on :math:`h_{we}` and :math:`h_{wn}`). This maximum value is chosen based on observations of large keels in the Arctic Ocean :cite:`Amundrud04`.
+
 The maximum seabed stress depends on the weight of the ridge
 above hydrostatic balance and the value of :math:`k_2`. It is, however, the parameter :math:`k_1` that has the most notable impact on the simulated extent of landfast ice.
 The value of :math:`k_1` can be changed at runtime using the namelist variable ``k1``.
-
-To prevent unrealistic grounding, :math:`T_b` is set to zero when :math:`h_{wu}`
-is larger than 30 m. This maximum value is chosen based on observations of large
-keels in the Arctic Ocean :cite:`Amundrud04`.
 
 Seabed stress based on probabilistic approach
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -337,22 +364,34 @@ and then obtains :math:`T_{bt}` by multiplying :math:`T_{bt}^*` by :math:`e^{-\a
 
 To calculate :math:`T_{bt}^*` in equation :eq:`Tbt`, :math:`f(x)` and :math:`b(y)` are discretized using many small categories (100). :math:`f(x)` is discretized between 0 and 50 m while :math:`b(y)` is truncated at plus and minus three :math:`\sigma_b`. :math:`f(x)` is also modified by setting it to	zero after a certain percentile of the log-normal distribution. This percentile, which is currently set to 99.7%, notably affects the simulation of landfast ice and is used as a tuning parameter. Its impact is similar to the one of the parameter :math:`k_1` for the LKD method.
 
-:math:`T_b` at the 'u' point is calculated from the 't' point values around it according to
+On the B grid, :math:`T_b` at the U point is calculated from the T point values around it according to
 
 .. math::
-   T_b=\max[T_{bt}(i,j),T_{bt}(i+1,j),T_{bt}(i,j+1),T_{bt}(i+1,j+1)]. \\
+   T_{bu}=\max[T_{bt}(i,j),T_{bt}(i+1,j),T_{bt}(i,j+1),T_{bt}(i+1,j+1)]. \\
    :label: Tb
 
 Following again the LKD method, the seabed stress coefficients are finally expressed as
 
 .. math::
-   C_b= T_b (\sqrt{u^2+v^2}+u_0)^{-1}, \\
+   C_b= T_{bu} (\sqrt{u^2+v^2}+u_0)^{-1}. \\
    :label: Cb2
+
+On the C grid, :math:`T_b` is needs to be calculated at the E and N points. :math:`T_{be}` and :math:`T_{bn}` are respectively given by
+
+.. math::
+   T_{be}=\max[T_{bt}(i,j),T_{bt}(i+1,j)], \\
+   :label: Tbe
+
+.. math::
+   T_{bn}=\max[T_{bt}(i,j),T_{bt}(i,j+1)]. \\
+   :label: Tbn
+
+The :math:`C_{b}` are different at the E and N points and are respectively :math:`T_{be} (\sqrt{u^2+v^2_{int}}+u_0)^{-1}` and :math:`T_{bn} (\sqrt{u^2_{int} + v^2}+u_0)^{-1}` where :math:`v_{int}` (:math:`u_{int}`) is :math:`v` ( :math:`u`) interpolated to the E (N) point.
 
 .. _internal-stress:
 
 ********************************
-Internal stress
+Internal stress and strain rate tensors
 ********************************
 
 For convenience we formulate the stress tensor :math:`\bf \sigma` in
@@ -399,6 +438,7 @@ An elliptical yield curve is used, with the viscosities given by
 
 .. math::
    \zeta = {P(1+k_t)\over 2\Delta},
+   :label: zeta
 
 .. math::
    \eta  = e_g^{-2} \zeta,
@@ -408,10 +448,12 @@ where
 .. math::
    \Delta = \left[D_D^2 + {e_f^2\over e_g^4}\left(D_T^2 + D_S^2\right)\right]^{1/2}.
 
+When the deformation :math:`\Delta` tends toward zero, the viscosities tend toward infinity. To avoid this issue, :math:`\Delta` needs to be limited and is replaced by :math:`\Delta^*` in equation :eq:`zeta`. Two methods for limiting :math:`\Delta` (or for capping the viscosities) are available in the code. If the namelist parameter ``capping`` is set to 1., :math:`\Delta^*=max(\Delta, \Delta_{min})` :cite:`Hibler79` while with ``capping`` set to 0., the smoother formulation  :math:`\Delta^*=(\Delta + \Delta_{min})` of :cite:`Kreyscher00` is used. 
+
 The ice strength :math:`P` is a function of the ice thickness distribution as
 described in the `Icepack Documentation <https://cice-consortium-icepack.readthedocs.io/en/master/science_guide/index.html>`_.
-   
-Two modifications to the standard VP rheology of :cite:`Hibler79` are available.
+ 
+Two other modifications to the standard VP rheology of :cite:`Hibler79` are available.
 First, following the approach of :cite:`Konig10` (see also :cite:`Lemieux16`), the
 elliptical yield curve can be modified such that the ice has isotropic tensile strength.
 The tensile strength is expressed as a fraction of :math:`P`, that is :math:`k_t P`
@@ -488,6 +530,10 @@ where :math:`k` denotes again the subcycling step. All coefficients on the left-
 the viscosity terms in the subcycling. Choices of the parameters used to define :math:`E`,
 :math:`T` and :math:`\Delta t_e` are discussed in
 Sections :ref:`revp` and :ref:`parameters`.
+
+On the B grid, the stresses :math:`\sigma_{1}`, :math:`\sigma_{2}` and :math:`\sigma_{12}` are collocated at the U point. To calculate these stresses, the viscosities :math:`\zeta` and :math:`\eta` and the replacement pressure :math:`P_R` are also defined at the U point. 
+
+However, on the C grid, :math:`\sigma_{1}` and :math:`\sigma_{2}` are collocated at the T point while :math:`\sigma_{12}` is defined at the U point. 
 
 .. _evp1d:
 
