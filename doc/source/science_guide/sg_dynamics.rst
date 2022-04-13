@@ -94,7 +94,7 @@ For clarity, the two components of Equation :eq:`vpmom` are
      -C_bv-mfu - mg{\partial H_\circ\over\partial y}. \end{aligned}
    :label: momsys
 
-On the B grid, the equations above are solved at the U point for the collocated u and v components (see figure :ref:`fig-Bgrid`). On the C grid, however. the two components are not collocated: the u component is at the E point while the v component is at the N point.
+On the B grid, the equations above are solved at the U point for the collocated u and v components (see figure :ref:`fig-Bgrid`). On the C grid, however, the two components are not collocated: the u component is at the E point while the v component is at the N point.
 
 The B grid spatial discretization is based on a variational method described in :cite:`Hunke02`. A bilinear discretization is used for the stress terms
 :math:`\partial\sigma_{ij}/\partial x_j`,
@@ -135,7 +135,7 @@ variables used in the code.
      &+ {\tt vrel}\underbrace{\left(U_w\sin\theta+V_w\cos\theta\right)}_{\tt watery}  + {m\over\Delta t_e}v^k,
    :label: vmom
 
-where :math:`{\tt vrel}\ \cdot\ {\tt waterx(y)}= {\tt taux(y)}` and the treatment of :math:`u^{l}` and :math:`v^{l}` vary depending of the grid.
+where :math:`{\tt vrel}\ \cdot\ {\tt waterx(y)}= {\tt taux(y)}` and the definitions of :math:`u^{l}` and :math:`v^{l}` vary depending of the grid.
 
 As :math:`u` and :math:`v` are collocated on the B grid, :math:`u^{l}` and :math:`v^{l}` are respectively :math:`u^{k+1}` and :math:`v^{k+1}` such that this system of equations can be solved as follows. Define
 
@@ -442,11 +442,13 @@ An elliptical yield curve is used, with the viscosities given by
 
 .. math::
    \eta  = e_g^{-2} \zeta,
+   :label: eta
 
 where
 
 .. math::
    \Delta = \left[D_D^2 + {e_f^2\over e_g^4}\left(D_T^2 + D_S^2\right)\right]^{1/2}.
+   :label: Delta
 
 When the deformation :math:`\Delta` tends toward zero, the viscosities tend toward infinity. To avoid this issue, :math:`\Delta` needs to be limited and is replaced by :math:`\Delta^*` in equation :eq:`zeta`. Two methods for limiting :math:`\Delta` (or for capping the viscosities) are available in the code. If the namelist parameter ``capping`` is set to 1., :math:`\Delta^*=max(\Delta, \Delta_{min})` :cite:`Hibler79` while with ``capping`` set to 0., the smoother formulation  :math:`\Delta^*=(\Delta + \Delta_{min})` of :cite:`Kreyscher00` is used. 
 
@@ -467,7 +469,7 @@ can be set in the namelist. The plastic potential can lead to more realistic fra
 
 By default, the namelist parameters are set to :math:`e_f=e_g=2` and :math:`k_t=0` which correspond to the standard VP rheology.
 
-There are four options in the code for solving the sea ice momentum equation with a VP formulation: the standard EVP approach, a 1d EVP solver, the revised EVP approach and an implicit Picard solver. The modifications to the yield curve and to the flow rule described above are available for these four different solution methods.  
+There are four options in the code for solving the sea ice momentum equation with a VP formulation: the standard EVP approach, a 1d EVP solver, the revised EVP approach and an implicit Picard solver. The choice of the capping method for the viscosities and the modifications to the yield curve and to the flow rule described above are available for these four different solution methods. Note that only the EVP and revised EVP methods are currently available if one chooses the C grid. 
 
 .. _stress-evp:
 
@@ -533,7 +535,7 @@ Sections :ref:`revp` and :ref:`parameters`.
 
 On the B grid, the stresses :math:`\sigma_{1}`, :math:`\sigma_{2}` and :math:`\sigma_{12}` are collocated at the U point. To calculate these stresses, the viscosities :math:`\zeta` and :math:`\eta` and the replacement pressure :math:`P_R` are also defined at the U point. 
 
-However, on the C grid, :math:`\sigma_{1}` and :math:`\sigma_{2}` are collocated at the T point while :math:`\sigma_{12}` is defined at the U point. 
+However, on the C grid, :math:`\sigma_{1}` and :math:`\sigma_{2}` are collocated at the T point while :math:`\sigma_{12}` is defined at the U point. During a certain subcycling step, :math:`\zeta`, :math:`\eta` and :math:`P_R` are first calculated at the T point. To do so, :math:`\Delta` given by  equation :eq:`Delta` is calculated following the approach of :cite:`Bouillon13` (see also :cite:`Kimmritz16` for details). With this approach, :math:`D_S^2` at the T point is obtained by calculating :math:`D_S^2` at the U points and interpolating these values to the T point. As :math:`\sigma_{12}` is calculated at the U point, :math:`\eta` also needs to be computed as these locations. If ``visc_method`` in the namelist is set to ``avg_zeta`` (the default value), :math:`\eta` at the U point is obtained by interpolating T point values to this location. This corresponds to the approach used by :cite:`Bouillon13` and the one associated with the C1 configuration of :cite:`Kimmritz16`. On the other hand, if ``visc_method = avg_strength``, the strength :math:`P` calculated at T points is interpolated to the U point and :math:`\Delta` is calculated at the U point in order to obtain :math:`\eta` following equations :eq:`zeta` and :eq:`eta`. This latter approach is the one used in the C2 configuration of :cite:`Kimmritz16`.
 
 .. _evp1d:
 
@@ -555,7 +557,7 @@ implicit solvers and there is an additional term for the pseudo-time iteration. 
 
 .. math::
     {\beta^*(u^{k+1}-u^k)\over\Delta t_e} + {m(u^{k+1}-u^n)\over\Delta t} + {\left({\tt vrel} \cos\theta + C_b \right)} u^{k+1}
-    - {\left(mf+{\tt vrel}\sin\theta\right)} v^{k+1}
+    - {\left(mf+{\tt vrel}\sin\theta\right)} v^{l}
     = {{\partial\sigma_{1j}^{k+1}\over\partial x_j}}
     + {\tau_{ax} - mg{\partial H_\circ\over\partial x} }
     + {\tt vrel} {\left(U_w\cos\theta-V_w\sin\theta\right)},
@@ -563,7 +565,7 @@ implicit solvers and there is an additional term for the pseudo-time iteration. 
 
 .. math::
     {\beta^*(v^{k+1}-v^k)\over\Delta t_e} + {m(v^{k+1}-v^n)\over\Delta t} + {\left({\tt vrel} \cos\theta + C_b \right)}v^{k+1}
-    + {\left(mf+{\tt vrel}\sin\theta\right)} u^{k+1}
+    + {\left(mf+{\tt vrel}\sin\theta\right)} u^{l}
     = {{\partial\sigma_{2j}^{k+1}\over\partial x_j}}
     + {\tau_{ay} - mg{\partial H_\circ\over\partial y} }
     + {\tt vrel}{\left(U_w\sin\theta+V_w\cos\theta\right)},
@@ -574,21 +576,21 @@ With :math:`\beta=\beta^* \Delta t \left(  m \Delta t_e \right)^{-1}` :cite:`Bou
 
 .. math::
    \underbrace{\left((\beta+1){m\over\Delta t}+{\tt vrel} \cos\theta\ + C_b \right)}_{\tt cca} u^{k+1}
-   - \underbrace{\left(mf+{\tt vrel}\sin\theta\right)}_{\tt ccb}v^{k+1}
+   - \underbrace{\left(mf+{\tt vrel}\sin\theta\right)}_{\tt ccb}v^{l}
     =  \underbrace{{\partial\sigma_{1j}^{k+1}\over\partial x_j}}_{\tt strintx}
     + \underbrace{\tau_{ax} - mg{\partial H_\circ\over\partial x} }_{\tt forcex}
      + {\tt vrel}\underbrace{\left(U_w\cos\theta-V_w\sin\theta\right)}_{\tt waterx}  + {m\over\Delta t}(\beta u^k + u^n),
    :label: umomr2
 
 .. math::
-    \underbrace{\left(mf+{\tt vrel}\sin\theta\right)}_{\tt ccb} u^{k+1}
+    \underbrace{\left(mf+{\tt vrel}\sin\theta\right)}_{\tt ccb} u^{l}
    + \underbrace{\left((\beta+1){m\over\Delta t}+{\tt vrel} \cos\theta + C_b \right)}_{\tt cca}v^{k+1}
     =  \underbrace{{\partial\sigma_{2j}^{k+1}\over\partial x_j}}_{\tt strinty}
     + \underbrace{\tau_{ay} - mg{\partial H_\circ\over\partial y} }_{\tt forcey}
      + {\tt vrel}\underbrace{\left(U_w\sin\theta+V_w\cos\theta\right)}_{\tt watery}  + {m\over\Delta t}(\beta v^k + v^n),
    :label: vmomr2
 
-At this point, the solutions :math:`u^{k+1}` and :math:`v^{k+1}` are obtained in the same manner as for the standard EVP approach (see equations :eq:`cevpuhat` to :eq:`cevpb`).
+At this point, the solutions :math:`u^{k+1}` and :math:`v^{k+1}` for the B or the C grids are obtained in the same manner as for the standard EVP approach (see Section :ref:`evp-momentum` for details).
 
 Introducing another numerical parameter :math:`\alpha=2T \Delta t_e ^{-1}` :cite:`Bouillon13`, the stress equations in :eq:`sigdisc` become
 
