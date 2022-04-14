@@ -96,12 +96,13 @@ For clarity, the two components of Equation :eq:`vpmom` are
 
 On the B grid, the equations above are solved at the U point for the collocated u and v components (see figure :ref:`fig-Bgrid`). On the C grid, however, the two components are not collocated: the u component is at the E point while the v component is at the N point.
 
-The B grid spatial discretization is based on a variational method described in :cite:`Hunke02`. A bilinear discretization is used for the stress terms
+The B grid spatial discretization is based on a variational method described in :cite:`Hunke97,Hunke02`. A bilinear discretization is used for the stress terms
 :math:`\partial\sigma_{ij}/\partial x_j`,
 which enables the discrete equations to be derived from the
 continuous equations written in curvilinear coordinates. In this
 manner, metric terms associated with the curvature of the grid are
-incorporated into the discretization explicitly.
+incorporated into the discretization explicitly. Details pertaining to
+the spatial discretization are found in :cite:`Hunke02`
 
 On the C grid, however, a finite difference approach is used for the spatial discretization. The C grid discretization is based on :cite:`Bouillon09, Bouillon13, Kimmritz16`.
 
