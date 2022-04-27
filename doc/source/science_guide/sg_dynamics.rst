@@ -36,7 +36,7 @@ respectively in :cite:`Hunke99` and
 The EVP numerical
 implementation in this code release is that of :cite:`Hunke02`
 and :cite:`Hunke03`, with revisions to the numerical solver as
-in :cite:`Bouillon13`. Details about the rEVP solver can be found in  :cite:`Lemieux12,Bouillon13,Kimmritz15,Koldunov19`. The implementation of the EAP sea ice
+in :cite:`Bouillon13`. Details about the rEVP solver can be found in  :cite:`Lemieux12`, :cite:`Bouillon13`,:cite:`Kimmritz15` and :cite:`Koldunov19`. The implementation of the EAP sea ice
 dynamics into CICE is described in detail in
 :cite:`Tsamados13`.
 
@@ -96,7 +96,7 @@ For clarity, the two components of Equation :eq:`vpmom` are
 
 On the B grid, the equations above are solved at the U point for the collocated u and v components (see figure :ref:`fig-Bgrid`). On the C grid, however, the two components are not collocated: the u component is at the E point while the v component is at the N point.
 
-The B grid spatial discretization is based on a variational method described in :cite:`Hunke97,Hunke02`. A bilinear discretization is used for the stress terms
+The B grid spatial discretization is based on a variational method described in :cite:`Hunke97` and :cite:`Hunke02`. A bilinear discretization is used for the stress terms
 :math:`\partial\sigma_{ij}/\partial x_j`,
 which enables the discrete equations to be derived from the
 continuous equations written in curvilinear coordinates. In this
@@ -104,7 +104,7 @@ manner, metric terms associated with the curvature of the grid are
 incorporated into the discretization explicitly. Details pertaining to
 the spatial discretization are found in :cite:`Hunke02`
 
-On the C grid, however, a finite difference approach is used for the spatial discretization. The C grid discretization is based on :cite:`Bouillon09, Bouillon13, Kimmritz16`.
+On the C grid, however, a finite difference approach is used for the spatial discretization. The C grid discretization is based on :cite:`Bouillon09`, :cite:`Bouillon13` and :cite:`Kimmritz16`.
 
 .. _evp-momentum:
 
@@ -192,19 +192,20 @@ implicit solvers and there is an additional term for the pseudo-time iteration. 
 
 .. math::
     {\beta^*(u^{k+1}-u^k)\over\Delta t_e} + {m(u^{k+1}-u^n)\over\Delta t} + {\left({\tt vrel} \cos\theta + C_b \right)} u^{k+1}
-    - {\left(mf+{\tt vrel}\sin\theta\right)} v^{l}
-    = & {{\partial\sigma_{1j}^{k+1}\over\partial x_j}}
-    + {\tau_{ax} - mg{\partial H_\circ\over\partial x} }\\
-    & + {\tt vrel} {\left(U_w\cos\theta-V_w\sin\theta\right)},
+    - & {\left(mf+{\tt vrel}\sin\theta\right)} v^{l}
+    =  {{\partial\sigma_{1j}^{k+1}\over\partial x_j}}
+    + {\tau_{ax}} \\
+      & - {mg{\partial H_\circ\over\partial x} }
+    + {\tt vrel} {\left(U_w\cos\theta-V_w\sin\theta\right)},
     :label: umomr
-
 
 .. math::
     {\beta^*(v^{k+1}-v^k)\over\Delta t_e} + {m(v^{k+1}-v^n)\over\Delta t} + {\left({\tt vrel} \cos\theta + C_b \right)}v^{k+1}
-    + {\left(mf+{\tt vrel}\sin\theta\right)} u^{l}
-    = & {{\partial\sigma_{2j}^{k+1}\over\partial x_j}}
-    + {\tau_{ay} - mg{\partial H_\circ\over\partial y} } \\
-    & + {\tt vrel}{\left(U_w\sin\theta+V_w\cos\theta\right)},
+    + & {\left(mf+{\tt vrel}\sin\theta\right)} u^{l}
+    =  {{\partial\sigma_{2j}^{k+1}\over\partial x_j}}
+    + {\tau_{ay}} \\
+     & - {mg{\partial H_\circ\over\partial y} }
+    + {\tt vrel}{\left(U_w\sin\theta+V_w\cos\theta\right)},
     :label: vmomr
 
 where :math:`\beta^*` is a numerical parameter and :math:`u^n, v^n` are the components of the previous time level solution.
@@ -212,16 +213,16 @@ With :math:`\beta=\beta^* \Delta t \left(  m \Delta t_e \right)^{-1}` :cite:`Bou
 
 .. math::
    \underbrace{\left((\beta+1){m\over\Delta t}+{\tt vrel} \cos\theta\ + C_b \right)}_{\tt cca} u^{k+1}
-   - \underbrace{\left(mf+{\tt vrel}\sin\theta\right)}_{\tt ccb}v^{l}
-    = & \underbrace{{\partial\sigma_{1j}^{k+1}\over\partial x_j}}_{\tt strintx}
+   - \underbrace{\left(mf+{\tt vrel} \sin\theta\right)}_{\tt ccb} & v^{l}
+    = \underbrace{{\partial\sigma_{1j}^{k+1}\over\partial x_j}}_{\tt strintx}
     + \underbrace{\tau_{ax} - mg{\partial H_\circ\over\partial x} }_{\tt forcex} \\
     & + {\tt vrel}\underbrace{\left(U_w\cos\theta-V_w\sin\theta\right)}_{\tt waterx}  + {m\over\Delta t}(\beta u^k + u^n),
    :label: umomr2
 
 .. math::
     \underbrace{\left(mf+{\tt vrel}\sin\theta\right)}_{\tt ccb} u^{l}
-   + \underbrace{\left((\beta+1){m\over\Delta t}+{\tt vrel} \cos\theta + C_b \right)}_{\tt cca}v^{k+1}
-    = & \underbrace{{\partial\sigma_{2j}^{k+1}\over\partial x_j}}_{\tt strinty}
+   + \underbrace{\left((\beta+1){m\over\Delta t}+{\tt vrel} \cos\theta + C_b \right)}_{\tt cca} & v^{k+1}
+    = \underbrace{{\partial\sigma_{2j}^{k+1}\over\partial x_j}}_{\tt strinty}
     + \underbrace{\tau_{ay} - mg{\partial H_\circ\over\partial y} }_{\tt forcey} \\
     & + {\tt vrel}\underbrace{\left(U_w\sin\theta+V_w\cos\theta\right)}_{\tt watery}  + {m\over\Delta t}(\beta v^k + v^n),
    :label: vmomr2
