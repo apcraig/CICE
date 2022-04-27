@@ -52,9 +52,9 @@ direct the reader to the above references for details.
 
 .. _momentum:
 
-********
-Momentum
-********
+*****************
+Momentum equation
+*****************
 
 The force balance per unit area in the ice pack is given by a
 two-dimensional momentum equation :cite:`Hibler79`, obtained
@@ -105,6 +105,12 @@ incorporated into the discretization explicitly. Details pertaining to
 the spatial discretization are found in :cite:`Hunke02`
 
 On the C grid, however, a finite difference approach is used for the spatial discretization. The C grid discretization is based on :cite:`Bouillon09`, :cite:`Bouillon13` and :cite:`Kimmritz16`.
+
+.. _momentumTS:
+
+**********************
+Momentum time stepping
+**********************
 
 .. _evp-momentum:
 
@@ -278,6 +284,15 @@ The Picard iterative process stops when :math:`\left\lVert \mathbf{u}_{k} \right
 
 Parameters for the FGMRES linear solver and the preconditioner can be controlled using additional namelist flags (see :ref:`dynamics_nml`).
 
+
+.. _surfstress:
+
+********************
+Surface stress terms
+********************
+
+The formulation for the wind stress is described in `Icepack Documentation <https://cice-consortium-icepack.readthedocs.io/en/master/science_guide/index.html>`_. Below, some details about the ice-ocean stress and the seabed stress are given. 
+
 Ice-Ocean stress
 ~~~~~~~~~~~~~~~~
 
@@ -291,9 +306,8 @@ pending further testing.
 
 .. _seabed-stress:
 
-***************
 Seabed stress
-***************
+~~~~~~~~~~~~~
 
 CICE includes two options for calculating the seabed stress,
 i.e. the term in the momentum equation that represents the interaction
@@ -314,8 +328,7 @@ grounding schemes. It is suggested to have a bathymetry field with water depths
 larger than 5 m that represents well shallow water (less than 30 m) regions such as the Laptev Sea
 and the East Siberian Sea.
 
-Seabed stress based on linear keel draft (LKD)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+**Seabed stress based on linear keel draft (LKD)**
 
 This parameterization for the seabed stress is described in
 :cite:`Lemieux16`. It assumes that the largest keel draft varies linearly with the mean thickness in a grid cell (i.e. sea ice volume). The :math:`C_b` coefficients are expressed as
@@ -372,8 +385,7 @@ The maximum seabed stress depends on the weight of the ridge
 above hydrostatic balance and the value of :math:`k_2`. It is, however, the parameter :math:`k_1` that has the most notable impact on the simulated extent of landfast ice.
 The value of :math:`k_1` can be changed at runtime using the namelist variable ``k1``.
 
-Seabed stress based on probabilistic approach
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+**Seabed stress based on probabilistic approach**
 
 This more sophisticated grounding parameterization computes the seabed stress based
 on the probability of contact between the ice thickness distribution
@@ -439,9 +451,9 @@ The :math:`C_{b}` are different at the E and N points and are respectively :math
 
 .. _internal-stress:
 
-****************************************************************
-Internal stress and strain rate tensors
-****************************************************************
+********
+Rheology
+********
 
 For convenience we formulate the stress tensor :math:`\bf \sigma` in
 terms of :math:`\sigma_1=\sigma_{11}+\sigma_{22}`,
