@@ -5,57 +5,6 @@
 Dynamics
 ========
 
-There are different approaches in the CICE code for representing sea ice
-rheology and for solving the sea ice momentum equation: the viscous-plastic (VP) rheology :cite:`Hibler79` with an implicit method,
-the elastic-viscous-plastic (EVP) :cite:`Hunke97` model which represents a modification of the
-VP model, the revised EVP (rEVP) approach :cite:`Lemieux12,Bouillon13` and the elastic-anisotropic-plastic (EAP) model which explicitly accounts for the sub-continuum
-anisotropy of the sea ice cover :cite:`Wilchinsky06,Weiss09`. If
-``kdyn`` = 1 in the namelist then the EVP model is used (module
-**ice\_dyn\_evp.F90**), while ``kdyn`` = 2 is associated with the EAP
-model (**ice\_dyn\_eap.F90**), and ``kdyn`` = 3 is associated with the
-VP model (**ice\_dyn\_vp.F90**). The rEVP approach can be used by setting ``kdyn`` = 1 and  ``revised_evp`` = true in the namelist.
-
-At times scales associated with the
-wind forcing, the EVP model reduces to the VP model while the EAP model
-reduces to the anisotropic rheology described in detail in
-:cite:`Wilchinsky06,Tsamados13`. At shorter time scales the
-adjustment process takes place in both models by a numerically more
-efficient elastic wave mechanism. While retaining the essential physics,
-this elastic wave modification leads to a fully explicit numerical
-scheme which greatly improves the model’s computational efficiency. The rEVP is also a fully explicit scheme which by construction should lead to the VP solution. 
-
-The EVP sea ice dynamics model is thoroughly documented in
-:cite:`Hunke97`, :cite:`Hunke01`,
-:cite:`Hunke02` and :cite:`Hunke03` and the EAP
-dynamics in :cite:`Tsamados13`. Simulation results and
-performance of the EVP and EAP models have been compared with the VP
-model and with each other in realistic simulations of the Arctic
-respectively in :cite:`Hunke99` and
-:cite:`Tsamados13`.
-
-The EVP numerical
-implementation in this code release is that of :cite:`Hunke02`
-and :cite:`Hunke03`, with revisions to the numerical solver as
-in :cite:`Bouillon13`. Details about the rEVP solver can be found in  :cite:`Lemieux12`, :cite:`Bouillon13`,:cite:`Kimmritz15` and :cite:`Koldunov19`. The implementation of the EAP sea ice
-dynamics into CICE is described in detail in
-:cite:`Tsamados13`.
-
-The VP solver implementation mostly follows :cite:`Lemieux08`, with
-FGMRES :cite:`Saad93` as the linear solver and GMRES as the preconditioner.
-Note that the VP solver has not yet been tested on the ``tx1`` grid or with
-threading enabled.
-
-The EVP, rEVP, EAP and VP approaches are all available with the B grid. However, at the moment, only the EVP and rEVP schemes are possible with the C grid.
-
-Here we summarize the equations and
-direct the reader to the above references for details.
-
-.. _momentum:
-
-*****************
-Momentum equation
-*****************
-
 The force balance per unit area in the ice pack is given by a
 two-dimensional momentum equation :cite:`Hibler79`, obtained
 by integrating the 3D equation through the thickness of the ice in the
@@ -105,6 +54,51 @@ incorporated into the discretization explicitly. Details pertaining to
 the spatial discretization are found in :cite:`Hunke02`
 
 On the C grid, however, a finite difference approach is used for the spatial discretization. The C grid discretization is based on :cite:`Bouillon09`, :cite:`Bouillon13` and :cite:`Kimmritz16`.
+
+There are different approaches in the CICE code for representing sea ice
+rheology and for solving the sea ice momentum equation: the viscous-plastic (VP) rheology :cite:`Hibler79` with an implicit method,
+the elastic-viscous-plastic (EVP) :cite:`Hunke97` model which represents a modification of the
+VP model, the revised EVP (rEVP) approach :cite:`Lemieux12,Bouillon13` and the elastic-anisotropic-plastic (EAP) model which explicitly accounts for the sub-continuum
+anisotropy of the sea ice cover :cite:`Wilchinsky06,Weiss09`. If
+``kdyn`` = 1 in the namelist then the EVP model is used (module
+**ice\_dyn\_evp.F90**), while ``kdyn`` = 2 is associated with the EAP
+model (**ice\_dyn\_eap.F90**), and ``kdyn`` = 3 is associated with the
+VP model (**ice\_dyn\_vp.F90**). The rEVP approach can be used by setting ``kdyn`` = 1 and  ``revised_evp`` = true in the namelist.
+
+At times scales associated with the
+wind forcing, the EVP model reduces to the VP model while the EAP model
+reduces to the anisotropic rheology described in detail in
+:cite:`Wilchinsky06,Tsamados13`. At shorter time scales the
+adjustment process takes place in both models by a numerically more
+efficient elastic wave mechanism. While retaining the essential physics,
+this elastic wave modification leads to a fully explicit numerical
+scheme which greatly improves the model’s computational efficiency. The rEVP is also a fully explicit scheme which by construction should lead to the VP solution. 
+
+The EVP sea ice dynamics model is thoroughly documented in
+:cite:`Hunke97`, :cite:`Hunke01`,
+:cite:`Hunke02` and :cite:`Hunke03` and the EAP
+dynamics in :cite:`Tsamados13`. Simulation results and
+performance of the EVP and EAP models have been compared with the VP
+model and with each other in realistic simulations of the Arctic
+respectively in :cite:`Hunke99` and
+:cite:`Tsamados13`.
+
+The EVP numerical
+implementation in this code release is that of :cite:`Hunke02`
+and :cite:`Hunke03`, with revisions to the numerical solver as
+in :cite:`Bouillon13`. Details about the rEVP solver can be found in  :cite:`Lemieux12`, :cite:`Bouillon13`, :cite:`Kimmritz15` and :cite:`Koldunov19`. The implementation of the EAP sea ice
+dynamics into CICE is described in detail in
+:cite:`Tsamados13`.
+
+The VP solver implementation mostly follows :cite:`Lemieux08`, with
+FGMRES :cite:`Saad93` as the linear solver and GMRES as the preconditioner.
+Note that the VP solver has not yet been tested on the ``tx1`` grid or with
+threading enabled.
+
+The EVP, rEVP, EAP and VP approaches are all available with the B grid. However, at the moment, only the EVP and rEVP schemes are possible with the C grid.
+
+Here we summarize the equations and
+direct the reader to the above references for details.
 
 .. _momentumTS:
 
