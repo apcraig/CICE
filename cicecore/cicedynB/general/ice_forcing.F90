@@ -53,7 +53,7 @@
                 read_clim_data, read_clim_data_nc, &
                 interpolate_data, interp_coeff_monthly, &
                 read_data_nc_point, interp_coeff, &
-                init_snowtable
+                init_snowtable, init_snicarssptable
 
       integer (kind=int_kind), public :: &
          ycycle          , & ! number of years in forcing cycle, set by namelist
@@ -181,6 +181,22 @@
          snw_tau_fname  , &  ! snow table 3d tau field name
          snw_kappa_fname, &  ! snow table 3d kappa field name
          snw_drdt0_fname     ! snow table 3d drdt0 field name
+
+      ! SNICAR snow grain single-scattering properties (SSP) for
+      ! direct (drc) and diffuse (dfs) shortwave incidents
+
+      character (len=char_len_long), public :: &
+         ssp_filename        ! filename for snicar snow and aerosol lookup table
+
+      character (char_len), public :: &
+         ssp_snwgrad_fname,   &  ! snow grain radius field name
+         ssp_specint_fname,   &  ! spectral intervals field name
+         ssp_extcffdrc_fname, &  ! snow mass extinction cross section (m2/kg) field name
+         ssp_extcffdfs_fname, &  ! snow mass extinction cross section (m2/kg) field name
+         ssp_sscalbdrc_fname, &  ! snow single scatter albedo (fraction) field name
+         ssp_sscalbdfs_fname, &  ! snow single scatter albedo (fraction) field name
+         ssp_asmprmdrc_fname, &  ! snow asymmetry factor (cos(theta)) field name
+         ssp_asmprmdfs_fname     ! snow asymmetry factor (cos(theta)) field name
 
       ! PRIVATE:
 
@@ -5751,24 +5767,22 @@
          allocate(snowage_kappa(idx_rhos_max, idx_Tgrd_max, idx_T_max))
          allocate(snowage_drdt0(idx_rhos_max, idx_Tgrd_max, idx_T_max))
 
+         ! ice_read_nc only reads on master
          fieldname = trim(snw_rhos_fname)
-         call ice_read_nc(fid,fieldname,snowage_rhos,  diag, &
-                          idx_rhos_max)
+         call ice_read_nc(fid, fieldname, snowage_rhos, diag, idx_rhos_max)
          fieldname = trim(snw_Tgrd_fname)
-         call ice_read_nc(fid,fieldname,snowage_Tgrd,  diag, &
-                          idx_Tgrd_max)
+         call ice_read_nc(fid, fieldname, snowage_Tgrd, diag, idx_Tgrd_max)
          fieldname = trim(snw_T_fname)
-         call ice_read_nc(fid,fieldname,snowage_T,  diag, &
-                          idx_T_max)
+         call ice_read_nc(fid, fieldname, snowage_T   , diag, idx_T_max)
 
          fieldname = trim(snw_tau_fname)
-         call ice_read_nc(fid,fieldname,snowage_tau,  diag, &
+         call ice_read_nc(fid, fieldname, snowage_tau  , diag, &
                           idx_rhos_max,idx_Tgrd_max,idx_T_max)
          fieldname = trim(snw_kappa_fname)
-         call ice_read_nc(fid,fieldname,snowage_kappa,diag, &
+         call ice_read_nc(fid, fieldname, snowage_kappa, diag, &
                           idx_rhos_max,idx_Tgrd_max,idx_T_max)
          fieldname = trim(snw_drdt0_fname)
-         call ice_read_nc(fid,fieldname,snowage_drdt0,diag, &
+         call ice_read_nc(fid, fieldname, snowage_drdt0, diag, &
                           idx_rhos_max,idx_Tgrd_max,idx_T_max)
 
          call ice_close_nc(fid)
@@ -5818,6 +5832,191 @@
       endif
 
       end subroutine init_snowtable
+
+!=======================================================================
+
+! snicar snow grain single-scattering properties lookup table
+!
+!
+     subroutine init_snicarssptable
+
+      use ice_broadcast, only: broadcast_array, broadcast_scalar
+      integer (kind=int_kind) :: &
+         nsnwgrad, &   ! Table dimensions
+         nspecint
+      real (kind=dbl_kind), allocatable :: &
+         extcffdrc(:,:), &  ! snow mass extinction cross section (m2/kg)
+         extcffdfs(:,:), &  ! snow mass extinction cross section (m2/kg)
+         sscalbdrc(:,:), &  ! snow single scatter albedo (fraction)
+         sscalbdfs(:,:), &  ! snow single scatter albedo (fraction)
+         asmprmdrc(:,:), &  ! snow asymmetry factor (cos(theta))
+         asmprmdfs(:,:)     ! snow asymmetry factor (cos(theta))
+
+      ! local variables
+
+      logical (kind=log_kind) :: diag = .false.
+
+      integer (kind=int_kind) :: &
+         fid                  ! file id for netCDF file
+
+      character (char_len) :: &
+         fieldname            ! field name in netcdf file
+
+      character(len=*), parameter :: subname = '(init_snicarssptable)'
+
+      !-----------------------------------------------------------------
+      ! read table of snicar SSP parameters
+      !-----------------------------------------------------------------
+
+      if (my_task == master_task) then
+         write (nu_diag,*) ' '
+         write (nu_diag,*) 'SNICAR SSP file:', trim(ssp_filename)
+      endif
+
+      if (ssp_filename == 'unknown') then
+
+         ! hardcode 5x5 table
+         nsnwgrad = 5
+         nspecint = 5
+
+         allocate(extcffdrc(nspecint,nsnwgrad))
+         allocate(extcffdfs(nspecint,nsnwgrad))
+         allocate(sscalbdrc(nspecint,nsnwgrad))
+         allocate(sscalbdfs(nspecint,nsnwgrad))
+         allocate(asmprmdrc(nspecint,nsnwgrad))
+         allocate(asmprmdfs(nspecint,nsnwgrad))
+
+         extcffdrc = reshape((/ &
+            46.27374983, 24.70286257, 6.54918455, 2.6035624,  1.196168,   &
+            46.56827715, 24.81790668, 6.56181227, 2.60604155, 1.19682614, &
+            46.76114033, 24.90468677, 6.56950323, 2.60780948, 1.19737512, &
+            46.9753992,  24.9495155,  6.57687695, 2.60937383, 1.19774008, &
+            47.48598349, 25.14100194, 6.59708024, 2.61372576, 1.19897351 /), &
+            (/nspecint,nsnwgrad/))
+
+         extcffdfs = reshape((/ &
+            46.26936158, 24.70165487, 6.54903637, 2.60353051, 1.19615825, &
+            46.56628244, 24.81707286, 6.56164279, 2.60601584, 1.1968169,  &
+            46.75501968, 24.90175807, 6.5693214,  2.60775795, 1.19736237, &
+            46.95368476, 24.94497414, 6.57612007, 2.60924059, 1.19770981, &
+            47.29620774, 25.0713585,  6.5891698,  2.61198929, 1.19850197 /), &
+            (/nspecint,nsnwgrad/))
+
+         sscalbdrc = reshape((/ &
+            0.99999581, 0.99999231, 0.99997215, 0.99993093, 0.99985157, &
+            0.99987892, 0.99978212, 0.99923115, 0.99817946, 0.99628374, &
+            0.99909682, 0.99835523, 0.99418008, 0.98592085, 0.97062632, &
+            0.99308867, 0.98972448, 0.97261528, 0.93947995, 0.88207117, &
+            0.93322249, 0.89645776, 0.75765643, 0.6272883,  0.55435033 /), &
+            (/nspecint,nsnwgrad/))
+
+         sscalbdfs = reshape((/ &
+            0.99999586, 0.9999924,  0.99997249, 0.99993178, 0.9998534,  &
+            0.99988441, 0.99979202, 0.99926745, 0.99826865, 0.99647135, &
+            0.99910997, 0.99837683, 0.99426171, 0.98610431, 0.97097643, &
+            0.99476731, 0.9916114,  0.97441209, 0.94127464, 0.88440735, &
+            0.9419837,  0.90613207, 0.77042376, 0.63887161, 0.5566098  /), &
+            (/nspecint,nsnwgrad/))
+
+         asmprmdrc = reshape((/ &
+            0.88503036, 0.88778473, 0.89049023, 0.89112501, 0.89136157, &
+            0.88495225, 0.88905367, 0.89315385, 0.89433673, 0.8950027,  &
+            0.88440201, 0.88928256, 0.89503166, 0.89762648, 0.90045378, &
+            0.88590371, 0.89350221, 0.90525156, 0.91314567, 0.92157748, &
+            0.9033537,  0.91778261, 0.94615574, 0.96323447, 0.97167644 /), &
+            (/nspecint,nsnwgrad/))
+
+         asmprmdfs = reshape((/ &
+            0.88500571, 0.88773868, 0.89042496, 0.8910553,  0.89128949, &
+            0.88495225, 0.88905367, 0.89315385, 0.89433673, 0.8950027 , &
+            0.88441433, 0.88929133, 0.89500611, 0.89756091, 0.90035504, &
+            0.88495554, 0.89201556, 0.90204619, 0.90914885, 0.91769988, &
+            0.89620237, 0.90998944, 0.94126152, 0.96209938, 0.9726631  /), &
+            (/nspecint,nsnwgrad/))
+
+      else
+         ! read everything
+
+         call ice_open_nc(ssp_filename,fid)
+
+         fieldname = trim(ssp_snwgrad_fname)
+         call ice_get_ncvarsize(fid,fieldname,nsnwgrad)
+         fieldname = trim(ssp_specint_fname)
+         call ice_get_ncvarsize(fid,fieldname,nspecint)
+
+         call broadcast_scalar(nsnwgrad, master_task)
+         call broadcast_scalar(nspecint, master_task)
+
+         allocate(extcffdrc(nspecint,nsnwgrad))
+         allocate(extcffdfs(nspecint,nsnwgrad))
+         allocate(sscalbdrc(nspecint,nsnwgrad))
+         allocate(sscalbdfs(nspecint,nsnwgrad))
+         allocate(asmprmdrc(nspecint,nsnwgrad))
+         allocate(asmprmdfs(nspecint,nsnwgrad))
+
+         ! ice_read_nc only reads on master
+         fieldname = trim(ssp_extcffdrc_fname)
+         call ice_read_nc(fid, fieldname, extcffdrc, diag, nspecint, nsnwgrad)
+         fieldname = trim(ssp_extcffdfs_fname)
+         call ice_read_nc(fid, fieldname, extcffdfs, diag, nspecint, nsnwgrad)
+         fieldname = trim(ssp_sscalbdrc_fname)
+         call ice_read_nc(fid, fieldname, sscalbdrc, diag, nspecint, nsnwgrad)
+         fieldname = trim(ssp_sscalbdfs_fname)
+         call ice_read_nc(fid, fieldname, sscalbdfs, diag, nspecint, nsnwgrad)
+         fieldname = trim(ssp_asmprmdrc_fname)
+         call ice_read_nc(fid, fieldname, asmprmdrc, diag, nspecint, nsnwgrad)
+         fieldname = trim(ssp_asmprmdfs_fname)
+         call ice_read_nc(fid, fieldname, asmprmdfs, diag, nspecint, nsnwgrad)
+
+         call ice_close_nc(fid)
+
+         call broadcast_array(extcffdrc, master_task)
+         call broadcast_array(extcffdfs, master_task)
+         call broadcast_array(sscalbdrc, master_task)
+         call broadcast_array(sscalbdfs, master_task)
+         call broadcast_array(asmprmdrc, master_task)
+         call broadcast_array(asmprmdfs, master_task)
+
+      endif
+
+      if (my_task == master_task) then
+         write(nu_diag,*) subname,'  '
+         write(nu_diag,*) subname,' Successfully initialized SNICAR SSP tables:'
+         write(nu_diag,*) subname,' ssp_filename         = ',trim(ssp_filename)
+         write(nu_diag,*) subname,' SSP N spectral int   = ',nspecint
+         write(nu_diag,*) subname,' SSP N snow grain rad = ',nsnwgrad
+         write(nu_diag,*) subname,' Data at first index '
+         write(nu_diag,*) subname,' extcffdrc(1,1)       = ',extcffdrc(1,1)
+         write(nu_diag,*) subname,' extcffdfs(1,1)       = ',extcffdfs(1,1)
+         write(nu_diag,*) subname,' sscalbdrc(1,1)       = ',sscalbdrc(1,1)
+         write(nu_diag,*) subname,' sscalbdfs(1,1)       = ',sscalbdfs(1,1)
+         write(nu_diag,*) subname,' asmprmdrc(1,1)       = ',asmprmdrc(1,1)
+         write(nu_diag,*) subname,' asmprmdfs(1,1)       = ',asmprmdfs(1,1)
+         write(nu_diag,*) subname,' Data at final index '
+         write(nu_diag,*) subname,' extcffdrc(max,max)   = ',extcffdrc(nspecint,nsnwgrad)
+         write(nu_diag,*) subname,' extcffdfs(max,max)   = ',extcffdfs(nspecint,nsnwgrad)
+         write(nu_diag,*) subname,' sscalbdrc(max,max)   = ',sscalbdrc(nspecint,nsnwgrad)
+         write(nu_diag,*) subname,' sscalbdfs(max,max)   = ',sscalbdfs(nspecint,nsnwgrad)
+         write(nu_diag,*) subname,' asmprmdrc(max,max)   = ',asmprmdrc(nspecint,nsnwgrad)
+         write(nu_diag,*) subname,' asmprmdfs(max,max)   = ',asmprmdfs(nspecint,nsnwgrad)
+      endif
+
+!      call icepack_init_parameters(      &
+!         ext_cff_ice_drc_in = extcffdrc, &
+!         ext_cff_ice_dfs_in = extcffdfs, &
+!          ss_alb_ice_drc_in = sscalbdrc, &
+!          ss_alb_ice_dfs_in = sscalbdfs, &
+!         asm_prm_ice_drc_in = asmprmdrc, &
+!         asm_prm_ice_dfs_in = asmprmdfs)
+
+      deallocate(extcffdrc)
+      deallocate(extcffdfs)
+      deallocate(sscalbdrc)
+      deallocate(sscalbdfs)
+      deallocate(asmprmdrc)
+      deallocate(asmprmdfs)
+
+      end subroutine init_snicarssptable
 
 !=======================================================================
 

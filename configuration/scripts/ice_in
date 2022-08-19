@@ -196,6 +196,15 @@
     sw_redist         = .false.
     sw_frac           = 0.9d0
     sw_dtemp          = 0.02d0
+    ssp_filename        = 'unknown'
+    ssp_snwgrad_fname   = 'nSnowGrainRadiusSNICAR'
+    ssp_specint_fname   = 'nSpectralIntervalsSNICAR'
+    ssp_extcffdrc_fname = 'iceMassExtinctionCrossSectionDirect'
+    ssp_extcffdfs_fname = 'iceMassExtinctionCrossSectionDiffuse'
+    ssp_sscalbdrc_fname = 'iceSingleScatterAlbedoDirect'
+    ssp_sscalbdfs_fname = 'iceSingleScatterAlbedoDiffuse'
+    ssp_asmprmdrc_fname = 'iceAsymmetryParameterDirect'
+    ssp_asmprmdfs_fname = 'iceAsymmetryParameterDiffuse'
 /
 
 &ponds_nml

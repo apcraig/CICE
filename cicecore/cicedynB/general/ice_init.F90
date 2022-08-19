@@ -101,8 +101,14 @@
           ice_data_type, ice_data_conc, ice_data_dist, &
           snw_filename, &
           snw_tau_fname, snw_kappa_fname, snw_drdt0_fname, &
-          snw_rhos_fname, snw_Tgrd_fname, snw_T_fname
-      use ice_arrays_column, only: bgc_data_dir, fe_data_type
+          snw_rhos_fname, snw_Tgrd_fname, snw_T_fname, &
+          ssp_filename, &
+          ssp_snwgrad_fname, ssp_specint_fname,  &
+          ssp_extcffdrc_fname, ssp_extcffdfs_fname, &
+          ssp_sscalbdrc_fname, ssp_sscalbdfs_fname, &
+          ssp_asmprmdrc_fname, ssp_asmprmdfs_fname
+
+use ice_arrays_column, only: bgc_data_dir, fe_data_type
       use ice_grid, only: grid_file, gridcpl_file, kmt_file, &
                           bathymetry_file, use_bathymetry, &
                           bathymetry_format, kmt_type, &
@@ -259,7 +265,12 @@
         albicev,        albicei,         albsnowv,      albsnowi,       &
         ahmax,          R_ice,           R_pnd,         R_snw,          &
         sw_redist,      sw_frac,         sw_dtemp,                      &
-        dT_mlt,         rsnw_mlt,        kalg
+        dT_mlt,         rsnw_mlt,        kalg,                          &
+        ssp_filename,                                                   &
+        ssp_snwgrad_fname,               ssp_specint_fname,             &
+        ssp_extcffdrc_fname,             ssp_extcffdfs_fname,           &
+        ssp_sscalbdrc_fname,             ssp_sscalbdfs_fname,           &
+        ssp_asmprmdrc_fname,             ssp_asmprmdfs_fname
 
       namelist /ponds_nml/ &
         hs0,            dpscale,         frzpnd,                        &
@@ -474,6 +485,15 @@
       rfracmin  = 0.15_dbl_kind   ! minimum retained fraction of meltwater
       rfracmax  = 0.85_dbl_kind   ! maximum retained fraction of meltwater
       pndaspect = 0.8_dbl_kind    ! ratio of pond depth to area fraction
+      ssp_filename        = 'snicar_optics_5bnd_snow_and_aerosols.nc' ! snicar ssp filename
+      ssp_snwgrad_fname   = 'nSnowGrainRadiusSNICAR'               ! snow grain radius fieldname
+      ssp_specint_fname   = 'nSpectralIntervalsSNICAR'             ! spectral interval fieldname
+      ssp_extcffdrc_fname = 'iceMassExtinctionCrossSectionDirect'  ! snow mass extinction cross section (m2/kg)
+      ssp_extcffdfs_fname = 'iceMassExtinctionCrossSectionDiffuse' ! snow mass extinction cross section (m2/kg)
+      ssp_sscalbdrc_fname = 'iceSingleScatterAlbedoDirect'         ! snow single scatter albedo (fraction)
+      ssp_sscalbdfs_fname = 'iceSingleScatterAlbedoDiffuse'        ! snow single scatter albedo (fraction)
+      ssp_asmprmdrc_fname = 'iceAsymmetryParameterDirect'          ! snow asymmetry factor (cos(theta))
+      ssp_asmprmdfs_fname = 'iceAsymmetryParameterDiffuse'         ! snow asymmetry factor (cos(theta))
       snwredist = 'none'          ! type of snow redistribution
       snw_aging_table = 'test'    ! snow aging lookup table
       snw_filename    = 'unknown' ! snowtable filename
@@ -943,6 +963,15 @@
       call broadcast_scalar(rfracmin,             master_task)
       call broadcast_scalar(rfracmax,             master_task)
       call broadcast_scalar(pndaspect,            master_task)
+      call broadcast_scalar(ssp_filename,         master_task)
+      call broadcast_scalar(ssp_snwgrad_fname,    master_task)
+      call broadcast_scalar(ssp_specint_fname,    master_task)
+      call broadcast_scalar(ssp_extcffdrc_fname,  master_task)
+      call broadcast_scalar(ssp_extcffdfs_fname,  master_task)
+      call broadcast_scalar(ssp_sscalbdrc_fname,  master_task)
+      call broadcast_scalar(ssp_sscalbdfs_fname,  master_task)
+      call broadcast_scalar(ssp_asmprmdrc_fname,  master_task)
+      call broadcast_scalar(ssp_asmprmdfs_fname,  master_task)
       call broadcast_scalar(snwredist,            master_task)
       call broadcast_scalar(snw_aging_table,      master_task)
       call broadcast_scalar(snw_filename,         master_task)
@@ -2197,6 +2226,23 @@
                   write(nu_diag,1031) ' snw_drdt0_fname  = ',trim(snw_drdt0_fname)
                endif
             endif
+!           if (??) then
+               if (ssp_filename == 'unknown') then
+                  tmpstr2 = ' : Using 5x5 test matrix of internallly defined snicar snow grain SSP'
+                  write(nu_diag,1030) ' ssp_filename     = ', trim(ssp_filename),trim(tmpstr2)
+               else
+                  tmpstr2 = ' : Reading 2D snicar SSP parameters from file'
+                  write(nu_diag,1030) ' ssp_filename        = ',trim(ssp_filename),trim(tmpstr2)
+                  write(nu_diag,1031) ' ssp_snwgrad_fname   = ',trim(ssp_snwgrad_fname)
+                  write(nu_diag,1031) ' ssp_specint_fname   = ',trim(ssp_specint_fname)
+                  write(nu_diag,1031) ' ssp_extcffdrc_fname = ',trim(ssp_extcffdrc_fname)
+                  write(nu_diag,1031) ' ssp_extcffdfs_fname = ',trim(ssp_extcffdfs_fname)
+                  write(nu_diag,1031) ' ssp_sscalbdrc_fname = ',trim(ssp_sscalbdrc_fname)
+                  write(nu_diag,1031) ' ssp_sscalbdfs_fname = ',trim(ssp_sscalbdfs_fname)
+                  write(nu_diag,1031) ' ssp_asmprmdrc_fname = ',trim(ssp_asmprmdrc_fname)
+                  write(nu_diag,1031) ' ssp_asmprmdfs_fname = ',trim(ssp_asmprmdfs_fname)
+               endif
+!           endif
          endif
 
          write(nu_diag,*) ' '

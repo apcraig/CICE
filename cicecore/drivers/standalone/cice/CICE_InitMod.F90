@@ -78,7 +78,8 @@
       use ice_flux, only: init_coupler_flux, init_history_therm, &
           init_history_dyn, init_flux_atm, init_flux_ocn, alloc_flux
       use ice_forcing, only: init_forcing_ocn, init_forcing_atmo, &
-          get_forcing_atmo, get_forcing_ocn, get_wave_spec, init_snowtable
+          get_forcing_atmo, get_forcing_ocn, get_wave_spec, init_snowtable, &
+          init_snicarssptable
       use ice_forcing_bgc, only: get_forcing_bgc, get_atm_bgc, &
           faero_default, faero_optics, alloc_forcing_bgc, fiso_default
       use ice_grid, only: init_grid1, init_grid2, alloc_grid
@@ -226,6 +227,11 @@
             call init_snowtable()
          endif
       endif
+
+      ! SNICAR SSP data
+      ! if (??) then
+         call init_snicarssptable()
+      ! endif
 
       ! isotopes
       if (tr_iso)     call fiso_default                 ! default values
