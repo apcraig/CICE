@@ -26,15 +26,18 @@ jobs:
     strategy:
       matrix:
 #        os: [macos-latest, ubuntu-latest]
-        os: [macos-12]
+        os: [macos-latest, macos-12, ubuntu-latest]
 #        os: [ubuntu-latest]
         include: 
+          - os: macos-latest
+            envdef: macos
+            minicond: Miniconda3-latest-MacOSX-x86_64.sh
           - os: macos-12
             envdef: macos
             minicond: Miniconda3-latest-MacOSX-x86_64.sh
-#          - os: ubuntu-latest
-#            envdef: linux
-#            minicond: Miniconda3-latest-Linux-x86_64.sh
+          - os: ubuntu-latest
+            envdef: linux-latest
+            minicond: Miniconda3-latest-Linux-x86_64.sh
     steps:
       - name: reset macos toolchain to commandlinetools
         shell: /bin/bash {0}
