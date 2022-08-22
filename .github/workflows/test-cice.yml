@@ -99,6 +99,7 @@ jobs:
           make --version
       - name: check setup case
         run: |
+          ls -al $HOME/
           source $HOME/miniconda/bin/activate
           conda activate cice
           cd $HOME/cice
