@@ -36,7 +36,7 @@ jobs:
             envdef: macos
             minicond: Miniconda3-latest-MacOSX-x86_64.sh
           - os: ubuntu-latest
-            envdef: linux-latest
+            envdef: ubuntu
             minicond: Miniconda3-latest-Linux-x86_64.sh
     steps:
       - name: reset macos toolchain to commandlinetools
