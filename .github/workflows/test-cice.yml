@@ -88,12 +88,13 @@ jobs:
         shell: /bin/bash -l {0}
         run: |
           cd $HOME && mkdir -p cice-dirs/runs cice-dirs/baseline cice-dirs/input
-          source $HOME/miniconda/etc/profile.d/conda.sh
+          source $HOME/miniconda/bin/activate
+          conda init tcsh
           cd $HOME/cice
           conda env create -f configuration/scripts/machines/environment.yml
       - name: check conda env
         run: |
-          source $HOME/miniconda/etc/profile.d/conda.csh
+          source $HOME/miniconda/bin/activate
           conda init tcsh
           conda activate cice && which mpicc && which mpifort && which make
           mpifort --version
