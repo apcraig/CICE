@@ -94,6 +94,7 @@ jobs:
           conda env create -f configuration/scripts/machines/environment.yml
       - name: check conda env
         run: |
+          conda init tcsh
           conda activate cice && which mpicc && which mpifort && which make
           mpifort --version
           mpicc --version
