@@ -40,7 +40,7 @@ jobs:
             minicond: Miniconda3-latest-Linux-x86_64.sh
     steps:
       - name: reset macos toolchain to commandlinetools
-        shell: /bin/bash {0}
+        shell: /bin/bash -l {0}
         if: contains( matrix.envdef, 'macos')
         run: |
           sudo xcode-select -r
@@ -49,14 +49,14 @@ jobs:
           echo "xcrun --show-sdk-path: $(xcrun --show-sdk-path)"
           echo "xcode-select -p: $(xcode-select -p)"
       - name: install ubuntu csh
-        shell: /bin/bash {0}
+        shell: /bin/bash -l {0}
         if: contains( matrix.envdef, 'ubuntu')
         run: |
           sudo apt-get update
           sudo apt-get install -y csh
           sudo apt-get install -y tcsh
       - name: system info
-        shell: /bin/bash {0}
+        shell: /bin/bash -l {0}
         run: |
           type wget
           type curl
@@ -71,7 +71,7 @@ jobs:
           echo "ENVDEF: ${{ matrix.envdef }}"
           echo "MINICOND: ${{ matrix.minicond }}"
       - name : install miniconda
-        shell: /bin/bash {0}
+        shell: /bin/bash -l {0}
         run: |
           wget https://repo.anaconda.com/miniconda/${{ matrix.minicond }} -O ~/miniconda.sh
           bash ~/miniconda.sh -b -p $HOME/miniconda
@@ -85,7 +85,7 @@ jobs:
 #           ls -al ${HOME}/
 #           ls -al ${GITHUB_WORKSPACE}/
       - name: setup conda env
-        shell: /bin/bash {0}
+        shell: /bin/bash -l {0}
         run: |
           cd $HOME && mkdir -p cice-dirs/runs cice-dirs/baseline cice-dirs/input
           source $HOME/miniconda/bin/activate
