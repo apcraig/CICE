@@ -92,11 +92,10 @@ jobs:
           conda init tcsh
           cd $HOME/cice
           conda env create -f configuration/scripts/machines/environment.yml
+          conda activate cice
       - name: check conda env
         run: |
-          source $HOME/miniconda/bin/activate
-          conda init tcsh
-          conda activate cice && which mpicc && which mpifort && which make
+          which mpicc && which mpifort && which make
           mpifort --version
           mpicc --version
           make --version
