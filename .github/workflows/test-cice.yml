@@ -93,8 +93,6 @@ jobs:
           cd $HOME/cice
           conda env create -f configuration/scripts/machines/environment.yml
           conda activate cice
-      - name: check conda env
-        run: |
           which mpicc && which mpifort && which make
           mpifort --version
           mpicc --version
