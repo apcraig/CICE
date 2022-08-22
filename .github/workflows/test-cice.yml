@@ -48,6 +48,8 @@ jobs:
           sudo ln -s /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/* /usr/local/include/
           echo "xcrun --show-sdk-path: $(xcrun --show-sdk-path)"
           echo "xcode-select -p: $(xcode-select -p)"
+      - name: install ubuntu csh
+        shell: /bin/bash {0}
         if: contains( matrix.envdef, 'ubuntu')
         run: |
           sudo apt-get update
