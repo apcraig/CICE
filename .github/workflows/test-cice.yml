@@ -36,7 +36,7 @@ jobs:
             envdef: macos
             minicond: Miniconda3-latest-MacOSX-x86_64.sh
           - os: ubuntu-latest
-            envdef: ubuntu
+            envdef: linux
             minicond: Miniconda3-latest-Linux-x86_64.sh
     steps:
       - name: reset macos toolchain to commandlinetools
@@ -50,7 +50,7 @@ jobs:
           echo "xcode-select -p: $(xcode-select -p)"
       - name: install ubuntu csh
         shell: /bin/bash -l {0}
-        if: contains( matrix.envdef, 'ubuntu')
+        if: contains( matrix.envdef, 'linux')
         run: |
           sudo apt-get update
           sudo apt-get install -y csh
