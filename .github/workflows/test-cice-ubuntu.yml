@@ -117,9 +117,7 @@ jobs:
       - name: check setup case
         shell: /bin/bash -l {0}
         run: |
-          ls -al $HOME/
           cd $HOME/cice
-          ls -al
           tcsh ./cice.setup -m conda -e ${{ matrix.envdef }} -c case0 --pes 1x1 -s diag1
       - name: check setup test
         run: |
