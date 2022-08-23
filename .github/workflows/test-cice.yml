@@ -39,6 +39,10 @@ jobs:
 #            envdef: linux
 #            minicond: Miniconda3-latest-Linux-x86_64.sh
     steps:
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.10.0
+        with:
+          access_token: ${{ github.token }}
       - name: reset macos toolchain to commandlinetools
         shell: /bin/bash {0}
         if: contains( matrix.envdef, 'macos')

@@ -39,6 +39,10 @@ jobs:
             envdef: linux
             minicond: Miniconda3-latest-Linux-x86_64.sh
     steps:
+      - name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.10.0
+        with:
+          access_token: ${{ github.token }}
       - name: system info
         shell: /bin/bash -l {0}
         run: |
@@ -65,22 +69,23 @@ jobs:
       - uses: actions/checkout@v2
       - uses: conda-incubator/setup-miniconda@v2
         with:
-          activate-environment: test
+          activate-environment: cice
           environment-file: configuration/scripts/machines/environment.yml
           python-version: 3.8
           auto-activate-base: false
-      - name: install ubuntu csh
-        shell: /bin/bash -l {0}
-        if: contains( matrix.envdef, 'linux')
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y csh
-          sudo apt-get install -y tcsh
-      - name: conda check
+#      - name: install ubuntu csh
+#        shell: /bin/bash -l {0}
+#        if: contains( matrix.envdef, 'linux')
+#        run: |
+#          sudo apt-get update
+#          sudo apt-get install -y csh
+#          sudo apt-get install -y tcsh
+      - name: conda activate
         shell: bash -l {0}
         run: |
           conda info
           conda list
+          conda activate cice
       - name: system info
         shell: /bin/bash -l {0}
         run: |
@@ -99,15 +104,10 @@ jobs:
 #        run: |
 #          wget https://repo.anaconda.com/miniconda/${{ matrix.minicond }} -O ~/miniconda.sh
 #          bash ~/miniconda.sh -b -p $HOME/miniconda
-      - name: setup conda env
+      - name: check conda env
         shell: /bin/bash -l {0}
         run: |
           cd $HOME && mkdir -p cice-dirs/runs cice-dirs/baseline cice-dirs/input
-          source $HOME/miniconda/bin/activate
-          conda init tcsh
-          cd $HOME/cice
-          conda env create -f configuration/scripts/machines/environment.yml
-          conda activate cice
           which mpicc && which mpifort && which make
           mpifort --version
           mpicc --version
@@ -115,8 +115,6 @@ jobs:
       - name: check setup case
         run: |
           ls -al $HOME/
-          source $HOME/miniconda/bin/activate
-          conda activate cice
           cd $HOME/cice
           ./cice.setup -m conda -e ${{ matrix.envdef }} -c case0 --pes 1x1 -s diag1
       - name: check setup test
