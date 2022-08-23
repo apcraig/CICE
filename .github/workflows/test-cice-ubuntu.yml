@@ -115,6 +115,7 @@ jobs:
           mpicc --version
           make --version
       - name: check setup case
+        shell: /bin/bash -l {0}
         run: |
           ls -al $HOME/
           cd $HOME/cice
