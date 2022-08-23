@@ -120,11 +120,11 @@ jobs:
           ls -al $HOME/
           cd $HOME/cice
           ls -al
-          ./cice.setup -m conda -e ${{ matrix.envdef }} -c case0 --pes 1x1 -s diag1
+          tcsh ./cice.setup -m conda -e ${{ matrix.envdef }} -c case0 --pes 1x1 -s diag1
       - name: check setup test
         run: |
           cd $HOME/cice
-          ./cice.setup -m conda -e ${{ matrix.envdef }} --test smoke --testid c0
+          tcsh ./cice.setup -m conda -e ${{ matrix.envdef }} --test smoke --testid c0
 #      - name: compile case
 #        run: |
 #          cd $HOME/cice
