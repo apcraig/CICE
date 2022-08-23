@@ -86,13 +86,16 @@ jobs:
           conda info
           conda list
           conda activate cice
+          conda init tcsh
       - name: system info
         shell: /bin/bash -l {0}
         run: |
           type wget
           type curl
           type csh
+          type tcsh
           echo "csh --version: $(csh --version)"
+          echo "tcsh --version: $(tcsh --version)"
           echo "uname -a: $(uname -a)"
           echo "HOME: $HOME"
           echo "GITHUB_WORKSPACE: $GITHUB_WORKSPACE"
