@@ -43,6 +43,12 @@ jobs:
         uses: styfle/cancel-workflow-action@0.10.0
         with:
           access_token: ${{ github.token }}
+      - name: install ubuntu csh
+        shell: /bin/bash -l {0}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y csh
+          sudo apt-get install -y tcsh
       - name: system info
         shell: /bin/bash -l {0}
         run: |
@@ -73,13 +79,6 @@ jobs:
           environment-file: configuration/scripts/machines/environment.yml
           python-version: 3.8
           auto-activate-base: false
-#      - name: install ubuntu csh
-#        shell: /bin/bash -l {0}
-#        if: contains( matrix.envdef, 'linux')
-#        run: |
-#          sudo apt-get update
-#          sudo apt-get install -y csh
-#          sudo apt-get install -y tcsh
       - name: conda activate
         shell: bash -l {0}
         run: |
