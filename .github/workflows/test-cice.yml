@@ -26,7 +26,6 @@ jobs:
     strategy:
       matrix:
 #        os: [macos-latest, ubuntu-latest]
-#        os: [macos-latest, macos-12, ubuntu-latest]
         os: [macos-latest, macos-12]
 #        os: [ubuntu-latest]
         include: 
@@ -41,7 +40,7 @@ jobs:
 #            minicond: Miniconda3-latest-Linux-x86_64.sh
     steps:
       - name: reset macos toolchain to commandlinetools
-        shell: /bin/bash -l {0}
+        shell: /bin/bash {0}
         if: contains( matrix.envdef, 'macos')
         run: |
           sudo xcode-select -r
@@ -49,15 +48,8 @@ jobs:
           sudo ln -s /Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/* /usr/local/include/
           echo "xcrun --show-sdk-path: $(xcrun --show-sdk-path)"
           echo "xcode-select -p: $(xcode-select -p)"
-      - name: install ubuntu csh
-        shell: /bin/bash -l {0}
-        if: contains( matrix.envdef, 'linux')
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y csh
-          sudo apt-get install -y tcsh
       - name: system info
-        shell: /bin/bash -l {0}
+        shell: /bin/bash {0}
         run: |
           type wget
           type curl
@@ -72,7 +64,7 @@ jobs:
           echo "ENVDEF: ${{ matrix.envdef }}"
           echo "MINICOND: ${{ matrix.minicond }}"
       - name : install miniconda
-        shell: /bin/bash -l {0}
+        shell: /bin/bash {0}
         run: |
           wget https://repo.anaconda.com/miniconda/${{ matrix.minicond }} -O ~/miniconda.sh
           bash ~/miniconda.sh -b -p $HOME/miniconda
@@ -86,23 +78,21 @@ jobs:
 #           ls -al ${HOME}/
 #           ls -al ${GITHUB_WORKSPACE}/
       - name: setup conda env
-        shell: /bin/bash -l {0}
+        shell: /bin/bash {0}
         run: |
           cd $HOME && mkdir -p cice-dirs/runs cice-dirs/baseline cice-dirs/input
           source $HOME/miniconda/bin/activate
           conda init tcsh
           cd $HOME/cice
           conda env create -f configuration/scripts/machines/environment.yml
-          conda activate cice
-          which mpicc && which mpifort && which make
+      - name: check conda env
+        run: |
+          conda activate cice && which mpicc && which mpifort && which make
           mpifort --version
           mpicc --version
           make --version
       - name: check setup case
         run: |
-          ls -al $HOME/
-          source $HOME/miniconda/bin/activate
-          conda activate cice
           cd $HOME/cice
           ./cice.setup -m conda -e ${{ matrix.envdef }} -c case0 --pes 1x1 -s diag1
       - name: check setup test
