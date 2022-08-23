@@ -27,23 +27,32 @@ jobs:
       matrix:
 #        os: [macos-latest, ubuntu-latest]
 #        os: [macos-latest, macos-12, ubuntu-latest]
-#        os: [ubuntu-latest]
+        os: [ubuntu-latest]
         include: 
-          - os: macos-latest
-            envdef: macos
-            minicond: Miniconda3-latest-MacOSX-x86_64.sh
-          - os: macos-12
-            envdef: macos
-            minicond: Miniconda3-latest-MacOSX-x86_64.sh
+#          - os: macos-latest
+#            envdef: macos
+#            minicond: Miniconda3-latest-MacOSX-x86_64.sh
+#          - os: macos-12
+#            envdef: macos
+#            minicond: Miniconda3-latest-MacOSX-x86_64.sh
           - os: ubuntu-latest
             envdef: linux
             minicond: Miniconda3-latest-Linux-x86_64.sh
     steps:
+      - name: clone
+        uses: actions/checkout@v2
+        with:
+          submodules: 'recursive'
+      - name: link
+        run: |
+           ln -s ${GITHUB_WORKSPACE}/../CICE ${HOME}/cice
+#           ls -al ${HOME}/
+#           ls -al ${GITHUB_WORKSPACE}/
       - uses: actions/checkout@v2
       - uses: conda-incubator/setup-miniconda@v2
         with:
           activate-environment: test
-          environment-file: environment.yml
+          environment-file: ${HOME}/cice/configuration/scripts/machines/environment.yml
           python-version: 3.8
           auto-activate-base: false
       - name: install ubuntu csh
@@ -76,15 +85,6 @@ jobs:
 #        run: |
 #          wget https://repo.anaconda.com/miniconda/${{ matrix.minicond }} -O ~/miniconda.sh
 #          bash ~/miniconda.sh -b -p $HOME/miniconda
-      - name: clone
-        uses: actions/checkout@v2
-        with:
-          submodules: 'recursive'
-      - name: link
-        run: |
-           ln -s ${GITHUB_WORKSPACE}/../CICE ${HOME}/cice
-#           ls -al ${HOME}/
-#           ls -al ${GITHUB_WORKSPACE}/
       - name: setup conda env
         shell: /bin/bash -l {0}
         run: |
