@@ -17,13 +17,13 @@
       use ice_calendar, only: dt, istep, msec, mday, mmonth
       use ice_fileunits, only: nu_diag
       use ice_arrays_column, only: restore_bgc, &
-         bgc_data_dir, fe_data_type, optics_file, optics_file_fieldname
+         bgc_data_dir, fe_data_type
       use ice_constants, only: c0, p1
       use ice_constants, only: field_loc_center, field_type_scalar
       use ice_exit, only: abort_ice
       use ice_forcing, only: bgc_data_type
       use icepack_intfc, only: icepack_warnings_flush, icepack_warnings_aborted
-      use icepack_intfc, only: icepack_nspint, icepack_max_aero, &
+      use icepack_intfc, only: icepack_nspint_3bd, icepack_max_aero, &
           icepack_max_algae, icepack_max_doc, icepack_max_dic
       use icepack_intfc, only: icepack_query_tracer_flags, &
           icepack_query_parameters, icepack_query_parameters, &
@@ -32,8 +32,7 @@
       implicit none
       private
       public :: get_forcing_bgc, get_atm_bgc, fzaero_data, alloc_forcing_bgc, &
-                init_bgc_data, faero_data, faero_default, faero_optics, &
-                fiso_default
+                init_bgc_data, faero_data, faero_default, fiso_default
 
       integer (kind=int_kind) :: &
          bgcrecnum = 0   ! old record number (save between steps)
@@ -840,6 +839,7 @@
 
       end subroutine init_bgc_data
 
+#if (1 == 0)
 !=======================================================================
 !
 ! Aerosol optical properties for bulk and modal aerosol formulation
@@ -854,14 +854,6 @@
       use ice_broadcast, only: broadcast_array
       use ice_read_write, only: ice_open_nc, ice_close_nc
       use ice_communicate, only: my_task, master_task
-      use ice_arrays_column, only: &
-         kaer_tab, & ! aerosol mass extinction cross section (m2/kg)
-         waer_tab, & ! aerosol single scatter albedo (fraction)
-         gaer_tab, & ! aerosol asymmetry parameter (cos(theta))
-         kaer_bc_tab, & ! BC mass extinction cross section (m2/kg)
-         waer_bc_tab, & ! BC single scatter albedo (fraction)
-         gaer_bc_tab, & ! BC aerosol asymmetry parameter (cos(theta))
-         bcenh          ! BC absorption enhancement factor
 
 #ifdef USE_NETCDF
       use netcdf
@@ -895,7 +887,7 @@
            2665.85867,   2256.71027,    820.36024, &
             840.78295,   1028.24656,   1163.03298, &
             387.51211,    414.68808,    450.29814/), &
-            (/icepack_nspint,icepack_max_aero/))
+            (/icepack_nspint_3bd,icepack_max_aero/))
       waer_tab = reshape((/ &      ! aerosol single scatter albedo (fraction)
               0.29003,      0.17349,      0.06613, &
               0.51731,      0.41609,      0.21324, &
@@ -903,7 +895,7 @@
               0.97764,      0.99402,      0.98552, &
               0.94146,      0.98527,      0.99093, &
               0.90034,      0.96543,      0.97678/), &
-              (/icepack_nspint,icepack_max_aero/))
+              (/icepack_nspint_3bd,icepack_max_aero/))
       gaer_tab = reshape((/ &      ! aerosol asymmetry parameter (cos(theta))
               0.35445,      0.19838,      0.08857, &
               0.52581,      0.32384,      0.14970, &
@@ -911,7 +903,7 @@
               0.68861,      0.70836,      0.54171, &
               0.70239,      0.66115,      0.71983, &
               0.78734,      0.73580,      0.64411/), &
-              (/icepack_nspint,icepack_max_aero/))
+              (/icepack_nspint_3bd,icepack_max_aero/))
 
       ! this data is used in MODAL AEROSOL treatment in dEdd radiation
       kaer_bc_tab = reshape((/ &      ! aerosol mass extinction cross section (m2/kg)
@@ -925,7 +917,7 @@
               3934.17604,   4020.20799, 3543.27199, &
               3461.20656,   3587.80962, 3289.98060, &
               3083.03396,   3226.27231, 3052.91441/), &
-              (/icepack_nspint,10/))
+              (/icepack_nspint_3bd,10/))
 
       waer_bc_tab = reshape((/ &      ! aerosol single scatter albedo (fraction)
               0.26107,      0.15861,    0.06535, &
@@ -938,7 +930,7 @@
               0.49440,      0.46328,    0.42008, &
               0.50131,      0.47070,    0.43128, &
               0.50736,      0.47704,    0.44056/), &
-              (/icepack_nspint,10/))
+              (/icepack_nspint_3bd,10/))
 
       gaer_bc_tab = reshape((/ &      ! aerosol asymmetry parameter (cos(theta))
               0.28328,      0.19644,      0.10498, &
@@ -951,7 +943,7 @@
               0.75064,      0.64959,      0.47551, &
               0.76663,      0.67461,      0.50415, &
               0.77926,      0.69561,      0.52981/),&
-              (/icepack_nspint,10/))
+              (/icepack_nspint_3bd,10/))
 
       bcenh(:,:,:)     = c0
 
@@ -999,7 +991,7 @@
       endif      ! modal_aero
 
       end subroutine faero_optics
-
+#endif
 !=======================================================================
 
       end module ice_forcing_bgc

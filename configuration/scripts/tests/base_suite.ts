@@ -76,3 +76,4 @@ restart        gx3     4x4        gx3ncarbulk,diag1
 smoke          gx3     4x1        calcdragio
 restart        gx3     4x2        atmbndyconstant
 restart        gx3     4x2        atmbndymixed
+restart        gx3     8x2        debug,diag1,snicar
