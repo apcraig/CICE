@@ -1,3 +1,4 @@
+ice_ic = 'default'
 nslyr = 5
 highfreq = .true.
 natmiter = 10
