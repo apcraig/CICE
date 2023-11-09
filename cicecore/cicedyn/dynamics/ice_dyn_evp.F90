@@ -121,7 +121,8 @@
       subroutine init_evp
       use ice_blocks, only: nx_block, ny_block, nghost
       use ice_domain_size, only: max_blocks, nx_global, ny_global
-      use ice_grid, only: grid_ice, dyT, dxT, uarear, tmask, G_HTE, G_HTN
+      use ice_grid, only: grid_ice, dyT, dxT, uarear, tmask, &
+          cxp, cyp, cxm, cym, dxhy, dyhx
       use ice_calendar, only: dt_dyn
       use ice_dyn_shared, only: init_dyn_shared, evp_algorithm
       use ice_dyn_evp1d, only: dyn_evp1d_init
@@ -136,7 +137,8 @@
       if (evp_algorithm == "shared_mem_1d" ) then
          call dyn_evp1d_init(nx_global , ny_global, nx_block, ny_block, &
                              max_blocks, nghost   , dyT     , dxT     , &
-                             uarear    , tmask    , G_HTE   , G_HTN)
+                             uarear    , tmask    , cxp     , cyp     , &
+                             cxm       , cym      , dxhy    , dyhx)
       endif
 
       allocate( uocnU    (nx_block,ny_block,max_blocks), & ! i ocean current (m/s)

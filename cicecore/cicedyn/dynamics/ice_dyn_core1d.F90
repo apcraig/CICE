@@ -70,7 +70,7 @@ module ice_dyn_core1d
   ! arguments ------------------------------------------------------------------
   subroutine stress_1d (ee, ne, se, lb, ub,                              &
                         uvel, vvel, dxT, dyT, skipme, strength,          &
-                        hte, htn, htem1, htnm1,                          &
+                        cxp, cyp, cxm, cym, dxhy, dyhx,                  &
                         stressp_1,  stressp_2,  stressp_3,  stressp_4,   &
                         stressm_1,  stressm_2,  stressm_3,  stressm_4,   &
                         stress12_1, stress12_2, stress12_3, stress12_4,  &
@@ -94,10 +94,9 @@ module ice_dyn_core1d
       vvel     , & ! y-component of velocity (m/s)
       dxT      , & ! width of T-cell through the middle (m)
       dyT      , & ! height of T-cell through the middle (m)
-      hte      , &
-      htn      , &
-      htem1    , &
-      htnm1
+      cxp, cyp , & ! grid metrics
+      cxm, cym , & !
+      dxhy, dyhx   !
 
     real    (kind=dbl_kind), dimension(:), intent(inout), contiguous :: &
       stressp_1, stressp_2, stressp_3, stressp_4 , & ! sigma11+sigma22
@@ -165,7 +164,8 @@ module ice_dyn_core1d
     !$omp         tmp_cxp, tmp_cyp, tmp_cxm, tmp_cym         , &
     !$omp         tmp_strength, tmp_DminTarea, tmparea       , &
     !$omp         tmp_dxhy, tmp_dyhx)                          &
-    !$omp  shared(uvel,vvel,dxT,dyT,htn,hte,htnm1,htem1      , &
+    !$omp  shared(uvel,vvel,dxT,dyT                          , &
+    !$omp         cxp, cyp, cxm, cym, dxhy, dyhx             , &
     !$omp         str1,str2,str3,str4,str5,str6,str7,str8    , &
     !$omp         stressp_1,stressp_2,stressp_3,stressp_4    , &
     !$omp         stressm_1,stressm_2,stressm_3,stressm_4    , &
@@ -188,15 +188,15 @@ module ice_dyn_core1d
       tmp_uvel_se   = uvel(se(iw))
       tmp_dxT       = dxT(iw)
       tmp_dyT       = dyT(iw)
-      tmp_cxp       = c1p5 * htn(iw) - p5 * htnm1(iw)
-      tmp_cyp       = c1p5 * hte(iw) - p5 * htem1(iw)
-      tmp_cxm       = -(c1p5 * htnm1(iw) - p5 * htn(iw))
-      tmp_cym       = -(c1p5 * htem1(iw) - p5 * hte(iw))
+      tmp_cxp       = cxp(iw)
+      tmp_cyp       = cyp(iw)
+      tmp_cxm       = cxm(iw)
+      tmp_cym       = cym(iw)
       tmp_strength  = strength(iw)
       tmparea       = dxT(iw) * dyT(iw) ! necessary to split calc of DminTarea. Otherwize not binary identical
       tmp_DminTarea = deltaminEVP * tmparea
-      tmp_dxhy      = p5 * (hte(iw) - htem1(iw))
-      tmp_dyhx      = p5 * (htn(iw) - htnm1(iw))
+      tmp_dxhy      = dxhy(iw)
+      tmp_dyhx      = dyhx(iw)
 
       !--------------------------------------------------------------------------
       ! strain rates - NOTE these are actually strain rates * area  (m^2/s)
