@@ -105,7 +105,7 @@
                           grid_ocn, grid_ocn_thrm, grid_ocn_dynu, grid_ocn_dynv, &
                           grid_atm, grid_atm_thrm, grid_atm_dynu, grid_atm_dynv, &
                           dxrect, dyrect, dxscale, dyscale, scale_dxdy, &
-                          lonrefrect, latrefrect, pgl_global_ext
+                          lonrefrect, latrefrect
       use ice_dyn_shared, only: ndte, kdyn, revised_evp, yield_curve, &
                                 evp_algorithm, visc_method,     &
                                 seabed_stress, seabed_stress_method,  &
@@ -375,7 +375,6 @@
       ndte = 120         ! subcycles per dynamics timestep:  ndte=dt_dyn/dte
       evp_algorithm = 'standard_2d'  ! EVP kernel (standard_2d=standard cice evp; shared_mem_1d=1d shared memory and no mpi
       elasticDamp = 0.36_dbl_kind    ! coefficient for calculating the parameter E
-      pgl_global_ext = .false.       ! if true, init primary grid lengths (global ext.)
       brlx   = 300.0_dbl_kind ! revised_evp values. Otherwise overwritten in ice_dyn_shared
       arlx   = 300.0_dbl_kind ! revised_evp values. Otherwise overwritten in ice_dyn_shared
       revised_evp = .false.   ! if true, use revised procedure for evp dynamics
@@ -963,7 +962,6 @@
       call broadcast_scalar(ndte,                 master_task)
       call broadcast_scalar(evp_algorithm,        master_task)
       call broadcast_scalar(elasticDamp,          master_task)
-      call broadcast_scalar(pgl_global_ext,       master_task)
       call broadcast_scalar(brlx,                 master_task)
       call broadcast_scalar(arlx,                 master_task)
       call broadcast_scalar(revised_evp,          master_task)
@@ -1842,11 +1840,10 @@
                   tmpstr2 = ' : standard 2d EVP solver'
                elseif (evp_algorithm == 'shared_mem_1d') then
                   tmpstr2 = ' : vectorized 1d EVP solver'
-                  pgl_global_ext = .true.
                else
                   tmpstr2 = ' : unknown value'
                endif
-               write(nu_diag,1031) ' evp_algorithm    = ', trim(evp_algorithm),trim(tmpstr2)
+               write(nu_diag,1030) ' evp_algorithm    = ', trim(evp_algorithm),trim(tmpstr2)
                write(nu_diag,1020) ' ndtd             = ', ndtd, ' : number of dynamics/advection/ridging/steps per thermo timestep'
                write(nu_diag,1020) ' ndte             = ', ndte, ' : number of EVP or EAP subcycles'
             endif
@@ -2279,17 +2276,17 @@
                   write(nu_diag,1010) ' use_smliq_pnd    = ', use_smliq_pnd, trim(tmpstr2)
                if (snw_aging_table == 'test') then
                   tmpstr2 = ' : Using 5x5x1 test matrix of internallly defined snow aging parameters'
-                  write(nu_diag,1030) ' snw_aging_table  = ', trim(snw_aging_table),trim(tmpstr2)
+                  write(nu_diag,1030) ' snw_aging_table  = ',trim(snw_aging_table),trim(tmpstr2)
                elseif (snw_aging_table == 'snicar') then
                   tmpstr2 = ' : Reading 3D snow aging parameters from SNICAR file'
-                  write(nu_diag,1030) ' snw_aging_table  = ', trim(snw_aging_table),trim(tmpstr2)
+                  write(nu_diag,1030) ' snw_aging_table  = ',trim(snw_aging_table),trim(tmpstr2)
                   write(nu_diag,1031) ' snw_filename     = ',trim(snw_filename)
                   write(nu_diag,1031) ' snw_tau_fname    = ',trim(snw_tau_fname)
                   write(nu_diag,1031) ' snw_kappa_fname  = ',trim(snw_kappa_fname)
                   write(nu_diag,1031) ' snw_drdt0_fname  = ',trim(snw_drdt0_fname)
                elseif (snw_aging_table == 'file') then
                   tmpstr2 = ' : Reading 1D and 3D snow aging dimensions and parameters from external file'
-                  write(nu_diag,1030) ' snw_aging_table  = ', trim(snw_aging_table),trim(tmpstr2)
+                  write(nu_diag,1030) ' snw_aging_table  = ',trim(snw_aging_table),trim(tmpstr2)
                   write(nu_diag,1031) ' snw_filename     = ',trim(snw_filename)
                   write(nu_diag,1031) ' snw_rhos_fname   = ',trim(snw_rhos_fname)
                   write(nu_diag,1031) ' snw_Tgrd_fname   = ',trim(snw_Tgrd_fname)

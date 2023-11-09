@@ -35,7 +35,6 @@ module ice_dyn_evp1d
   ! indexes 
   integer(kind=int_kind), allocatable, dimension(:,:) :: iwidx
   logical(kind=log_kind), allocatable, dimension(:)   :: skipTcell,skipUcell
-  real   (kind=dbl_kind), allocatable, dimension(:)   :: HTE,HTN, HTEm1,HTNm1
   integer(kind=int_kind), allocatable, dimension(:)   :: ee,ne,se,nw,sw,sse ! arrays for neighbour points
   integer(kind=int_kind), allocatable, dimension(:)   :: indxti, indxtj, indxTij
 
@@ -43,7 +42,7 @@ module ice_dyn_evp1d
   real(kind=dbl_kind)   , allocatable, dimension(:)   ::                       &
     cdn_ocn,aiu,uocn,vocn,waterxU,wateryU,forcexU,forceyU,umassdti,fmU,uarear, &
     strintxU,strintyU,uvel_init,vvel_init,                                     &
-    strength, uvel, vvel, dxt, dyt,                                            &
+    strength, uvel, vvel, dxt, dyt, cxp, cyp, cxm, cym, dxhy, dyhx,            &
     stressp_1, stressp_2, stressp_3, stressp_4, stressm_1, stressm_2,          &
     stressm_3, stressm_4, stress12_1, stress12_2, stress12_3, stress12_4,      &
     str1, str2, str3, str4, str5, str6, str7, str8, Tbu, Cb
@@ -68,26 +67,30 @@ module ice_dyn_evp1d
   ! This follows CICE naming
   ! In addition all water points are assumed to be active and allocated thereafter.
   subroutine dyn_evp1d_init(nx_global, ny_global, cnx_block, cny_block,        &
-                            cmax_block, cnghost ,                              &
-                            L_dyT, L_dxT, L_uarear, L_tmask, G_HTE, G_HTN)
+                            cmax_block, cnghost,                               &
+                            L_dyT, L_dxT, L_uarear, L_tmask,                   &
+                            L_cxp, L_cyp, L_cxm, L_cym, L_dxhy, L_dyhx)
 
+    use ice_communicate, only : master_task
+    use ice_gather_scatter, only : gather_global_ext
+    use ice_domain, only : distrb_info
     ! Note that TMask is ocean/land
     implicit none
 
     integer(kind=int_kind), intent(in)  ::                            &
       nx_global, ny_global, cnx_block, cny_block, cmax_block, cnghost
     real(kind=dbl_kind)   , dimension(:,:,:), intent(in)  ::          &
-      L_dyT, L_dxT, L_uarear
+      L_dyT, L_dxT, L_uarear, L_cxp, L_cyp, L_cxm, L_cym, L_dxhy, L_dyhx
     logical(kind=log_kind), dimension(:,:,:), intent(in)  ::          &
       L_tmask
 
     ! variables for Global arrays (domain size)
-    real(kind=dbl_kind)   , dimension(:,:)  , intent(in)  :: G_HTE,G_HTN
-    real(kind=dbl_kind)   , dimension(:,:)  , allocatable :: G_dyT, G_dxT, G_uarear
-    logical(kind=log_kind), dimension(:,:)  , allocatable :: G_tmask
+    real(kind=dbl_kind)   , dimension(:,:), allocatable :: &
+      G_dyT, G_dxT, G_uarear, G_cxp, G_cyp, G_cxm, G_cym, G_dxhy, G_dyhx
+    logical(kind=log_kind), dimension(:,:), allocatable :: G_tmask
 
+    integer(kind=int_kind) :: ios, ierr
     character(len=*), parameter :: subname = '(dyn_evp1d_init)'
-    integer(kind=int_kind)                                :: ios, ierr
 
     nx_block=cnx_block
     ny_block=cny_block
@@ -98,14 +101,26 @@ module ice_dyn_evp1d
     ny=ny_global+2*nghost
 
     allocate(G_dyT(nx,ny),G_dxT(nx,ny),G_uarear(nx,ny),G_tmask(nx,ny),stat=ierr)
-
     if (ierr/=0) then
        call abort_ice(subname//' ERROR: allocating', file=__FILE__, line=__LINE__)
     endif
 
-    ! gather from blks to global
-    call gather_static(L_uarear,  L_dxT, L_dyT, L_Tmask, &
-                       G_uarear,  G_dxT, G_dyT, G_Tmask)
+    allocate(G_cxp(nx,ny),G_cyp(nx,ny),G_cxm(nx,ny),G_cym(nx,ny),G_dxhy(nx,ny),G_dyhx(nx,ny),stat=ierr)
+    if (ierr/=0) then
+       call abort_ice(subname//' ERROR: allocating', file=__FILE__, line=__LINE__)
+    endif
+
+    ! copy from distributed I_* to G_*
+    call gather_global_ext(G_uarear, L_uarear, master_task, distrb_info)
+    call gather_global_ext(G_dxT   , L_dxT   , master_task, distrb_info)
+    call gather_global_ext(G_dyT   , L_dyT   , master_task, distrb_info)
+    call gather_global_ext(G_Tmask , L_Tmask , master_task, distrb_info)
+    call gather_global_ext(G_cxp   , L_cxp   , master_task, distrb_info)
+    call gather_global_ext(G_cyp   , L_cyp   , master_task, distrb_info)
+    call gather_global_ext(G_cxm   , L_cxm   , master_task, distrb_info)
+    call gather_global_ext(G_cym   , L_cym   , master_task, distrb_info)
+    call gather_global_ext(G_dxhy  , L_dxhy  , master_task, distrb_info)
+    call gather_global_ext(G_dyhx  , L_dyhx  , master_task, distrb_info)
 
     ! calculate number of water points (T and U). Only needed for the static version
     ! Tmask in ocean/ice
@@ -116,9 +131,13 @@ module ice_dyn_evp1d
       call calc_navel(nActive, navel)
       call evp1d_alloc_static_navel(navel)
       call numainit(1,nActive,navel)
-      call convert_2d_1d_init(nActive,G_HTE, G_HTN, G_uarear, G_dxT, G_dyT)
+      call convert_2d_1d_init(nActive, G_uarear, G_dxT, G_dyT, &
+           G_cxp, G_cyp, G_cxm, G_cym, G_dxhy, G_dyhx)
       call evp1d_alloc_static_halo()
     endif
+
+    deallocate(G_dyT,G_dxT,G_uarear,G_tmask)
+    deallocate(G_cxp, G_cyp, G_cxm, G_cym, G_dxhy, G_dyhx)
 
   end subroutine dyn_evp1d_init
 
@@ -223,7 +242,8 @@ module ice_dyn_evp1d
        call ice_timer_start(timer_evp1dcore)
 #ifdef _OPENMP_TARGET
        !$omp target data map(to: ee, ne, se, nw, sw, sse, skipUcell, skipTcell,&
-       !$omp                 strength, dxT, dyT, HTE,HTN,HTEm1, HTNm1,         &
+       !$omp                 strength, dxT, dyT,                               &
+       !$omp                 cxp, cyp, cxm, cym, dxhy, dyhx,                   &
        !$omp                 forcexU, forceyU, umassdti, fmU, uarear,          &
        !$omp                 uvel_init, vvel_init, Tbu, Cb,                    &
        !$omp                 str1, str2, str3, str4, str5, str6, str7, str8,   &
@@ -247,7 +267,7 @@ module ice_dyn_evp1d
        do ksub = 1,ndte        ! subcycling
           call stress_1d (ee, ne, se, 1, nActive,                                    &
                           uvel, vvel, dxT, dyT, skipTcell, strength,                 &
-                          HTE, HTN, HTEm1, HTNm1,                                    &
+                          cxp, cyp, cxm, cym, dxhy, dyhx,                            &
                           stressp_1,  stressp_2,  stressp_3,  stressp_4,             &
                           stressm_1,  stressm_2,  stressm_3,  stressm_4,             &
                           stress12_1, stress12_2, stress12_3, stress12_4,            &
@@ -369,12 +389,14 @@ module ice_dyn_evp1d
        call abort_ice(subname//' ERROR: allocating', file=__FILE__, line=__LINE__)
     endif
 
-    allocate( HTE       (1:na0), &
-              HTN       (1:na0), &
-              HTEm1     (1:na0), &
-              HTNm1     (1:na0), &
-              dxt       (1:na0), &
+    allocate( dxt       (1:na0), &
               dyt       (1:na0), &
+              cxp       (1:na0), &
+              cyp       (1:na0), &
+              cxm       (1:na0), &
+              cym       (1:na0), &
+              dxhy      (1:na0), &
+              dyhx      (1:na0), &
               strength  (1:na0), &
               stressp_1 (1:na0), &
               stressp_2 (1:na0), &
@@ -596,29 +618,6 @@ module ice_dyn_evp1d
   end subroutine union
 
   !=============================================================================
-  subroutine gather_static(L_uarear, L_dxT, L_dyT,L_Tmask, G_uarear,G_dxT,G_dyT, G_Tmask)
-     ! In standalone  distrb_info is an integer. Not needed anyway
-     use ice_communicate, only : master_task
-     use ice_gather_scatter, only : gather_global_ext
-     use ice_domain, only : distrb_info
-     implicit none
-
-     real(kind=dbl_kind)   , dimension(nx_block, ny_block, max_block), intent(in) :: &
-        L_uarear,  L_dxT, L_dyT
-
-     logical(kind=log_kind), dimension(nx_block, ny_block, max_block), intent(in) :: L_Tmask
-     real(kind=dbl_kind)   , dimension(:, :), intent(out) :: G_uarear,G_dxT,G_dyT
-     logical(kind=log_kind), dimension(:, :), intent(out) :: G_Tmask
-     character(len=*), parameter :: subname = '(gather_static)'
-
-     ! copy from distributed I_* to G_*
-     call gather_global_ext(G_uarear, L_uarear, master_task, distrb_info)
-     call gather_global_ext(G_dxT   , L_dxT   , master_task, distrb_info)
-     call gather_global_ext(G_dyT   , L_dyT   , master_task, distrb_info)
-     call gather_global_ext(G_Tmask , L_Tmask , master_task, distrb_info)
-  end subroutine gather_static
-
-  !=============================================================================
   subroutine gather_dyn(L_stressp_1 , L_stressp_2 , L_stressp_3 , L_stressp_4 , &
                         L_stressm_1 , L_stressm_2 , L_stressm_3 , L_stressm_4 , &
                         L_stress12_1, L_stress12_2, L_stress12_3,L_stress12_4 , &
@@ -766,12 +765,13 @@ module ice_dyn_evp1d
   end subroutine scatter_dyn
 
   !=============================================================================
-  subroutine convert_2d_1d_init(na0, G_HTE, G_HTN, G_uarear,  G_dxT, G_dyT)
+  subroutine convert_2d_1d_init(na0, G_uarear, G_dxT, G_dyT, G_cxp, G_cyp, G_cxm, G_cym, G_dxhy, G_dyhx)
 
      implicit none
 
      integer(kind=int_kind), intent(in) ::  na0
-     real (kind=dbl_kind), dimension(:, :), intent(in) :: G_HTE, G_HTN, G_uarear, G_dxT, G_dyT
+     real (kind=dbl_kind), dimension(:, :), intent(in) :: &
+          G_uarear, G_dxT, G_dyT, G_cxp, G_cyp, G_cxm, G_cym, G_dxhy, G_dyhx
      ! local variables
 
      integer(kind=int_kind) :: iw, lo, up, j, i
@@ -835,10 +835,12 @@ module ice_dyn_evp1d
         uarear(iw)     = G_uarear(i, j)
         dxT(iw)        = G_dxT(i, j)
         dyT(iw)        = G_dyT(i, j)
-        HTE(iw)        = G_HTE(i, j)
-        HTN(iw)        = G_HTN(i, j)
-        HTEm1(iw)      = G_HTE(i - 1, j)
-        HTNm1(iw)      = G_HTN(i, j - 1)
+        cxp(iw)        = G_cxp(i, j)
+        cyp(iw)        = G_cyp(i, j)
+        cxm(iw)        = G_cxm(i, j)
+        cym(iw)        = G_cym(i, j)
+        dxhy(iw)       = G_dxhy(i, j)
+        dyhx(iw)       = G_dyhx(i, j)
      end do
   end subroutine convert_2d_1d_init
 
@@ -1142,15 +1144,17 @@ module ice_dyn_evp1d
         aiu(iw)=c0
         Cb(iw)=c0
         cdn_ocn(iw)=c0
+        cxp(iw)=c0
+        cyp(iw)=c0
+        cxm(iw)=c0
+        cym(iw)=c0
+        dxhy(iw)=c0
+        dyhx(iw)=c0
         dxt(iw)=c0
         dyt(iw)=c0
         fmU(iw)=c0
         forcexU(iw)=c0
         forceyU(iw)=c0
-        HTE(iw)=c0
-        HTEm1(iw)=c0
-        HTN(iw)=c0
-        HTNm1(iw)=c0
         strength(iw)= c0
         stress12_1(iw)=c0
         stress12_2(iw)=c0
