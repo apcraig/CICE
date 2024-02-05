@@ -1764,7 +1764,7 @@
          endif
       endif
 
-      if (history_format/='hdf5' .and. (history_chunksize(1)/=0 .or. history_chunksize(2)/=0)) then
+      if (history_format/='hdf5' .and. all(history_chunksize/=0)) then
          if (my_task == master_task) then
             write (nu_diag,*) subname//' WARNING: history_chunksize not compatible with '//history_format
             write (nu_diag,*) subname//' WARNING: netcdf chunking only possible with history_type="hdf5" '
@@ -1778,7 +1778,7 @@
          endif
       endif
 
-      if (restart_format/='hdf5' .and. (restart_chunksize(1)/=0 .or. restart_chunksize(2)/=0)) then
+      if (restart_format/='hdf5' .and. all(restart_chunksize/=0)) then
          if (my_task == master_task) then
             write (nu_diag,*) subname//' WARNING: restart_chunksize not compatible with '//restart_format
             write (nu_diag,*) subname//' WARNING: netcdf chunking only possible with restart_type="hdf5" '

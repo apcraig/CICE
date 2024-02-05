@@ -253,7 +253,7 @@
       endif
 
       time_coord = coord_attributes('time', 'time', trim(cal_units))
-      call ice_hist_coord_def(File, time_coord, pio_double, (/timid/), varid) !why is pio_double this not lprecision ?
+      call ice_hist_coord_def(File, time_coord, pio_double, (/timid/), varid)
       call ice_pio_check(pio_put_att(File,varid,'calendar',cal_att), &
               subname//' ERROR: defining att calendar: '//cal_att,file=__FILE__,line=__LINE__)
       if (hist_avg(ns) .and. .not. write_ic) then
@@ -268,7 +268,7 @@
          dimid2(1) = boundid
          dimid2(2) = timid
 
-         call ice_hist_coord_def(File, time_coord, pio_double, dimid2, varid) !why is pio_double this not lprecision ?
+         call ice_hist_coord_def(File, time_coord, pio_double, dimid2, varid)
          call ice_pio_check(pio_put_att(File,varid,'calendar',cal_att), &
               subname//' ERROR: defining att calendar: '//cal_att,file=__FILE__,line=__LINE__)
       endif

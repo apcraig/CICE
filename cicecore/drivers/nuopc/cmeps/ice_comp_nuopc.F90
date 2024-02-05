@@ -646,36 +646,6 @@ contains
        call abort_ice(trim(errmsg))
     endif
 
-    ! Netcdf output created by PIO
-    call NUOPC_CompAttributeGet(gcomp, name="pio_typename", value=cvalue, &
-         isPresent=isPresent, isSet=isSet, rc=rc)
-    if (chkerr(rc,__LINE__,u_FILE_u)) return
-    if (isPresent .and. isSet) then
-      if (trim(history_format)/='cdf2' .and. mastertask) then
-         write(nu_diag,*) trim(subname)//history_format//'WARNING: history_format from cice_namelist ignored'
-         write(nu_diag,*) trim(subname)//'WARNING: using '//trim(cvalue)//' from ICE_modelio'
-      endif
-      if (trim(restart_format)/='cdf2' .and. mastertask) then
-         write(nu_diag,*) trim(subname)//restart_format//'WARNING: restart_format from cice_namelist ignored'
-         write(nu_diag,*) trim(subname)//'WARNING: using '//trim(cvalue)//' from ICE_modelio'
-      endif
-
-      ! The only reason to set these is to detect in ice_history_write if the chunk/deflate settings are ok.
-      select case (trim(cvalue))
-      case ('netcdf4p')
-         history_format='hdf5'
-         restart_format='hdf5'
-      case ('netcdf4c')
-         if (mastertask) write(nu_diag,*) trim(subname)//'WARNING: pio_typename = netcdf4c is superseded, use netcdf4p'
-         history_format='hdf5'
-         restart_format='hdf5'
-      case default !pio_typename=netcdf or pnetcdf
-         ! do nothing
-      end select
-    else
-      if(mastertask) write(nu_diag,*) trim(subname)//'WARNING: pio_typename from driver needs to be set for netcdf output to work'
-    end if
-
 #else
 
     ! Read the cice namelist as part of the call to cice_init1
@@ -690,6 +660,38 @@ contains
     if (ChkErr(rc,__LINE__,u_FILE_u)) return
 
 #endif
+
+    !----------------------------------------------------------------------------
+    ! Initialize netcdf output info
+    !----------------------------------------------------------------------------
+    
+    call NUOPC_CompAttributeGet(gcomp, name="pio_typename", value=cvalue, &
+         isPresent=isPresent, isSet=isSet, rc=rc)
+    if (chkerr(rc,__LINE__,u_FILE_u)) return
+    if (isPresent .and. isSet) then
+      if (trim(history_format)/='cdf2' .and. mastertask) then
+         write(nu_diag,*) trim(subname)//history_format//'WARNING: history_format from cice_namelist ignored'
+         write(nu_diag,*) trim(subname)//'WARNING: using '//trim(cvalue)//' from ICE_modelio'
+      endif
+      if (trim(restart_format)/='cdf2' .and. mastertask) then
+         write(nu_diag,*) trim(subname)//restart_format//'WARNING: restart_format from cice_namelist ignored'
+         write(nu_diag,*) trim(subname)//'WARNING: using '//trim(cvalue)//' from ICE_modelio'
+      endif
+      ! The only reason to set these is to detect in ice_history_write if the chunk/deflate settings are ok.
+      select case (trim(cvalue))
+      case ('netcdf4p')
+         history_format='hdf5'
+         restart_format='hdf5'
+      case ('netcdf4c')
+         if (mastertask) write(nu_diag,*) trim(subname)//'WARNING: pio_typename = netcdf4c is superseded, use netcdf4p'
+         history_format='hdf5'
+         restart_format='hdf5'
+      case default !pio_typename=netcdf or pnetcdf
+         ! do nothing
+      end select
+    else
+      if(mastertask) write(nu_diag,*) trim(subname)//'WARNING: pio_typename from driver needs to be set for netcdf output to work'
+    endif
 
     !----------------------------------------------------------------------------
     ! Initialize grid info
