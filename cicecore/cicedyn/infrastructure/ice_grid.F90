@@ -505,7 +505,7 @@
          else
             call abort_ice(subname//'ERROR: binary format for GEOS-MOM grid not supported', &
              file=__FILE__, line=__LINE__)
-         endif 
+         endif
 #ifdef CESMCOUPLED
       elseif (trim(grid_type) == 'latlon') then
          call latlongrid        ! lat lon grid for sequential CESM (CAM mode)
@@ -1405,7 +1405,7 @@
 
       type (block) :: &
          this_block           ! block information for current block
-      
+
       integer(kind=int_kind) :: &
          varid
       integer (kind=int_kind) :: &
@@ -1431,7 +1431,7 @@
 
       fieldname='kmt'
       call ice_read_nc(fid_kmt,1,fieldname,work1,diag, &
-                       field_loc=field_loc_center, & 
+                       field_loc=field_loc_center, &
                        field_type=field_type_scalar)
 
       hm (:,:,:) = c0
@@ -1448,7 +1448,7 @@
          do i = ilo, ihi
             kmt(i,j,iblk) = work1(i,j,iblk)
             if (kmt(i,j,iblk) >= c1) hm(i,j,iblk) = c1
-            ! set grid cells which are MOM ocean but land in GEOS to land 
+            ! set grid cells which are MOM ocean but land in GEOS to land
             if (ocn_gridcell_frac(i,j,iblk) < puny) then
                kmt(i,j,iblk)  = c0
                hm(i,j,iblk)   = c0
@@ -1466,7 +1466,7 @@
 
       fieldname='ulat'
       call ice_read_global_nc(fid_grid,1,fieldname,work_g1,diag) ! ULAT
-      call gridbox_verts(work_g1,latt_bounds)       
+      call gridbox_verts(work_g1,latt_bounds)
       call scatter_global(ULAT, work_g1, master_task, distrb_info, &
                           field_loc_NEcorner, field_type_scalar)
       call ice_HaloExtrapolate(ULAT, distrb_info, &
@@ -1474,7 +1474,7 @@
 
       fieldname='ulon'
       call ice_read_global_nc(fid_grid,1,fieldname,work_g1,diag) ! ULON
-      call gridbox_verts(work_g1,lont_bounds)       
+      call gridbox_verts(work_g1,lont_bounds)
       call scatter_global(ULON, work_g1, master_task, distrb_info, &
                           field_loc_NEcorner, field_type_scalar)
       call ice_HaloExtrapolate(ULON, distrb_info, &
@@ -1501,7 +1501,7 @@
       endif
       call broadcast_scalar(l_readCenter,master_task)
       if (l_readCenter) then
-         call ice_read_global_nc(fid_grid,1,fieldname,work_g1,diag) 
+         call ice_read_global_nc(fid_grid,1,fieldname,work_g1,diag)
          call scatter_global(ANGLET, work_g1, master_task, distrb_info, &
                              field_loc_center, field_type_angle)
          where (ANGLET >  pi) ANGLET =  pi
@@ -1517,7 +1517,7 @@
       endif
       !-----------------------------------------------------------------
       ! cell dimensions
-      ! calculate derived quantities from global arrays to preserve 
+      ! calculate derived quantities from global arrays to preserve
       ! information on boundaries
       !-----------------------------------------------------------------
 
