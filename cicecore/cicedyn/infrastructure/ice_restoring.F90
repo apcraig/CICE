@@ -8,7 +8,7 @@
 
       use ice_arrays_column, only:ffracn,dhsn,oceanmixed_ice
       use ice_kinds_mod
-      use ice_blocks, only: nx_block, ny_block
+      use ice_blocks, only: nx_block, ny_block, nghost
       use ice_constants, only: c0, c1, c2, p2, p5, c4
       use ice_domain_size, only: ncat, max_blocks, nilyr, nslyr
       use ice_flux, only:stressp_1,stressp_2,stressp_3,&
@@ -91,6 +91,9 @@
          frzmelt_rest
       real (kind=dbl_kind), dimension (:,:,:,:,:), allocatable, public :: &
          trcrn_rest     ! tracers
+
+      integer(kind=int_kind), parameter :: &
+         nfact=1        ! how far to restore into grid, 0=just halo
 
 !=======================================================================
 
@@ -208,11 +211,13 @@
    ! restore to initial ice state
 
 ! the easy way
-!   aicen_rest(:,:,:,:) = aicen(:,:,:,:)
-!   vicen_rest(:,:,:,:) = vicen(:,:,:,:)
-!   vsnon_rest(:,:,:,:) = vsnon(:,:,:,:)
-!   trcrn_rest(:,:,:,:,:) = trcrn(:,:,:,:,:)
+#if (1 == 1) 
+   aicen_rest(:,:,:,:) = aicen(:,:,:,:)
+   vicen_rest(:,:,:,:) = vicen(:,:,:,:)
+   vsnon_rest(:,:,:,:) = vsnon(:,:,:,:)
+   trcrn_rest(:,:,:,:,:) = trcrn(:,:,:,:,:)
 
+#else
 ! the more precise way
    !$OMP PARALLEL DO PRIVATE(iblk,ilo,ihi,jlo,jhi,this_block, &
    !$OMP                     i,j,n,nt,ibc,npad)
@@ -319,6 +324,7 @@
 
    enddo ! iblk
    !$OMP END PARALLEL DO
+#endif
 
    endif ! restore_ic
 
@@ -369,8 +375,7 @@
      iblock, jblock,     &! block indices
      ibc,                &! ghost cell column or row
      ntrcr,              &!
-     npad,               &! padding column/row counter
-     nfact
+     npad                 ! padding column/row counter
 
    character (len=7), parameter :: &
 !     restore_ic = 'defined' ! otherwise restore to initial ice state
@@ -473,10 +478,87 @@
    vicen_rest(:,:,:,:) = c0
    vsnon_rest(:,:,:,:) = c0
    trcrn_rest(:,:,:,:,:) = c0
-   nfact=0.
 
    if (sea_ice_time_bry) then
-   call get_forcing_bry
+      call get_forcing_bry
+
+#if (1 == 1) 
+      if (trim(ew_boundary_type) /= 'cyclic') then
+         if (bdy_origin=='intern' .or. bdy_origin=='restart_f') then
+            trcrn_rest(:,:,nt_Tsfc,:,:) = Tsfc_bry(:,:,:,:)
+            aicen_rest(:,:,:,:) = aicen_bry(:,:,:,:)
+            vicen_rest(:,:,:,:) = vicen_bry(:,:,:,:)
+            vsnon_rest(:,:,:,:) = vsnon_bry(:,:,:,:)
+
+            do k = 1,nilyr
+               trcrn_rest(:,:,nt_sice+k-1,:,:) = Sinz_bry(:,:,k,:,:)
+               trcrn_rest(:,:,nt_qice+k-1,:,:) = Tinz_bry(:,:,k,:,:)
+            enddo
+            do k = 1,nslyr
+               trcrn_rest(:,:,nt_qsno+k-1,:,:) = qsno_bry(:,:,k,:,:)
+            enddo
+
+            if (tr_pond_lvl) then ! bdy from file
+               fsnow_rest(:,:,:) = fsnow_bry(:,:,:)
+               trcrn_rest(:,:,nt_apnd,:,:) = apnd_bry(:,:,:,:)
+               trcrn_rest(:,:,nt_ipnd,:,:) = ipnd_bry(:,:,:,:)
+               trcrn_rest(:,:,nt_hpnd,:,:) = hpnd_bry(:,:,:,:)
+               dhs_rest(:,:,:,:) = dhs_bry(:,:,:,:)
+               ffrac_rest(:,:,:,:) = ffrac_bry(:,:,:,:)
+            endif !tr_pond_lvl
+
+            if (oceanmixed_ice) then
+               frzmelt_rest(:,:,:) = frzmelt_bry(:,:,:)
+               sst_rest(:,:,:) = sst_bry(:,:,:)
+            endif !oceanmixed_ice
+                   
+            if (tr_FY) then
+               frz_onset_rest(:,:,:) = frz_onset_bry(:,:,:)
+               trcrn_rest(:,:,nt_FY,:,:) = FY_bry(:,:,:,:)
+            endif !tr_FY
+
+            if (tr_lvl) then
+               trcrn_rest(:,:,nt_alvl,:,:) = alvl_bry(:,:,:,:)
+               trcrn_rest(:,:,nt_vlvl,:,:) = vlvl_bry(:,:,:,:)
+            endif !tr_lvl
+
+            if (tr_iage) then
+               trcrn_rest(:,:,nt_iage,:,:) = iage_bry(:,:,:,:)
+            endif !tr_iage
+
+            uvel_rest(:,:,:) = uvel_bry(:,:,:)
+            vvel_rest(:,:,:) = vvel_bry(:,:,:)
+            scale_factor_rest(:,:,:) = scale_factor_bry(:,:,:)
+            swvdr_rest(:,:,:) = swvdr_bry(:,:,:)
+            swvdf_rest(:,:,:) = swvdf_bry(:,:,:)
+            swidr_rest(:,:,:) = swidr_bry(:,:,:)
+            swidf_rest(:,:,:) = swidf_bry(:,:,:)
+            strocnxT_rest(:,:,:) = strocnxT_bry(:,:,:)
+            strocnyT_rest(:,:,:) = strocnyT_bry(:,:,:)
+            stressp_1_rest(:,:,:) = stressp_1_bry(:,:,:)
+            stressp_2_rest(:,:,:) = stressp_2_bry(:,:,:)
+            stressp_3_rest(:,:,:) = stressp_3_bry(:,:,:)
+            stressp_4_rest(:,:,:) = stressp_4_bry(:,:,:)
+            stressm_1_rest(:,:,:) = stressm_1_bry(:,:,:)
+            stressm_2_rest(:,:,:) = stressm_2_bry(:,:,:)
+            stressm_3_rest(:,:,:) = stressm_3_bry(:,:,:)
+            stressm_4_rest(:,:,:) = stressm_4_bry(:,:,:)
+            stress12_1_rest(:,:,:) = stress12_1_bry(:,:,:)
+            stress12_2_rest(:,:,:) = stress12_2_bry(:,:,:)
+            stress12_3_rest(:,:,:) = stress12_3_bry(:,:,:)
+            stress12_4_rest(:,:,:) = stress12_4_bry(:,:,:)
+            iceumask_rest(:,:,:) = iceumask_bry(:,:,:)
+         else
+            if (my_task == master_task) write (nu_diag,*) ' ERROR: sea_ice_time_bry=T, but bdy_origin not defined'
+            call abort_ice(error_message=subname//'if sea_ice_time_bry=T bdy_origin must be =extern or =intern', &
+                           file=__FILE__, line=__LINE__)
+
+               
+         endif
+      endif
+   endif
+
+#else
    do iblk = 1, nblocks
 
       this_block = get_block(blocks_ice(iblk),iblk)
@@ -953,6 +1035,7 @@
 
    enddo ! iblk
    endif ! restore_ic
+#endif
 end subroutine ice_HaloRestore_getbdy
 
 !=======================================================================
@@ -1242,8 +1325,7 @@ end subroutine ice_HaloRestore_getbdy
      ilo,ihi,jlo,jhi,    &! beginning and end of physical domain
      ibc,                &! ghost cell column or row
      ntrcr,              &!
-     npad,              &! padding column/row counter
-     nfact
+     npad                 ! padding column/row counter
 
    type (block) :: &
      this_block  ! block info for current block
@@ -1281,7 +1363,7 @@ end subroutine ice_HaloRestore_getbdy
          trest = real(trestore,kind=dbl_kind) * secday ! seconds
       endif
       ctime = dt/trest
-      nfact=0.
+
 !-----------------------------------------------------------------------
 !
 !  Restore values in cells surrounding the grid
@@ -1302,7 +1384,8 @@ end subroutine ice_HaloRestore_getbdy
       jhi = this_block%jhi
       if (this_block%iblock == 1) then              ! west edge
          if (trim(ew_boundary_type) /= 'cyclic') then
-            do i = 1, ilo+nfact !test ims
+!tcx            do i = 1, ilo+nfact !test ims
+            do i = 1, ilo-1+nfact
             do j = 1, ny_block
             do n = 1, ncat
                aicen(i,j,n,iblk) = aicen_rest(i,j,n,iblk) !&
@@ -1378,6 +1461,7 @@ end subroutine ice_HaloRestore_getbdy
       endif ! ew_boundary_type
       if (this_block%iblock == nblocks_x) then  ! east edge
          if (trim(ew_boundary_type) /= 'cyclic') then
+#if (1 == 0)
             ! locate ghost cell column (avoid padding)
             ibc = nx_block
             do i = nx_block, 1, -1
@@ -1389,8 +1473,22 @@ end subroutine ice_HaloRestore_getbdy
                endif
                if (npad /= 0) ibc = ibc - 1
             enddo
+#endif
 
-            do i = ihi-nfact, ibc!test ims: ibc
+! tcx velocity halo, add 1 block on east and north boundary
+!            do i = ihi-nfact-1, ibc!test ims: ibc
+!            do i = ihi-nfact, ibc!test ims: ibc
+            do i = ihi-nfact, ihi+nghost
+            do j = 1, ny_block
+               uvel(i,j,iblk) = uvel_rest(i,j,iblk)! &
+                       !+ (uvel_rest(i,j,iblk)-uvel(i,j,iblk))*ctime
+               vvel(i,j,iblk) = vvel_rest(i,j,iblk) !&
+                       !+ (vvel_rest(i,j,iblk)-vvel(i,j,iblk))*ctime
+            enddo
+            enddo
+
+!tcx            do i = ihi-nfact, ibc!test ims: ibc
+            do i = ihi+1-nfact, ihi+nghost
             do j = 1, ny_block
             do n = 1, ncat
                aicen(i,j,n,iblk) = aicen_rest(i,j,n,iblk) !&
@@ -1408,10 +1506,11 @@ end subroutine ice_HaloRestore_getbdy
                      !+ (trcrn_rest(i,j,nt,n,iblk)-trcrn(i,j,nt,n,iblk))*ctime
                enddo
             enddo
-               uvel(i,j,iblk) = uvel_rest(i,j,iblk)! &
-                       !+ (uvel_rest(i,j,iblk)-uvel(i,j,iblk))*ctime
-               vvel(i,j,iblk) = vvel_rest(i,j,iblk) !&
-                       !+ (vvel_rest(i,j,iblk)-vvel(i,j,iblk))*ctime
+!tcx extend halo fill on velocity points, see above
+!               uvel(i,j,iblk) = uvel_rest(i,j,iblk)! &
+!                       !+ (uvel_rest(i,j,iblk)-uvel(i,j,iblk))*ctime
+!               vvel(i,j,iblk) = vvel_rest(i,j,iblk) !&
+!                       !+ (vvel_rest(i,j,iblk)-vvel(i,j,iblk))*ctime
                scale_factor(i,j,iblk) = scale_factor_rest(i,j,iblk) !&
                        !+ (scale_factor_rest(i,j,iblk)-scale_factor(i,j,iblk))*ctime
                swvdr(i,j,iblk) = swvdr_rest(i,j,iblk) !&
@@ -1465,7 +1564,8 @@ end subroutine ice_HaloRestore_getbdy
       endif ! this_block%iblock == nblocks_x
       if (this_block%jblock == 1) then              ! south edge
          if (trim(ns_boundary_type) /= 'cyclic') then
-            do j = 1, jlo+nfact
+!tcx            do j = 1, jlo+nfact
+            do j = 1, jlo-1+nfact
             do i = 1, nx_block
             do n = 1, ncat
                aicen(i,j,n,iblk) = aicen_rest(i,j,n,iblk) !&
@@ -1542,6 +1642,7 @@ end subroutine ice_HaloRestore_getbdy
          if (trim(ns_boundary_type) /= 'cyclic' .and. &
              trim(ns_boundary_type) /= 'tripole' .and. &
              trim(ns_boundary_type) /= 'tripoleT') then
+#if (1 == 0)
             ! locate ghost cell row (avoid padding)
             ibc = ny_block
             do j = ny_block, 1, -1
@@ -1553,7 +1654,24 @@ end subroutine ice_HaloRestore_getbdy
                endif
                if (npad /= 0) ibc = ibc - 1
             enddo
-            do j = jhi-nfact, ibc
+
+   write(nu_diag,*) subname,'tcx11',ny_block,npad,ibc
+#endif
+
+! tcx velocity halo, add 1 block on east and north boundary
+!            do j = jhi-nfact-1, ibc
+!            do j = jhi-nfact, ibc
+            do j = jhi-nfact, jhi+nghost
+            do i = 1, nx_block
+               uvel(i,j,iblk) = uvel_rest(i,j,iblk)! &
+                       !+ (uvel_rest(i,j,iblk)-uvel(i,j,iblk))*ctime
+               vvel(i,j,iblk) = vvel_rest(i,j,iblk) !&
+                       !+ (vvel_rest(i,j,iblk)-vvel(i,j,iblk))*ctime
+            enddo
+            enddo
+
+!tcx            do j = jhi-nfact, ibc
+            do j = jhi+1-nfact, jhi+nghost
             do i = 1, nx_block
             do n = 1, ncat
                aicen(i,j,n,iblk) = aicen_rest(i,j,n,iblk) !&
@@ -1571,10 +1689,11 @@ end subroutine ice_HaloRestore_getbdy
                      !+ (trcrn_rest(i,j,nt,n,iblk)-trcrn(i,j,nt,n,iblk))*ctime
                enddo
             enddo
-               uvel(i,j,iblk) = uvel_rest(i,j,iblk)! &
-                       !+ (uvel_rest(i,j,iblk)-uvel(i,j,iblk))*ctime
-               vvel(i,j,iblk) = vvel_rest(i,j,iblk) !&
-                       !+ (vvel_rest(i,j,iblk)-vvel(i,j,iblk))*ctime
+!tcx extend halo fill on velocity points, see above
+!               uvel(i,j,iblk) = uvel_rest(i,j,iblk)! &
+!                       !+ (uvel_rest(i,j,iblk)-uvel(i,j,iblk))*ctime
+!               vvel(i,j,iblk) = vvel_rest(i,j,iblk) !&
+!                       !+ (vvel_rest(i,j,iblk)-vvel(i,j,iblk))*ctime
                scale_factor(i,j,iblk) = scale_factor_rest(i,j,iblk) !&
                        !+ (scale_factor_rest(i,j,iblk)-scale_factor(i,j,iblk))*ctime
                swvdr(i,j,iblk) = swvdr_rest(i,j,iblk) !&
