@@ -161,11 +161,8 @@
       logical (kind=log_kind), public :: &
          restore_ocn                 ! restore sst if true
 
-      integer (kind=int_kind), public :: &
-         trestore                    ! restoring time scale (days)
-
       real (kind=dbl_kind), public :: &
-         trest                       ! restoring time scale (sec)
+         trestore                    ! restoring time scale (days)
 
       logical (kind=log_kind), public :: &
          debug_forcing               ! prints forcing debugging output if true
@@ -186,6 +183,7 @@
          snw_tau_fname  , &  ! snow table 3d tau field name
          snw_kappa_fname, &  ! snow table 3d kappa field name
          snw_drdt0_fname     ! snow table 3d drdt0 field name
+
       real (kind=dbl_kind),dimension(:,:,:), allocatable, public ::&
       !real (kind=dbl_kind), dimension(nx_block,ny_block,max_blocks), public :: &
           uvel_bry,         &     !
@@ -214,6 +212,7 @@
           fsnow_bry,        &
           frzmelt_bry,      &     !
           sst_bry
+
       real (kind=dbl_kind), dimension(:,:,:,:), allocatable , public ::&
           FY_bry,           &     !
           vlvl_bry,         &
@@ -228,12 +227,16 @@
           vicen_bry, &     ! volume per unit area of ice          (m)
           vsnon_bry, &     ! volume per unit area of snow         (m)
           Tsfc_bry         ! ice/snow surface temperature         (oC)
+
       real (kind=dbl_kind), dimension(:,:,:,:,:), allocatable, public ::&
          Tinz_bry, &     ! sea-ice innner temperature  (CICE grid layers)
          Sinz_bry, &     ! sea-ice inner bulk salinity (CICE grid layers)
          qsno_bry
 
       ! PRIVATE:
+
+      real (dbl_kind) :: &
+         crestore        ! restoring value, dt/trestore
 
       real (dbl_kind), parameter :: &
          mixed_layer_depth_default = c20  ! default mixed layer depth in m
@@ -459,10 +462,10 @@
       nbits = 64              ! double precision data
 
       if (restore_ocn .or. restore_bgc) then
-         if (trestore == 0) then
-            trest = dt        ! use data instantaneously
+         if (trestore == c0) then
+            crestore = c1      ! use data instantaneously
          else
-            trest = real(trestore,kind=dbl_kind) * secday ! seconds
+            crestore = max(abs(dt/(trestore*secday)),c1)
          endif
       endif
 
@@ -3676,7 +3679,7 @@
             do j = 1, ny_block
             do i = 1, nx_block
                sst(i,j,iblk) = sst(i,j,iblk)  &
-                         + (sstdat(i,j,iblk)-sst(i,j,iblk))*dt/trest
+                         + (sstdat(i,j,iblk)-sst(i,j,iblk))*crestore
             enddo
             enddo
          enddo
@@ -4132,7 +4135,7 @@
       if (restore_ocn) then
         do j = 1, ny_block
          do i = 1, nx_block
-           sst(i,j,:) = sst(i,j,:) + (work1(i,j,:)-sst(i,j,:))*dt/trest
+           sst(i,j,:) = sst(i,j,:) + (work1(i,j,:)-sst(i,j,:))*crestore
          enddo
         enddo
 !     else sst is only updated in ice_ocean.F
@@ -4335,7 +4338,7 @@
             do j = 1, ny_block
             do i = 1, nx_block
                sst(i,j,iblk) = sst(i,j,iblk)  &
-                         + (sstdat(i,j,iblk)-sst(i,j,iblk))*dt/trest
+                         + (sstdat(i,j,iblk)-sst(i,j,iblk))*crestore
             enddo
             enddo
          enddo

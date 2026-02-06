@@ -288,7 +288,7 @@
     restart_coszen  = .false.
     restore_ice     = .false.
     restore_ocn     = .false.
-    trestore        =  90
+    trestore        =  90.
     precip_units    = 'mm_per_month'
     default_season  = 'winter'
     atm_data_type   = 'ncar'
@@ -329,6 +329,8 @@
     maskhalo_bound    = .false.
     add_mpi_barriers  = .false.
     debug_blocks      = .false.
+    sea_ice_time_bry  = .false.
+    bdy_origin        = 'intern'
 /
 
 &zbgc_nml

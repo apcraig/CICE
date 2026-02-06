@@ -576,7 +576,7 @@
       ocn_data_dir    = 'unknown_ocn_data_dir'
       oceanmixed_file = 'unknown_oceanmixed_file' ! ocean forcing data
       restore_ocn     = .false.   ! restore sst if true
-      trestore        = 90        ! restoring timescale, days (0 instantaneous)
+      trestore        = 90._dbl_kind ! restoring timescale, days (0 instantaneous)
       restore_ice     = .false.   ! restore ice state on grid edges if true
       restart_mod     = 'none'    ! restart modification option
       debug_forcing   = .false.   ! true writes diagnostics for input forcing
@@ -1478,6 +1478,13 @@
               'use ew_boundary_type=closed and/or ns_boundary_type=closed'
          endif
          abort_list = trim(abort_list)//":49"
+      endif
+
+      if (restore_ice .and. .not.(restart_ext)) then
+         if (my_task == master_task) then
+            write (nu_diag,*) subname,' ERROR: restore_ice requires restart_ext=T'
+         endif
+         abort_list = trim(abort_list)//":58"
       endif
 
       if (grid_ice == 'CD') then
@@ -2438,7 +2445,7 @@
          write(nu_diag,1030) ' fbot_xfer_type   = ', trim(fbot_xfer_type),trim(tmpstr2)
          write(nu_diag,1000) ' ustar_min        = ', ustar_min,' : minimum value of ocean friction velocity'
          write(nu_diag,1000) ' hi_min           = ', hi_min,' : minimum ice thickness allowed (m)'
-         write(nu_diag,1000) ' puny             = ', puny,' : general-use minimum value'
+         write(nu_diag,1003) ' puny             = ', puny,' : general-use minimum value'
          write(nu_diag,*) ' Ice thickness category areas smaller than puny are always removed.'
          write(nu_diag,1003) ' itd_area_min     = ', itd_area_min,' : zap residual ice below a minimum area'
          write(nu_diag,1003) ' itd_mass_min     = ', itd_mass_min,' : zap residual ice below a minimum mass'
@@ -2746,7 +2753,7 @@
          endif
          write(nu_diag,1011) ' restore_ice      = ', restore_ice
          if (restore_ice .or. restore_ocn) &
-         write(nu_diag,1021) ' trestore         = ', trestore
+         write(nu_diag,1000) ' trestore         = ', trestore
 
          write(nu_diag,*) ' '
          write(nu_diag,'(a31,2f8.2)') 'Diagnostic point 1: lat, lon =', &

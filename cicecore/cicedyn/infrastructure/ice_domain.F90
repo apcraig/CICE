@@ -165,8 +165,8 @@
    maskhalo_dyn      = .false.     ! if true, use masked halos for dynamics
    maskhalo_remap    = .false.     ! if true, use masked halos for transport
    maskhalo_bound    = .false.     ! if true, use masked halos for bound_state
-   sea_ice_time_bry  = .true.     ! if true, use time-varying sea-ice boundary files
-   bdy_origin        = 'restart_f' ! 'non', or 'restart_f': resart_f reads from restart file
+   sea_ice_time_bry  = .false.     ! if true, use time-varying sea-ice boundary files
+   bdy_origin        = 'intern'    ! 'intern', or 'restart_f': restart_f reads from restart file
    halo_dynbundle    = .true.      ! if true, bundle halo updates in dynamics
    add_mpi_barriers  = .false.     ! if true, throttle communication
    debug_blocks      = .false.     ! if true, print verbose block information
@@ -305,9 +305,8 @@
      write(nu_diag,'(a,2i6)') '  block_size_x,_y       = ', block_size_x, block_size_y
      write(nu_diag,'(a,i6)')  '  max_blocks            = ', max_blocks
      write(nu_diag,'(a,i6,/)')'  Number of ghost cells = ', nghost
-     write(nu_diag,'(a26,l6)') '  sea_ice_time_bry      = ', &
-                                  sea_ice_time_bry
-     write(nu_diag,'(a,a)')   '  bdy_origin      = ', trim(bdy_origin)
+     write(nu_diag,'(a,l6)')  '  sea_ice_time_bry      = ', sea_ice_time_bry
+     write(nu_diag,'(a,a)')   '  bdy_origin            = ', trim(bdy_origin)
    endif
 
 !----------------------------------------------------------------------

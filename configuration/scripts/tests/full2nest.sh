@@ -27,43 +27,46 @@
 # to be executed in the rundirectory of the nest
 #------------------input--------------------------
 
+# case/path to full case
 CASE="bdyf21"
 PATH2hist="/glade/derecho/scratch/tcraig/CICE_RUNS/${CASE}/history/"
 PATH2rst="/glade/derecho/scratch/tcraig/CICE_RUNS/${CASE}/restart/"
+# ninest and njnest is the grid size of the nest (do not include halo)
 ninest=12
 njnest=12
-nis=40
-njs=40
+# nis, njs are the full grid indices that align with i=1,j=1 in the nest
+nis=42
+njs=42
 
 #----------------end input------------------------
 #
-# make the kmt_grid from full domain 
-# most variables can be cut from full domain
-# kmt needs to be created
+# make the kmt_grid extended grid from full domain 
+# set ncks indexing to fortran (-F)
+# need to reduce nis and njs by 1 to extract halo
 
+nis=$(($nis - 1))
+njs=$(($njs - 1))
 nie=$(($nis + $ninest + 1))
 nje=$(($njs + $njnest + 1))
-echo "cutting $nis,$nie $njs,$nje"
+echo "cutting extended grid i=$nis,$nie  j=$njs,$nje"
 
 # cut domain from history file of full domain: 
-ncks -d ni,$nis,$nie -d nj,$njs,$nje ${PATH2hist}/iceh.2005-01-02.nc temp.nc
+ncks -F -d ni,$nis,$nie -d nj,$njs,$nje ${PATH2hist}/iceh.2005-01-02.nc temp.nc
 
-#convert sigP to kmt and cut relevant variables:
+#cut relevant variables then convert units and rename variables for grid file
 ncrename -v tmask,kmt temp.nc
 ncks -C -v kmt,HTN,HTE,NLON,NLAT,ANGLET,ANGLE,TLAT,TLON,ULAT,ULON temp.nc temp1.nc
 ncap2 -s "HTE=HTE*100.;HTN=HTN*100.;ULON=ULON/(180/3.14159);ULAT=ULAT/(180/3.14159);TLON=TLON/(180/3.14159);TLAT=TLAT/(180/3.14159)" temp1.nc grid_kmt.nc
-
 ncrename -v HTE,hte -v HTN,htn -v ULON,ulon -v ULAT,ulat -v ANGLE,angle -v ANGLET,anglet -v TLAT,tlat -v TLON,tlon grid_kmt.nc
 rm temp*.nc
 
-# cut boundary files from full domain
-# one bigger than grid, since restart ext needs to be true
+# cut extended restart files from full domain restart files
 
 for dd in {01..05}
 do
         for ss in 03600 07200 10800 14400 18000 21600 25200 28800 32400 36000 39600 43200 46800 50400 54000 57600 61200 64800 68400 72000 75600 79200 82800 00000
         do
-                ncks --no-abc -d ni,$nis,$nie -d nj,$njs,$nje ${PATH2rst}/iced.2005-01-${dd}-${ss}.nc cice_bdy_restart200501${dd}${ss}.nc
+                ncks --no-abc -F -d ni,$nis,$nie -d nj,$njs,$nje ${PATH2rst}/iced.2005-01-${dd}-${ss}.nc cice_bdy_restart200501${dd}${ss}.nc
         done
 done
 

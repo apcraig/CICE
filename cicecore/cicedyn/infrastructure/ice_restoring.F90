@@ -4,46 +4,47 @@
 !
 ! authors: Elizabeth C. Hunke, LANL
 
-      module ice_restoring
+   module ice_restoring
 
       use ice_arrays_column, only:ffracn,dhsn,oceanmixed_ice
       use ice_kinds_mod
-      use ice_blocks, only: nx_block, ny_block, nghost
+      use ice_blocks, only: block, get_block, nx_block, ny_block, nghost, &
+          nblocks_x, nblocks_y
+      use ice_communicate, only: my_task, master_task
       use ice_constants, only: c0, c1, c2, p2, p5, c4
       use ice_domain_size, only: ncat, max_blocks, nilyr, nslyr
-      use ice_flux, only:stressp_1,stressp_2,stressp_3,&
-              stressp_4,stressm_1,stressm_2,stressm_3,&
-              stressm_4,stress12_1,stress12_2,stress12_3,stress12_4,&
-              swvdr,swvdf,swidr,swidf,strocnyT_iavg,strocnxT_iavg,&
-              scale_factor,frz_onset,fsnow,frzmlt, sst
-      use ice_forcing, only: trestore, trest, get_forcing_bry,&
-              aicen_bry, vicen_bry, vsnon_bry,alvl_bry,qsno_bry,ffrac_bry,&
-              Tsfc_bry, Tinz_bry, Sinz_bry, vlvl_bry,FY_bry,dhs_bry,&
-              apnd_bry, hpnd_bry, ipnd_bry,iage_bry,uvel_bry,&
-              vvel_bry,scale_factor_bry,swvdr_bry,swvdf_bry,swidr_bry,swidf_bry,&
-              strocnxT_bry,strocnyT_bry,stressp_1_bry,stressp_2_bry,&
-              stressp_3_bry,stressp_4_bry,stressm_1_bry,&
-              stressm_2_bry,stressm_3_bry,stressm_4_bry,&
-              stress12_1_bry,stress12_2_bry,stress12_3_bry,&
-              stress12_4_bry,iceumask_bry,frz_onset_bry,fsnow_bry, &
-              frzmelt_bry,sst_bry
-      use ice_state, only: aicen, vicen, vsnon, trcrn, bound_state, &
-                           aice_init, aice0, aice, vice, vsno, trcr, &
-                           trcr_depend, uvel, vvel, &
-                           divu, shear, strength
-      use ice_timers, only: ice_timer_start, ice_timer_stop, timer_bound
-      use ice_domain, only:sea_ice_time_bry, bdy_origin
+      use ice_domain, only: nblocks, blocks_ice, sea_ice_time_bry, bdy_origin, &
+          ew_boundary_type, ns_boundary_type
       use ice_dyn_shared, only: iceUmask
       use ice_exit, only: abort_ice
       use ice_fileunits, only: nu_diag
+      use ice_flux, only: stressp_1, stressp_2, stressp_3, &
+          stressp_4, stressm_1, stressm_2, stressm_3, &
+          stressm_4, stress12_1, stress12_2, stress12_3, stress12_4, &
+          swvdr, swvdf, swidr, swidf, strocnyT_iavg, strocnxT_iavg, &
+          scale_factor, frz_onset, fsnow, frzmlt,  sst
+      use ice_forcing, only: trestore, get_forcing_bry, &
+          aicen_bry, vicen_bry, vsnon_bry, alvl_bry, qsno_bry, ffrac_bry, &
+          Tsfc_bry, Tinz_bry, Sinz_bry, vlvl_bry, FY_bry, dhs_bry, &
+          apnd_bry, hpnd_bry, ipnd_bry, iage_bry, uvel_bry, &
+          vvel_bry, scale_factor_bry, swvdr_bry, swvdf_bry, swidr_bry, swidf_bry, &
+          strocnxT_bry, strocnyT_bry, stressp_1_bry, stressp_2_bry, &
+          stressp_3_bry, stressp_4_bry, stressm_1_bry, &
+          stressm_2_bry, stressm_3_bry, stressm_4_bry, &
+          stress12_1_bry, stress12_2_bry, stress12_3_bry, &
+          stress12_4_bry, iceumask_bry, frz_onset_bry, fsnow_bry,  &
+          frzmelt_bry, sst_bry
+      use ice_grid, only: tmask, hm
       use icepack_intfc, only: icepack_warnings_flush, icepack_warnings_aborted
       use icepack_intfc, only: icepack_init_trcr
       use icepack_intfc, only: icepack_query_parameters, &
           icepack_query_tracer_sizes, icepack_query_tracer_flags, &
           icepack_query_tracer_indices
-      use icepack_tracers, only: ntrcr, nbtrcr,tr_pond_lvl,nt_Tsfc, &
-              nt_qice, nt_qsno, nt_sice,nt_fbri, tr_brine, nt_vlvl, nt_alvl, nt_iage, &
-              nt_apnd, nt_hpnd, nt_ipnd,nt_FY
+      use ice_state, only: aicen, vicen, vsnon, trcrn, bound_state, &
+          aice_init, aice0, aice, vice, vsno, trcr, &
+          trcr_depend, uvel, vvel, &
+          divu, shear, strength
+      use ice_timers, only: ice_timer_start, ice_timer_stop, timer_bound
 
       implicit none
       private
@@ -52,17 +53,22 @@
       logical (kind=log_kind), public :: &
          restore_ice                 ! restore ice state if true
 
+      character (len=7), parameter :: &
+!         restore_ic = 'defined' ! restore to internally defined ice state
+         restore_ic = 'initial' ! restore to initial ice state
+
       !-----------------------------------------------------------------
       ! state of the ice for each category
       !-----------------------------------------------------------------
 
-      real (kind=dbl_kind), dimension (:,:,:,:), allocatable, public :: &
+      real (kind=dbl_kind), dimension (:,:,:,:), allocatable :: &
          aicen_rest , & ! concentration of ice
          vicen_rest , & ! volume per unit area of ice          (m)
          vsnon_rest ,&  ! volume per unit area of snow         (m)
          dhs_rest ,&
          ffrac_rest
-      real (kind=dbl_kind), dimension (:,:,:), allocatable, public :: &
+
+      real (kind=dbl_kind), dimension (:,:,:), allocatable :: &
          uvel_rest, &
          vvel_rest, &
          scale_factor_rest, &
@@ -89,7 +95,8 @@
          fsnow_rest, &
          sst_rest, &
          frzmelt_rest
-      real (kind=dbl_kind), dimension (:,:,:,:,:), allocatable, public :: &
+
+      real (kind=dbl_kind), dimension (:,:,:,:,:), allocatable :: &
          trcrn_rest     ! tracers
 
       integer(kind=int_kind), parameter :: &
@@ -105,960 +112,300 @@
 !  in cells surrounding the grid.
 
 
- subroutine ice_HaloRestore_init
+   subroutine ice_HaloRestore_init
 
-      use ice_blocks, only: block, get_block, nblocks_x, nblocks_y
-      use ice_communicate, only: my_task, master_task
-      use ice_domain, only: ew_boundary_type, ns_boundary_type, &
-          nblocks, blocks_ice
-      use ice_grid, only: tmask, hm
-      use ice_flux, only: Tf, Tair, salinz, Tmltz,sss
-      use ice_restart_shared, only: restart_ext
-      use icepack_tracers, only: tr_pond_lvl,tr_iage
-      use icepack_mushy_physics, only: icepack_enthalpy_mush
-      use icepack_parameters, only: dsin0_frazil
+      use ice_flux, only: Tf, Tair, salinz, Tmltz
 
-   integer (int_kind) :: &
-     i,j,iblk,nt,n,k,    &! dummy loop indices
-     ilo,ihi,jlo,jhi,    &! beginning and end of physical domain
-     iglob(nx_block),    &! global indices
-     jglob(ny_block),    &! global indices
-     iblock, jblock,     &! block indices
-     ibc,                &! ghost cell column or row
-     ntrcr,              &!
-     npad                 ! padding column/row counter
+      integer (int_kind) :: &
+         i,j,iblk,nt,n,k,    &! dummy loop indices
+         ilo,ihi,jlo,jhi,    &! beginning and end of physical domain
+         iglob(nx_block),    &! global indices
+         jglob(ny_block),    &! global indices
+         iblock, jblock,     &! block indices
+         ntrcr                !
 
-   character (len=7), parameter :: &
-!     restore_ic = 'defined' ! otherwise restore to initial ice state
-     restore_ic = 'initial' ! restore to initial ice state
+      type (block) :: &
+         this_block  ! block info for current block
 
-   type (block) :: &
-     this_block  ! block info for current block
-   integer(kind=int_kind) :: ktherm
-   real(kind=dbl_kind)    :: rhos, Lfresh, Si0new, slope, Ti, &
-                             cp_ice, cp_ocn, rhoi, Tsmelt, Tffresh
-   logical(kind=log_kind) :: calc_Tsfc
-   character(len=*), parameter :: subname = '(ice_HaloRestore_init)'
+      character(len=*), parameter :: subname = '(ice_HaloRestore_init)'
 
-   if (.not. restore_ice) return
+      if (.not. restore_ice) return
 
-   call icepack_query_tracer_sizes(ntrcr_out=ntrcr)
-   call icepack_warnings_flush(nu_diag)
-   call icepack_query_parameters(calc_Tsfc_out=calc_Tsfc, &
-            rhos_out=rhos, Lfresh_out=Lfresh, &
-        cp_ice_out=cp_ice, cp_ocn_out=cp_ocn, rhoi_out=rhoi, Tsmelt_out=Tsmelt, &
-        Tffresh_out=Tffresh, ktherm_out=ktherm)
-   if (icepack_warnings_aborted()) call abort_ice(error_message=subname, &
-      file=__FILE__, line=__LINE__)
-
-   if ((ew_boundary_type == 'open' .or. &
-        ns_boundary_type == 'open') .and. .not.(restart_ext)) then
-      if (my_task == master_task) write (nu_diag,*) ' ERROR: restart_ext=F and open boundaries'
-      call abort_ice(error_message=subname//'open boundary and restart_ext=F', &
+      call icepack_query_tracer_sizes(ntrcr_out=ntrcr)
+      call icepack_warnings_flush(nu_diag)
+      if (icepack_warnings_aborted()) call abort_ice(error_message=subname, &
          file=__FILE__, line=__LINE__)
-   endif
-   if (.not. ALLOCATED(aicen_rest)) then
-     allocate (aicen_rest(nx_block,ny_block,ncat,max_blocks), &
-               vicen_rest(nx_block,ny_block,ncat,max_blocks), &
-               vsnon_rest(nx_block,ny_block,ncat,max_blocks), &
-               trcrn_rest(nx_block,ny_block,ntrcr,ncat,max_blocks))
-   endif
 
-   aicen_rest(:,:,:,:) = c0
-   vicen_rest(:,:,:,:) = c0
-   vsnon_rest(:,:,:,:) = c0
-   trcrn_rest(:,:,:,:,:) = c0
+      allocate (aicen_rest(nx_block,ny_block,ncat,max_blocks), &
+                vicen_rest(nx_block,ny_block,ncat,max_blocks), &
+                vsnon_rest(nx_block,ny_block,ncat,max_blocks), &
+                trcrn_rest(nx_block,ny_block,ntrcr,ncat,max_blocks))
 
-!-----------------------------------------------------------------------
-! initialize
-! halo cells have to be filled manually at this stage
-! these arrays could be set to values read from a file...
-!-----------------------------------------------------------------------
+      aicen_rest(:,:,:,:) = c0
+      vicen_rest(:,:,:,:) = c0
+      vsnon_rest(:,:,:,:) = c0
+      trcrn_rest(:,:,:,:,:) = c0
 
-   if (trim(restore_ic) == 'defined') then
+      !-----------------------------------------------------------------------
+      ! initialize
+      ! halo cells have to be filled manually at this stage
+      !-----------------------------------------------------------------------
 
-      ! restore to defined ice state
-      !$OMP PARALLEL DO PRIVATE(iblk,ilo,ihi,jlo,jhi,this_block, &
-      !$OMP                     iglob,jglob,iblock,jblock)
-      do iblk = 1, nblocks
-         this_block = get_block(blocks_ice(iblk),iblk)
-         ilo = this_block%ilo
-         ihi = this_block%ihi
-         jlo = this_block%jlo
-         jhi = this_block%jhi
-         iglob = this_block%i_glob
-         jglob = this_block%j_glob
-         iblock = this_block%iblock
-         jblock = this_block%jblock
+      if (trim(restore_ic) == 'defined') then
 
-         call set_restore_var (nx_block,            ny_block,            &
-                               ilo, ihi,            jlo, jhi,            &
-                               iglob,               jglob,               &
-                               iblock,              jblock,              &
-                               Tair (:,:,    iblk), &
-                               Tf   (:,:,    iblk),                      &
-                               salinz(:,:,:, iblk), Tmltz(:,:,:,  iblk), &
-                               tmask(:,:,    iblk),                      &
-                               aicen_rest(:,:,  :,iblk), &
-                               trcrn_rest(:,:,:,:,iblk), ntrcr,         &
-                               vicen_rest(:,:,  :,iblk), &
-                               vsnon_rest(:,:,  :,iblk))
-      enddo ! iblk
-      !$OMP END PARALLEL DO
+         ! restore to defined ice state
+         !$OMP PARALLEL DO PRIVATE(iblk,ilo,ihi,jlo,jhi,this_block, &
+         !$OMP                     iglob,jglob,iblock,jblock)
+         do iblk = 1, nblocks
+            this_block = get_block(blocks_ice(iblk),iblk)
+            ilo = this_block%ilo
+            ihi = this_block%ihi
+            jlo = this_block%jlo
+            jhi = this_block%jhi
+            iglob = this_block%i_glob
+            jglob = this_block%j_glob
+            iblock = this_block%iblock
+            jblock = this_block%jblock
 
-   else  ! restore_ic
+            call set_restore_var (nx_block,            ny_block,            &
+                                  ilo, ihi,            jlo, jhi,            &
+                                  iglob,               jglob,               &
+                                  iblock,              jblock,              &
+                                  Tair (:,:,    iblk), &
+                                  Tf   (:,:,    iblk),                      &
+                                  salinz(:,:,:, iblk), Tmltz(:,:,:,  iblk), &
+                                  tmask(:,:,    iblk),                      &
+                                  aicen_rest(:,:,  :,iblk), &
+                                  trcrn_rest(:,:,:,:,iblk), ntrcr,         &
+                                  vicen_rest(:,:,  :,iblk), &
+                                  vsnon_rest(:,:,  :,iblk))
+         enddo ! iblk
+         !$OMP END PARALLEL DO
 
-   ! restore to initial ice state
+      else  ! restore_ic
 
-! the easy way
-#if (1 == 1) 
-   aicen_rest(:,:,:,:) = aicen(:,:,:,:)
-   vicen_rest(:,:,:,:) = vicen(:,:,:,:)
-   vsnon_rest(:,:,:,:) = vsnon(:,:,:,:)
-   trcrn_rest(:,:,:,:,:) = trcrn(:,:,:,:,:)
+         ! restore to initial ice state
 
-#else
-! the more precise way
-   !$OMP PARALLEL DO PRIVATE(iblk,ilo,ihi,jlo,jhi,this_block, &
-   !$OMP                     i,j,n,nt,ibc,npad)
-   do iblk = 1, nblocks
-      this_block = get_block(blocks_ice(iblk),iblk)
-         ilo = this_block%ilo
-         ihi = this_block%ihi
-         jlo = this_block%jlo
-         jhi = this_block%jhi
+         aicen_rest(:,:,:,:) = aicen(:,:,:,:)
+         vicen_rest(:,:,:,:) = vicen(:,:,:,:)
+         vsnon_rest(:,:,:,:) = vsnon(:,:,:,:)
+         trcrn_rest(:,:,:,:,:) = trcrn(:,:,:,:,:)
 
-      if (this_block%iblock == 1) then              ! west edge
-         if (trim(ew_boundary_type) /= 'cyclic') then
-            do n = 1, ncat
-            do j = 1, ny_block
-            do i = 1, ilo
-               aicen_rest(i,j,n,iblk) = aicen(ilo,j,n,iblk)
-               vicen_rest(i,j,n,iblk) = vicen(ilo,j,n,iblk)
-               vsnon_rest(i,j,n,iblk) = vsnon(ilo,j,n,iblk)
-               do nt = 1, ntrcr
-                  trcrn_rest(i,j,nt,n,iblk) = trcrn(ilo,j,nt,n,iblk)
-               enddo
-            enddo
-            enddo
-            enddo
-         endif
-      endif
-
-      if (this_block%iblock == nblocks_x) then  ! east edge
-         if (trim(ew_boundary_type) /= 'cyclic') then
-            ! locate ghost cell column (avoid padding)
-            ibc = nx_block
-            do i = nx_block, 1, -1
-               npad = 0
-               if (this_block%i_glob(i) == 0) then
-                  do j = 1, ny_block
-                     npad = npad + this_block%j_glob(j)
-                  enddo
-               endif
-               if (npad /= 0) ibc = ibc - 1
-            enddo
-
-            do n = 1, ncat
-            do j = 1, ny_block
-            do i = ihi, ibc
-               aicen_rest(i,j,n,iblk) = aicen(ihi,j,n,iblk)
-               vicen_rest(i,j,n,iblk) = vicen(ihi,j,n,iblk)
-               vsnon_rest(i,j,n,iblk) = vsnon(ihi,j,n,iblk)
-               do nt = 1, ntrcr
-                  trcrn_rest(i,j,nt,n,iblk) = trcrn(ihi,j,nt,n,iblk)
-               enddo
-            enddo
-            enddo
-            enddo
-         endif
-      endif
-
-      if (this_block%jblock == 1) then              ! south edge
-         if (trim(ns_boundary_type) /= 'cyclic') then
-            do n = 1, ncat
-            do j = 1, jlo
-            do i = 1, nx_block
-               aicen_rest(i,j,n,iblk) = aicen(i,jlo,n,iblk)
-               vicen_rest(i,j,n,iblk) = vicen(i,jlo,n,iblk)
-               vsnon_rest(i,j,n,iblk) = vsnon(i,jlo,n,iblk)
-               do nt = 1, ntrcr
-                  trcrn_rest(i,j,nt,n,iblk) = trcrn(i,jlo,nt,n,iblk)
-               enddo
-            enddo
-            enddo
-            enddo
-         endif
-      endif
-
-      if (this_block%jblock == nblocks_y) then  ! north edge
-         if (trim(ns_boundary_type) /= 'cyclic' .and. &
-             trim(ns_boundary_type) /= 'tripole' .and. &
-             trim(ns_boundary_type) /= 'tripoleT') then
-            ! locate ghost cell row (avoid padding)
-            ibc = ny_block
-            do j = ny_block, 1, -1
-               npad = 0
-               if (this_block%j_glob(j) == 0) then
-                  do i = 1, nx_block
-                     npad = npad + this_block%i_glob(i)
-                  enddo
-               endif
-               if (npad /= 0) ibc = ibc - 1
-            enddo
-
-            do n = 1, ncat
-            do j = jhi, ibc
-            do i = 1, nx_block
-               aicen_rest(i,j,n,iblk) = aicen(i,jhi,n,iblk)
-               vicen_rest(i,j,n,iblk) = vicen(i,jhi,n,iblk)
-               vsnon_rest(i,j,n,iblk) = vsnon(i,jhi,n,iblk)
-               do nt = 1, ntrcr
-                  trcrn_rest(i,j,nt,n,iblk) = trcrn(i,jhi,nt,n,iblk)
-               enddo
-            enddo
-            enddo
-            enddo
-         endif
-      endif
-
-   enddo ! iblk
-   !$OMP END PARALLEL DO
-#endif
-
-   endif ! restore_ic
+      endif ! restore_ic
 
       !-----------------------------------------------------------------
       ! Impose land mask
       !-----------------------------------------------------------------
 
-   do iblk = 1, nblocks
-      do n = 1, ncat
-         do j = 1, ny_block
-         do i = 1, nx_block
-            aicen_rest(i,j,n,iblk) = aicen_rest(i,j,n,iblk) * hm(i,j,iblk)
-            vicen_rest(i,j,n,iblk) = vicen_rest(i,j,n,iblk) * hm(i,j,iblk)
-            vsnon_rest(i,j,n,iblk) = vsnon_rest(i,j,n,iblk) * hm(i,j,iblk)
-            do nt = 1, ntrcr
-               trcrn_rest(i,j,nt,n,iblk) = trcrn_rest(i,j,nt,n,iblk) &
-                                                            * hm(i,j,iblk)
+      do iblk = 1, nblocks
+         do n = 1, ncat
+            do j = 1, ny_block
+            do i = 1, nx_block
+               aicen_rest(i,j,n,iblk) = aicen_rest(i,j,n,iblk) * hm(i,j,iblk)
+               vicen_rest(i,j,n,iblk) = vicen_rest(i,j,n,iblk) * hm(i,j,iblk)
+               vsnon_rest(i,j,n,iblk) = vsnon_rest(i,j,n,iblk) * hm(i,j,iblk)
+               do nt = 1, ntrcr
+                  trcrn_rest(i,j,nt,n,iblk) = trcrn_rest(i,j,nt,n,iblk) &
+                                                               * hm(i,j,iblk)
+               enddo
             enddo
-         enddo
+            enddo
          enddo
       enddo
-   enddo
 
-   if (my_task == master_task) &
-      write (nu_diag,*) 'ice restoring timescale = ',trestore,' days'
+      if (bdy_origin == 'restart_f') then
 
- end subroutine ice_HaloRestore_init
+         allocate (uvel_rest        (nx_block,ny_block,max_blocks), &
+                   vvel_rest        (nx_block,ny_block,max_blocks), &
+                   scale_factor_rest(nx_block,ny_block,max_blocks), &
+                   swvdr_rest       (nx_block,ny_block,max_blocks), &
+                   swvdf_rest       (nx_block,ny_block,max_blocks), &
+                   swidr_rest       (nx_block,ny_block,max_blocks), &
+                   swidf_rest       (nx_block,ny_block,max_blocks), &
+                   strocnxT_rest    (nx_block,ny_block,max_blocks), &
+                   strocnyT_rest    (nx_block,ny_block,max_blocks), &
+                   stressp_1_rest   (nx_block,ny_block,max_blocks), &
+                   stressp_2_rest   (nx_block,ny_block,max_blocks), &
+                   stressp_3_rest   (nx_block,ny_block,max_blocks), &
+                   stressp_4_rest   (nx_block,ny_block,max_blocks), &
+                   stressm_1_rest   (nx_block,ny_block,max_blocks), &
+                   stressm_2_rest   (nx_block,ny_block,max_blocks), &
+                   stressm_3_rest   (nx_block,ny_block,max_blocks), &
+                   stressm_4_rest   (nx_block,ny_block,max_blocks), &
+                   stress12_1_rest  (nx_block,ny_block,max_blocks), &
+                   stress12_2_rest  (nx_block,ny_block,max_blocks), &
+                   stress12_3_rest  (nx_block,ny_block,max_blocks), &
+                   stress12_4_rest  (nx_block,ny_block,max_blocks), &
+                   iceumask_rest    (nx_block,ny_block,max_blocks), &
+                   frz_onset_rest   (nx_block,ny_block,max_blocks), &
+                   fsnow_rest       (nx_block,ny_block,max_blocks),  &
+                   ffrac_rest       (nx_block,ny_block,ncat,max_blocks),  &
+                   dhs_rest         (nx_block,ny_block,ncat,max_blocks),  &
+                   sst_rest         (nx_block,ny_block,max_blocks),  &
+                   frzmelt_rest     (nx_block,ny_block,max_blocks))
+
+         uvel_rest(:,:,:) = c0
+         vvel_rest(:,:,:) = c0
+         scale_factor_rest(:,:,:) = c0
+         swvdr_rest(:,:,:) = c0
+         swvdf_rest(:,:,:) = c0
+         swidr_rest(:,:,:) = c0
+         swidf_rest(:,:,:) = c0
+         strocnxT_rest(:,:,:) = c0
+         strocnyT_rest(:,:,:) = c0
+         stressp_1_rest(:,:,:) = c0
+         stressp_2_rest(:,:,:) = c0
+         stressp_3_rest(:,:,:) = c0
+         stressp_4_rest(:,:,:) = c0
+         stressm_1_rest(:,:,:) = c0
+         stressm_2_rest(:,:,:) = c0
+         stressm_3_rest(:,:,:) = c0
+         stressm_4_rest(:,:,:) = c0
+         stress12_1_rest(:,:,:) = c0
+         stress12_2_rest(:,:,:) = c0
+         stress12_3_rest(:,:,:) = c0
+         stress12_4_rest(:,:,:) = c0
+         iceumask_rest(:,:,:) = c0
+         frz_onset_rest(:,:,:) = c0
+         fsnow_rest(:,:,:) = c0
+         sst_rest(:,:,:) = c0
+         frzmelt_rest(:,:,:) = c0
+         ffrac_rest(:,:,:,:) = c0
+         dhs_rest(:,:,:,:) = c0
+
+         if (sea_ice_time_bry) then
+            ! do nothing, read later
+         else
+! tcraig, doesn't work for current testing because there is no ability to read
+! a single file with the right timestep at the moment
+!            call ice_HaloRestore_getbdy()
+            call abort_ice(error_message=subname//' ERROR: bdy_origin restart_f must have sea_ice_time_bry true', &
+               file=__FILE__, line=__LINE__)
+         endif
+      endif
+
+   end subroutine ice_HaloRestore_init
+
 !=======================================================================
 !
- subroutine ice_HaloRestore_getbdy
+   subroutine ice_HaloRestore_getbdy
 
-      use ice_blocks, only: block, get_block, nblocks_x, nblocks_y
-      use ice_communicate, only: my_task, master_task
-      use ice_domain, only: ew_boundary_type, ns_boundary_type, &
-          nblocks, blocks_ice
-      use ice_grid, only: tmask, hm
-      use ice_flux, only: Tf, Tair, salinz, Tmltz,sss
-      use ice_restart_shared, only: restart_ext
-      use icepack_tracers, only: tr_pond_lvl,tr_iage,tr_FY,tr_lvl
-      use icepack_mushy_physics, only: icepack_enthalpy_mush
-      use icepack_parameters, only: dsin0_frazil
+      integer(kind=int_kind) :: &
+         k            ! dummy arguments
 
-   integer (int_kind) :: &
-     i,j,iblk,nt,n,k,    &! dummy loop indices
-     ilo,ihi,jlo,jhi,    &! beginning and end of physical domain
-     iglob(nx_block),    &! global indices
-     jglob(ny_block),    &! global indices
-     iblock, jblock,     &! block indices
-     ibc,                &! ghost cell column or row
-     ntrcr,              &!
-     npad                 ! padding column/row counter
+      integer (kind=int_kind) :: ntrcr
+      logical (kind=log_kind) :: tr_iage, tr_FY, tr_lvl, tr_pond, tr_aero, tr_fsd
+      logical (kind=log_kind) :: tr_snow, tr_brine
+      logical (kind=log_kind) :: tr_iso, tr_pond_lvl, tr_pond_topo, tr_pond_sealvl
+      integer (kind=int_kind) :: nt_Tsfc, nt_sice, nt_qice, nt_qsno, nt_iage, nt_FY
+      integer (kind=int_kind) :: nt_alvl, nt_vlvl, nt_apnd, nt_hpnd, nt_ipnd, nt_aero
+      integer (kind=int_kind) :: nt_fsd, nt_isosno, nt_isoice, nt_fbri
+      integer (kind=int_kind) :: nt_smice, nt_smliq, nt_rhos, nt_rsnw
 
-   character (len=7), parameter :: &
-!     restore_ic = 'defined' ! otherwise restore to initial ice state
-     restore_ic = 'initial' ! restore to initial ice state
+      character(len=*), parameter :: subname = '(ice_HaloRestore_getbdy)'
 
-   type (block) :: &
-     this_block  ! block info for current block
-   integer(kind=int_kind) :: ktherm
-   real(kind=dbl_kind)    :: rhos, Lfresh, Si0new, slope, Ti, &
-                             cp_ice, cp_ocn, rhoi, Tsmelt, Tffresh
-   logical(kind=log_kind) :: calc_Tsfc
-   character(len=*), parameter :: subname = '(ice_HaloRestore_getbdy)'
+      call icepack_query_tracer_flags(tr_iage_out=tr_iage, tr_FY_out=tr_FY, &
+         tr_lvl_out=tr_lvl, tr_aero_out=tr_aero, tr_pond_out=tr_pond, &
+         tr_pond_lvl_out=tr_pond_lvl, tr_pond_sealvl_out=tr_pond_sealvl, &
+         tr_pond_topo_out=tr_pond_topo, tr_brine_out=tr_brine, tr_fsd_out=tr_fsd, &
+         tr_snow_out=tr_snow, tr_iso_out=tr_iso)
+      call icepack_query_tracer_indices(nt_Tsfc_out=nt_Tsfc, nt_sice_out=nt_sice, &
+         nt_qice_out=nt_qice, nt_qsno_out=nt_qsno, nt_iage_out=nt_iage, nt_fy_out=nt_fy, &
+         nt_alvl_out=nt_alvl, nt_vlvl_out=nt_vlvl, nt_apnd_out=nt_apnd, nt_hpnd_out=nt_hpnd, &
+         nt_ipnd_out=nt_ipnd, nt_fsd_out=nt_fsd, nt_aero_out=nt_aero, &
+         nt_smice_out=nt_smice, nt_smliq_out=nt_smliq, nt_rhos_out=nt_rhos, nt_rsnw_out=nt_rsnw, &
+         nt_isosno_out=nt_isosno,     nt_isoice_out=nt_isoice,       nt_fbri_out=nt_fbri)
+      call icepack_warnings_flush(nu_diag)
+      if (icepack_warnings_aborted()) call abort_ice(error_message=subname, &
+          file=__FILE__, line=__LINE__)
 
-   if (.not. restore_ice) return
+      call get_forcing_bry()
 
-   call icepack_query_tracer_sizes(ntrcr_out=ntrcr)
-   call icepack_warnings_flush(nu_diag)
-   call icepack_query_parameters(calc_Tsfc_out=calc_Tsfc, &
-            rhos_out=rhos, Lfresh_out=Lfresh, &
-        cp_ice_out=cp_ice, cp_ocn_out=cp_ocn, rhoi_out=rhoi, Tsmelt_out=Tsmelt, &
-        Tffresh_out=Tffresh, ktherm_out=ktherm)
-   if (icepack_warnings_aborted()) call abort_ice(error_message=subname, &
-      file=__FILE__, line=__LINE__)
-   
-   if ((ew_boundary_type == 'open' .or. &
-        ns_boundary_type == 'open') .and. .not.(restart_ext)) then
-      if (my_task == master_task) write (nu_diag,*) ' ERROR: restart_ext=F and open boundaries'
-      call abort_ice(error_message=subname//'open boundary and restart_ext=F', &
-         file=__FILE__, line=__LINE__)
-   endif
-   if (.not. ALLOCATED(aicen_rest)) then
-     allocate (aicen_rest(nx_block,ny_block,ncat,max_blocks), &
-               vicen_rest(nx_block,ny_block,ncat,max_blocks), &
-               vsnon_rest(nx_block,ny_block,ncat,max_blocks), &
-               trcrn_rest(nx_block,ny_block,ntrcr,ncat,max_blocks))
-   endif
+      trcrn_rest(:,:,nt_Tsfc,:,:) = Tsfc_bry(:,:,:,:)
+      aicen_rest(:,:,:,:) = aicen_bry(:,:,:,:)
+      vicen_rest(:,:,:,:) = vicen_bry(:,:,:,:)
+      vsnon_rest(:,:,:,:) = vsnon_bry(:,:,:,:)
 
-   if (bdy_origin=='intern' .or. bdy_origin=='restart_f') then
-      if (.not. ALLOCATED(uvel_rest)) then
-        allocate (uvel_rest(nx_block,ny_block,max_blocks), &
-                  vvel_rest(nx_block,ny_block,max_blocks), &
-                  scale_factor_rest(nx_block,ny_block,max_blocks), &
-                  swvdr_rest(nx_block,ny_block,max_blocks), &
-                  swvdf_rest(nx_block,ny_block,max_blocks), &
-                  swidr_rest(nx_block,ny_block,max_blocks), &
-                  swidf_rest(nx_block,ny_block,max_blocks), &
-                  strocnxT_rest(nx_block,ny_block,max_blocks), &
-                  strocnyT_rest(nx_block,ny_block,max_blocks), &
-                  stressp_1_rest(nx_block,ny_block,max_blocks), &
-                  stressp_2_rest(nx_block,ny_block,max_blocks), &
-                  stressp_3_rest(nx_block,ny_block,max_blocks), &
-                  stressp_4_rest(nx_block,ny_block,max_blocks), &
-                  stressm_1_rest(nx_block,ny_block,max_blocks), &
-                  stressm_2_rest(nx_block,ny_block,max_blocks), &
-                  stressm_3_rest(nx_block,ny_block,max_blocks), &
-                  stressm_4_rest(nx_block,ny_block,max_blocks), &
-                  stress12_1_rest(nx_block,ny_block,max_blocks), &
-                  stress12_2_rest(nx_block,ny_block,max_blocks), &
-                  stress12_3_rest(nx_block,ny_block,max_blocks), &
-                  stress12_4_rest(nx_block,ny_block,max_blocks), &
-                  iceumask_rest(nx_block,ny_block,max_blocks), &
-                  frz_onset_rest(nx_block,ny_block,max_blocks), &
-                  fsnow_rest(nx_block,ny_block,max_blocks),  &
-                  ffrac_rest(nx_block,ny_block,ncat,max_blocks),  &
-                  dhs_rest(nx_block,ny_block,ncat,max_blocks),  &
-                  sst_rest(nx_block,ny_block,max_blocks),  &
-                  frzmelt_rest(nx_block,ny_block,max_blocks))
+      do k = 1,nilyr
+         trcrn_rest(:,:,nt_sice+k-1,:,:) = Sinz_bry(:,:,k,:,:)
+         trcrn_rest(:,:,nt_qice+k-1,:,:) = Tinz_bry(:,:,k,:,:)
+      enddo
+      do k = 1,nslyr
+         trcrn_rest(:,:,nt_qsno+k-1,:,:) = qsno_bry(:,:,k,:,:)
+      enddo
 
-      endif !ALLOCATED(uvel_rest)
-                  uvel_rest(:,:,:) = c0
-                  vvel_rest(:,:,:) = c0
-                  scale_factor_rest(:,:,:) = c0
-                  swvdr_rest(:,:,:) = c0
-                  swvdf_rest(:,:,:) = c0
-                  swidr_rest(:,:,:) = c0
-                  swidf_rest(:,:,:) = c0
-                  strocnxT_rest(:,:,:) = c0
-                  strocnyT_rest(:,:,:) = c0
-                  stressp_1_rest(:,:,:) = c0
-                  stressp_2_rest(:,:,:) = c0
-                  stressp_3_rest(:,:,:) = c0
-                  stressp_4_rest(:,:,:) = c0
-                  stressm_1_rest(:,:,:) = c0
-                  stressm_2_rest(:,:,:) = c0
-                  stressm_3_rest(:,:,:) = c0
-                  stressm_4_rest(:,:,:) = c0
-                  stress12_1_rest(:,:,:) = c0
-                  stress12_2_rest(:,:,:) = c0
-                  stress12_3_rest(:,:,:) = c0
-                  stress12_4_rest(:,:,:) = c0
-                  iceumask_rest(:,:,:) = c0
-                  frz_onset_rest(:,:,:) = c0
-                  fsnow_rest(:,:,:) = c0
-                  sst_rest(:,:,:) = c0
-                  frzmelt_rest(:,:,:) = c0
-                  ffrac_rest(:,:,:,:) = c0
-                  dhs_rest(:,:,:,:) = c0
-   endif ! (bdy_origin=='intern')
-   aicen_rest(:,:,:,:) = c0
-   vicen_rest(:,:,:,:) = c0
-   vsnon_rest(:,:,:,:) = c0
-   trcrn_rest(:,:,:,:,:) = c0
+      if (tr_pond_lvl) then ! bdy from file
+         fsnow_rest(:,:,:) = fsnow_bry(:,:,:)
+         trcrn_rest(:,:,nt_apnd,:,:) = apnd_bry(:,:,:,:)
+         trcrn_rest(:,:,nt_ipnd,:,:) = ipnd_bry(:,:,:,:)
+         trcrn_rest(:,:,nt_hpnd,:,:) = hpnd_bry(:,:,:,:)
+         dhs_rest(:,:,:,:) = dhs_bry(:,:,:,:)
+         ffrac_rest(:,:,:,:) = ffrac_bry(:,:,:,:)
+      endif !tr_pond_lvl
 
-   if (sea_ice_time_bry) then
-      call get_forcing_bry
-
-#if (1 == 1) 
-      if (trim(ew_boundary_type) /= 'cyclic') then
-         if (bdy_origin=='intern' .or. bdy_origin=='restart_f') then
-            trcrn_rest(:,:,nt_Tsfc,:,:) = Tsfc_bry(:,:,:,:)
-            aicen_rest(:,:,:,:) = aicen_bry(:,:,:,:)
-            vicen_rest(:,:,:,:) = vicen_bry(:,:,:,:)
-            vsnon_rest(:,:,:,:) = vsnon_bry(:,:,:,:)
-
-            do k = 1,nilyr
-               trcrn_rest(:,:,nt_sice+k-1,:,:) = Sinz_bry(:,:,k,:,:)
-               trcrn_rest(:,:,nt_qice+k-1,:,:) = Tinz_bry(:,:,k,:,:)
-            enddo
-            do k = 1,nslyr
-               trcrn_rest(:,:,nt_qsno+k-1,:,:) = qsno_bry(:,:,k,:,:)
-            enddo
-
-            if (tr_pond_lvl) then ! bdy from file
-               fsnow_rest(:,:,:) = fsnow_bry(:,:,:)
-               trcrn_rest(:,:,nt_apnd,:,:) = apnd_bry(:,:,:,:)
-               trcrn_rest(:,:,nt_ipnd,:,:) = ipnd_bry(:,:,:,:)
-               trcrn_rest(:,:,nt_hpnd,:,:) = hpnd_bry(:,:,:,:)
-               dhs_rest(:,:,:,:) = dhs_bry(:,:,:,:)
-               ffrac_rest(:,:,:,:) = ffrac_bry(:,:,:,:)
-            endif !tr_pond_lvl
-
-            if (oceanmixed_ice) then
-               frzmelt_rest(:,:,:) = frzmelt_bry(:,:,:)
-               sst_rest(:,:,:) = sst_bry(:,:,:)
-            endif !oceanmixed_ice
+      if (oceanmixed_ice) then
+         frzmelt_rest(:,:,:) = frzmelt_bry(:,:,:)
+         sst_rest(:,:,:) = sst_bry(:,:,:)
+      endif !oceanmixed_ice
                    
-            if (tr_FY) then
-               frz_onset_rest(:,:,:) = frz_onset_bry(:,:,:)
-               trcrn_rest(:,:,nt_FY,:,:) = FY_bry(:,:,:,:)
-            endif !tr_FY
+      if (tr_FY) then
+         frz_onset_rest(:,:,:) = frz_onset_bry(:,:,:)
+         trcrn_rest(:,:,nt_FY,:,:) = FY_bry(:,:,:,:)
+      endif !tr_FY
 
-            if (tr_lvl) then
-               trcrn_rest(:,:,nt_alvl,:,:) = alvl_bry(:,:,:,:)
-               trcrn_rest(:,:,nt_vlvl,:,:) = vlvl_bry(:,:,:,:)
-            endif !tr_lvl
+      if (tr_lvl) then
+         trcrn_rest(:,:,nt_alvl,:,:) = alvl_bry(:,:,:,:)
+         trcrn_rest(:,:,nt_vlvl,:,:) = vlvl_bry(:,:,:,:)
+      endif !tr_lvl
 
-            if (tr_iage) then
-               trcrn_rest(:,:,nt_iage,:,:) = iage_bry(:,:,:,:)
-            endif !tr_iage
+      if (tr_iage) then
+         trcrn_rest(:,:,nt_iage,:,:) = iage_bry(:,:,:,:)
+      endif !tr_iage
 
-            uvel_rest(:,:,:) = uvel_bry(:,:,:)
-            vvel_rest(:,:,:) = vvel_bry(:,:,:)
-            scale_factor_rest(:,:,:) = scale_factor_bry(:,:,:)
-            swvdr_rest(:,:,:) = swvdr_bry(:,:,:)
-            swvdf_rest(:,:,:) = swvdf_bry(:,:,:)
-            swidr_rest(:,:,:) = swidr_bry(:,:,:)
-            swidf_rest(:,:,:) = swidf_bry(:,:,:)
-            strocnxT_rest(:,:,:) = strocnxT_bry(:,:,:)
-            strocnyT_rest(:,:,:) = strocnyT_bry(:,:,:)
-            stressp_1_rest(:,:,:) = stressp_1_bry(:,:,:)
-            stressp_2_rest(:,:,:) = stressp_2_bry(:,:,:)
-            stressp_3_rest(:,:,:) = stressp_3_bry(:,:,:)
-            stressp_4_rest(:,:,:) = stressp_4_bry(:,:,:)
-            stressm_1_rest(:,:,:) = stressm_1_bry(:,:,:)
-            stressm_2_rest(:,:,:) = stressm_2_bry(:,:,:)
-            stressm_3_rest(:,:,:) = stressm_3_bry(:,:,:)
-            stressm_4_rest(:,:,:) = stressm_4_bry(:,:,:)
-            stress12_1_rest(:,:,:) = stress12_1_bry(:,:,:)
-            stress12_2_rest(:,:,:) = stress12_2_bry(:,:,:)
-            stress12_3_rest(:,:,:) = stress12_3_bry(:,:,:)
-            stress12_4_rest(:,:,:) = stress12_4_bry(:,:,:)
-            iceumask_rest(:,:,:) = iceumask_bry(:,:,:)
-         else
-            if (my_task == master_task) write (nu_diag,*) ' ERROR: sea_ice_time_bry=T, but bdy_origin not defined'
-            call abort_ice(error_message=subname//'if sea_ice_time_bry=T bdy_origin must be =extern or =intern', &
-                           file=__FILE__, line=__LINE__)
+      uvel_rest(:,:,:) = uvel_bry(:,:,:)
+      vvel_rest(:,:,:) = vvel_bry(:,:,:)
+      scale_factor_rest(:,:,:) = scale_factor_bry(:,:,:)
+      swvdr_rest(:,:,:) = swvdr_bry(:,:,:)
+      swvdf_rest(:,:,:) = swvdf_bry(:,:,:)
+      swidr_rest(:,:,:) = swidr_bry(:,:,:)
+      swidf_rest(:,:,:) = swidf_bry(:,:,:)
+      strocnxT_rest(:,:,:) = strocnxT_bry(:,:,:)
+      strocnyT_rest(:,:,:) = strocnyT_bry(:,:,:)
+      stressp_1_rest(:,:,:) = stressp_1_bry(:,:,:)
+      stressp_2_rest(:,:,:) = stressp_2_bry(:,:,:)
+      stressp_3_rest(:,:,:) = stressp_3_bry(:,:,:)
+      stressp_4_rest(:,:,:) = stressp_4_bry(:,:,:)
+      stressm_1_rest(:,:,:) = stressm_1_bry(:,:,:)
+      stressm_2_rest(:,:,:) = stressm_2_bry(:,:,:)
+      stressm_3_rest(:,:,:) = stressm_3_bry(:,:,:)
+      stressm_4_rest(:,:,:) = stressm_4_bry(:,:,:)
+      stress12_1_rest(:,:,:) = stress12_1_bry(:,:,:)
+      stress12_2_rest(:,:,:) = stress12_2_bry(:,:,:)
+      stress12_3_rest(:,:,:) = stress12_3_bry(:,:,:)
+      stress12_4_rest(:,:,:) = stress12_4_bry(:,:,:)
+      iceumask_rest(:,:,:) = iceumask_bry(:,:,:)
 
-               
-         endif
-      endif
-   endif
-
-#else
-   do iblk = 1, nblocks
-
-      this_block = get_block(blocks_ice(iblk),iblk)
-      ilo = this_block%ilo
-      ihi = this_block%ihi
-      jlo = this_block%jlo
-      jhi = this_block%jhi
-
-      if (this_block%iblock == 1) then              ! west edge
-         if (trim(ew_boundary_type) /= 'cyclic') then
-             if (bdy_origin=='intern' .or. bdy_origin=='restart_f') then
-                     do n = 1, ncat
-                     do j = 1, ny_block
-                     do i = 1, ilo+nfact
-                        trcrn_rest(i,j,nt_Tsfc,n,iblk) = Tsfc_bry(i,j,n,iblk)
-                        aicen_rest(i,j,n,iblk) = aicen_bry(i,j,n,iblk)
-                        vicen_rest(i,j,n,iblk) = vicen_bry(i,j,n,iblk)
-                        vsnon_rest(i,j,n,iblk) = vsnon_bry(i,j,n,iblk)
-                        do k = 1,nilyr
-                            trcrn_rest(i,j,nt_sice+k-1,n,iblk) = Sinz_bry(i,j,k,n,iblk)
-                            trcrn_rest(i,j,nt_qice+k-1,n,iblk) = Tinz_bry(i,j,k,n,iblk)
-                        enddo
-                        do k = 1,nslyr
-                            trcrn_rest(i,j,nt_qsno+k-1,n,iblk) = qsno_bry(i,j,k,n,iblk)
-                        enddo
-                     enddo
-                     enddo
-                     enddo
-                   if (tr_pond_lvl) then ! bdy from file
-                   do i = 1, ilo+nfact
-                   do j = 1, ny_block
-                       fsnow_rest(i,j,iblk) = fsnow_bry(i,j,iblk)
-                       do n = 1, ncat
-                           trcrn_rest(i,j,nt_apnd,n,iblk) = apnd_bry(i,j,n,iblk)
-                           trcrn_rest(i,j,nt_ipnd,n,iblk) = ipnd_bry(i,j,n,iblk)
-                           trcrn_rest(i,j,nt_hpnd,n,iblk) = hpnd_bry(i,j,n,iblk)
-                           dhs_rest(i,j,n,iblk) = dhs_bry(i,j,n,iblk)
-                           ffrac_rest(i,j,n,iblk) = ffrac_bry(i,j,n,iblk)
-                       enddo
-                   enddo
-                   enddo
-                   endif !tr_pond_lvl
-
-                   if (oceanmixed_ice) then
-                   do j = 1, ny_block
-                   do i = 1, ilo+nfact
-                      frzmelt_rest(i,j,iblk) = frzmelt_bry(i,j,iblk)
-                      sst_rest(i,j,iblk) = sst_bry(i,j,iblk)
-                   enddo
-                   enddo
-                   endif !oceanmixed_ice
-                   
-                   if (tr_FY) then
-                   do j = 1, ny_block
-                   do i = 1, ilo+nfact
-                       frz_onset_rest(i,j,iblk) = frz_onset_bry(i,j,iblk)
-                       do n = 1, ncat
-                           trcrn_rest(i,j,nt_FY,n,iblk) = FY_bry(i,j,n,iblk)
-                       enddo
-                   enddo
-                   enddo
-                   endif !tr_FY
-
-                   if (tr_lvl) then
-                   do j = 1, ny_block
-                   do i = 1, ilo+nfact
-                   do n = 1, ncat
-                       trcrn_rest(i,j,nt_alvl,n,iblk) = alvl_bry(i,j,n,iblk)
-                       trcrn_rest(i,j,nt_vlvl,n,iblk) = vlvl_bry(i,j,n,iblk)
-                   enddo
-                   enddo
-                   enddo
-                   endif !tr_lvl
-
-                   if (tr_iage) then
-                   do j = 1, ny_block
-                   do i = 1, ilo+nfact
-                   do n = 1, ncat
-                      trcrn_rest(i,j,nt_iage,n,iblk) = iage_bry(i,j,n,iblk)
-                   enddo
-                   enddo
-                   enddo
-                   endif !tr_iage
-
-                   do j = 1, ny_block
-                   do i = 1, ilo+nfact
-                      uvel_rest(i,j,iblk) = uvel_bry(i,j,iblk)
-                      vvel_rest(i,j,iblk) = vvel_bry(i,j,iblk)
-                      scale_factor_rest(i,j,iblk) = scale_factor_bry(i,j,iblk)
-                      swvdr_rest(i,j,iblk) = swvdr_bry(i,j,iblk)
-                      swvdf_rest(i,j,iblk) = swvdf_bry(i,j,iblk)
-                      swidr_rest(i,j,iblk) = swidr_bry(i,j,iblk)
-                      swidf_rest(i,j,iblk) = swidf_bry(i,j,iblk)
-                      strocnxT_rest(i,j,iblk) = strocnxT_bry(i,j,iblk)
-                      strocnyT_rest(i,j,iblk) = strocnyT_bry(i,j,iblk)
-                      stressp_1_rest(i,j,iblk) = stressp_1_bry(i,j,iblk)
-                      stressp_2_rest(i,j,iblk) = stressp_2_bry(i,j,iblk)
-                      stressp_3_rest(i,j,iblk) = stressp_3_bry(i,j,iblk)
-                      stressp_4_rest(i,j,iblk) = stressp_4_bry(i,j,iblk)
-                      stressm_1_rest(i,j,iblk) = stressm_1_bry(i,j,iblk)
-                      stressm_2_rest(i,j,iblk) = stressm_2_bry(i,j,iblk)
-                      stressm_3_rest(i,j,iblk) = stressm_3_bry(i,j,iblk)
-                      stressm_4_rest(i,j,iblk) = stressm_4_bry(i,j,iblk)
-                      stress12_1_rest(i,j,iblk) = stress12_1_bry(i,j,iblk)
-                      stress12_2_rest(i,j,iblk) = stress12_2_bry(i,j,iblk)
-                      stress12_3_rest(i,j,iblk) = stress12_3_bry(i,j,iblk)
-                      stress12_4_rest(i,j,iblk) = stress12_4_bry(i,j,iblk)
-                      iceumask_rest(i,j,iblk) = iceumask_bry(i,j,iblk)
-                   enddo
-                   enddo
-             else
-                     if (my_task == master_task) write (nu_diag,*) ' ERROR: sea_ice_time_bry=T, but bdy_origin not defined'
-                     call abort_ice(error_message=subname//'if sea_ice_time_bry=T bdy_origin must be =extern or =intern', &
-                            file=__FILE__, line=__LINE__)
-
-               
-             endif
-         endif
-      endif
-
-      if (this_block%iblock == nblocks_x) then  ! east edge
-         if (trim(ew_boundary_type) /= 'cyclic') then
-            ! locate ghost cell column (avoid padding)
-            ibc = nx_block
-            do i = nx_block, 1, -1
-               npad = 0
-               if (this_block%i_glob(i) == 0) then
-                  do j = 1, ny_block
-                     npad = npad + this_block%j_glob(j)
-                  enddo
-               endif
-               if (npad /= 0) ibc = ibc - 1
-            enddo
-             if ((bdy_origin=='intern' .or. bdy_origin=='restart_f')) then
-                     do n = 1, ncat
-                     do j = 1, ny_block
-                     do i = ihi-nfact, ibc
-                        aicen_rest(i,j,n,iblk) = aicen_bry(i,j,n,iblk)
-                        vicen_rest(i,j,n,iblk) = vicen_bry(i,j,n,iblk)
-                        vsnon_rest(i,j,n,iblk) = vsnon_bry(i,j,n,iblk)
-                        trcrn_rest(i,j,nt_Tsfc,n,iblk) = Tsfc_bry(i,j,n,iblk)
-                        do k = 1,nilyr
-                            trcrn_rest(i,j,nt_sice+k-1,n,iblk) = Sinz_bry(i,j,k,n,iblk)
-                            trcrn_rest(i,j,nt_qice+k-1,n,iblk) = Tinz_bry(i,j,k,n,iblk)
-                        enddo
-                        do k = 1,nslyr
-                            trcrn_rest(i,j,nt_qsno+k-1,n,iblk) = qsno_bry(i,j,k,n,iblk)
-                        enddo
-                     enddo
-                     enddo
-                     enddo
-                   if (tr_pond_lvl) then ! bdy from file
-                    do j = 1, ny_block
-                    do i = ihi-nfact, ibc
-                      fsnow_rest(i,j,iblk) = fsnow_bry(i,j,iblk)
-                      do n = 1, ncat
-                       trcrn_rest(i,j,nt_apnd,n,iblk) = apnd_bry(i,j,n,iblk)
-                       trcrn_rest(i,j,nt_ipnd,n,iblk) = ipnd_bry(i,j,n,iblk)
-                       trcrn_rest(i,j,nt_hpnd,n,iblk) = hpnd_bry(i,j,n,iblk)
-                       dhs_rest(i,j,n,iblk) = dhs_bry(i,j,n,iblk)
-                       ffrac_rest(i,j,n,iblk) = ffrac_bry(i,j,n,iblk)
-                      enddo
-                    enddo
-                    enddo
-                   endif !tr_pond_lvl
-
-                   if (oceanmixed_ice) then
-                   do j = 1, ny_block
-                   do i = ihi-nfact, ibc
-                      frzmelt_rest(i,j,iblk) = frzmelt_bry(i,j,iblk)
-                      sst_rest(i,j,iblk) = sst_bry(i,j,iblk)
-                   enddo
-                   enddo
-                   endif !oceanmixed_ice
-
-                   if (tr_FY) then
-                   do j = 1, ny_block
-                   do i = ihi-nfact, ibc
-                       frz_onset_rest(i,j,iblk) = frz_onset_bry(i,j,iblk)
-                       do n = 1, ncat
-                           trcrn_rest(i,j,nt_FY,n,iblk) = FY_bry(i,j,n,iblk)
-                       enddo
-                   enddo
-                   enddo
-                   endif !tr_FY
-
-                   if (tr_lvl) then
-                   do j = 1, ny_block
-                   do i = ihi-nfact, ibc
-                   do n = 1, ncat
-                       trcrn_rest(i,j,nt_alvl,n,iblk) = alvl_bry(i,j,n,iblk)
-                       trcrn_rest(i,j,nt_vlvl,n,iblk) = vlvl_bry(i,j,n,iblk)
-                   enddo
-                   enddo
-                   enddo
-                   endif !tr_lvl
-
-                   if (tr_iage) then
-                   do j = 1, ny_block
-                   do i = ihi-nfact, ibc
-                   do n = 1, ncat
-                      trcrn_rest(i,j,nt_iage,n,iblk) = iage_bry(i,j,n,iblk)
-                   enddo
-                   enddo
-                   enddo
-                   endif !tr_iage
-
-                   do j = 1, ny_block
-                   do i = ihi-nfact, ibc
-                      uvel_rest(i,j,iblk) = uvel_bry(i,j,iblk)
-                      vvel_rest(i,j,iblk) = vvel_bry(i,j,iblk)
-                      scale_factor_rest(i,j,iblk) = scale_factor_bry(i,j,iblk)
-                      swvdr_rest(i,j,iblk) = swvdr_bry(i,j,iblk)
-                      swvdf_rest(i,j,iblk) = swvdf_bry(i,j,iblk)
-                      swidr_rest(i,j,iblk) = swidr_bry(i,j,iblk)
-                      swidf_rest(i,j,iblk) = swidf_bry(i,j,iblk)
-                      strocnxT_rest(i,j,iblk) = strocnxT_bry(i,j,iblk)
-                      strocnyT_rest(i,j,iblk) = strocnyT_bry(i,j,iblk)
-                      stressp_1_rest(i,j,iblk) = stressp_1_bry(i,j,iblk)
-                      stressp_2_rest(i,j,iblk) = stressp_2_bry(i,j,iblk)
-                      stressp_3_rest(i,j,iblk) = stressp_3_bry(i,j,iblk)
-                      stressp_4_rest(i,j,iblk) = stressp_4_bry(i,j,iblk)
-                      stressm_1_rest(i,j,iblk) = stressm_1_bry(i,j,iblk)
-                      stressm_2_rest(i,j,iblk) = stressm_2_bry(i,j,iblk)
-                      stressm_3_rest(i,j,iblk) = stressm_3_bry(i,j,iblk)
-                      stressm_4_rest(i,j,iblk) = stressm_4_bry(i,j,iblk)
-                      stress12_1_rest(i,j,iblk) = stress12_1_bry(i,j,iblk)
-                      stress12_2_rest(i,j,iblk) = stress12_2_bry(i,j,iblk)
-                      stress12_3_rest(i,j,iblk) = stress12_3_bry(i,j,iblk)
-                      stress12_4_rest(i,j,iblk) = stress12_4_bry(i,j,iblk)
-                      iceumask_rest(i,j,iblk) = iceumask_bry(i,j,iblk)
-                   enddo
-                   enddo
-             else
-                     if (my_task == master_task) write (nu_diag,*) ' ERROR: sea_ice_time_bry=T, but bdy_origin not defined'
-                     call abort_ice(error_message=subname//'if sea_ice_time_bry=T bdy_origin must be =extern or =intern', &
-                            file=__FILE__, line=__LINE__)
-             endif
-         endif
-      endif
-
-      if (this_block%jblock == 1) then              ! south edge
-         if (trim(ns_boundary_type) /= 'cyclic') then
-             if ((bdy_origin=='intern' .or. bdy_origin=='restart_f')) then
-                    do n = 1, ncat
-                    do j = 1, jlo+nfact
-                    do i = 1, nx_block
-                        aicen_rest(i,j,n,iblk) = aicen_bry(i,j,n,iblk)
-                        vicen_rest(i,j,n,iblk) = vicen_bry(i,j,n,iblk)
-                        vsnon_rest(i,j,n,iblk) = vsnon_bry(i,j,n,iblk)
-                        trcrn_rest(i,j,nt_Tsfc,n,iblk) = Tsfc_bry(i,j,n,iblk)
-                        do k = 1,nilyr
-                            trcrn_rest(i,j,nt_sice+k-1,n,iblk) = Sinz_bry(i,j,k,n,iblk)
-                            trcrn_rest(i,j,nt_qice+k-1,n,iblk) = Tinz_bry(i,j,k,n,iblk)
-                        enddo
-                        do k = 1,nslyr
-                            trcrn_rest(i,j,nt_qsno+k-1,n,iblk) = qsno_bry(i,j,k,n,iblk)
-                        enddo
-                     enddo
-                     enddo
-                     enddo
-                   if (tr_pond_lvl) then ! bdy from file
-                   do j = 1, jlo+nfact
-                   do i = 1, nx_block
-                      fsnow_rest(i,j,iblk) = fsnow_bry(i,j,iblk)
-                      do n = 1, ncat
-                       trcrn_rest(i,j,nt_apnd,n,iblk) = apnd_bry(i,j,n,iblk)
-                       trcrn_rest(i,j,nt_ipnd,n,iblk) = ipnd_bry(i,j,n,iblk)
-                       trcrn_rest(i,j,nt_hpnd,n,iblk) = hpnd_bry(i,j,n,iblk)
-                       dhs_rest(i,j,n,iblk) = dhs_bry(i,j,n,iblk)
-                       ffrac_rest(i,j,n,iblk) = ffrac_bry(i,j,n,iblk)
-                      enddo
-                   enddo
-                   enddo
-                   endif ! tr_pond_lvl
-
-                   if (oceanmixed_ice) then
-                   do j = 1, jlo+nfact
-                   do i = 1, nx_block
-                      frzmelt_rest(i,j,iblk) = frzmelt_bry(i,j,iblk)
-                      sst_rest(i,j,iblk) = sst_bry(i,j,iblk)
-                   enddo
-                   enddo
-                   endif !oceanmixed_ice
-
-                   if (tr_FY) then
-                   do j = 1, jlo+nfact
-                   do i = 1, nx_block
-                       frz_onset_rest(i,j,iblk) = frz_onset_bry(i,j,iblk)
-                       do n = 1, ncat
-                           trcrn_rest(i,j,nt_FY,n,iblk) = FY_bry(i,j,n,iblk)
-                       enddo
-                   enddo
-                   enddo
-                   endif !tr_FY
-
-                   if (tr_lvl) then
-                   do j = 1, jlo+nfact
-                   do i = 1, nx_block
-                   do n = 1, ncat
-                       trcrn_rest(i,j,nt_alvl,n,iblk) = alvl_bry(i,j,n,iblk)
-                       trcrn_rest(i,j,nt_vlvl,n,iblk) = vlvl_bry(i,j,n,iblk)
-                   enddo
-                   enddo
-                   enddo
-                   endif !tr_lvl
-
-                   if (tr_iage) then
-                   do j = 1, jlo+nfact
-                   do i = 1, nx_block
-                   do n = 1, ncat
-                      trcrn_rest(i,j,nt_iage,n,iblk) = iage_bry(i,j,n,iblk)
-                   enddo
-                   enddo
-                   enddo
-                   endif !tr_iage
-
-                   do j = 1, jlo+nfact
-                   do i = 1, nx_block
-                      uvel_rest(i,j,iblk) = uvel_bry(i,j,iblk)
-                      vvel_rest(i,j,iblk) = vvel_bry(i,j,iblk)
-                      scale_factor_rest(i,j,iblk) = scale_factor_bry(i,j,iblk)
-                      swvdr_rest(i,j,iblk) = swvdr_bry(i,j,iblk)
-                      swvdf_rest(i,j,iblk) = swvdf_bry(i,j,iblk)
-                      swidr_rest(i,j,iblk) = swidr_bry(i,j,iblk)
-                      swidf_rest(i,j,iblk) = swidf_bry(i,j,iblk)
-                      strocnxT_rest(i,j,iblk) = strocnxT_bry(i,j,iblk)
-                      strocnyT_rest(i,j,iblk) = strocnyT_bry(i,j,iblk)
-                      stressp_1_rest(i,j,iblk) = stressp_1_bry(i,j,iblk)
-                      stressp_2_rest(i,j,iblk) = stressp_2_bry(i,j,iblk)
-                      stressp_3_rest(i,j,iblk) = stressp_3_bry(i,j,iblk)
-                      stressp_4_rest(i,j,iblk) = stressp_4_bry(i,j,iblk)
-                      stressm_1_rest(i,j,iblk) = stressm_1_bry(i,j,iblk)
-                      stressm_2_rest(i,j,iblk) = stressm_2_bry(i,j,iblk)
-                      stressm_3_rest(i,j,iblk) = stressm_3_bry(i,j,iblk)
-                      stressm_4_rest(i,j,iblk) = stressm_4_bry(i,j,iblk)
-                      stress12_1_rest(i,j,iblk) = stress12_1_bry(i,j,iblk)
-                      stress12_2_rest(i,j,iblk) = stress12_2_bry(i,j,iblk)
-                      stress12_3_rest(i,j,iblk) = stress12_3_bry(i,j,iblk)
-                      stress12_4_rest(i,j,iblk) = stress12_4_bry(i,j,iblk)
-                      iceumask_rest(i,j,iblk) = iceumask_bry(i,j,iblk)
-                   enddo
-                   enddo
-             else
-                     if (my_task == master_task) write (nu_diag,*) ' ERROR: sea_ice_time_bry=T, but bdy_origin not defined'
-                     call abort_ice(error_message=subname//'if sea_ice_time_bry=T bdy_origin must be =extern or =intern', &
-                            file=__FILE__, line=__LINE__)
-             endif
-         endif
-      endif
-
-      if (this_block%jblock == nblocks_y) then  ! north edge
-         if ( &!trim(ns_boundary_type) /= 'cyclic' .and. &
-             trim(ns_boundary_type) /= 'tripole' .and. &
-             trim(ns_boundary_type) /= 'tripoleT') then
-            ! locate ghost cell row (avoid padding)
-            ibc = ny_block
-            do j = ny_block, 1, -1
-               npad = 0
-               if (this_block%j_glob(j) == 0) then
-                  do i = 1, nx_block
-                     npad = npad + this_block%i_glob(i)
-                  enddo
-               endif
-               if (npad /= 0) ibc = ibc - 1
-            enddo
-             if ((bdy_origin=='intern' .or. bdy_origin=='restart_f')) then
-                    do n = 1, ncat
-                    do j = jhi-nfact, ibc
-                    do i = 1, nx_block
-                        aicen_rest(i,j,n,iblk) = aicen_bry(i,j,n,iblk)
-                        vicen_rest(i,j,n,iblk) = vicen_bry(i,j,n,iblk)
-                        vsnon_rest(i,j,n,iblk) = vsnon_bry(i,j,n,iblk)
-                        trcrn_rest(i,j,nt_Tsfc,n,iblk) = Tsfc_bry(i,j,n,iblk)
-                        do k = 1,nilyr
-                            trcrn_rest(i,j,nt_sice+k-1,n,iblk) = Sinz_bry(i,j,k,n,iblk)
-                            trcrn_rest(i,j,nt_qice+k-1,n,iblk) = Tinz_bry(i,j,k,n,iblk)
-                        enddo
-                        do k = 1,nslyr
-                            trcrn_rest(i,j,nt_qsno+k-1,n,iblk) = qsno_bry(i,j,k,n,iblk)
-                        enddo
-                     enddo
-                     enddo
-                     enddo
-                   if (tr_pond_lvl) then ! bdy from file
-                    do j = jhi-nfact, ibc
-                    do i = 1, nx_block
-                      fsnow_rest(i,j,iblk) = fsnow_bry(i,j,iblk)
-                      do n = 1, ncat
-                       trcrn_rest(i,j,nt_apnd,n,iblk) = apnd_bry(i,j,n,iblk)
-                       trcrn_rest(i,j,nt_ipnd,n,iblk) = ipnd_bry(i,j,n,iblk)
-                       trcrn_rest(i,j,nt_hpnd,n,iblk) = hpnd_bry(i,j,n,iblk)
-                       dhs_rest(i,j,n,iblk) = dhs_bry(i,j,n,iblk)
-                       ffrac_rest(i,j,n,iblk) = ffrac_bry(i,j,n,iblk)
-                      enddo
-                    enddo
-                    enddo
-                   endif !tr_pond_lvl
-
-                   if (oceanmixed_ice) then
-                   do j = jhi-nfact, ibc
-                   do i = 1, nx_block
-                      frzmelt_rest(i,j,iblk) = frzmelt_bry(i,j,iblk)
-                      sst_rest(i,j,iblk) = sst_bry(i,j,iblk)
-                   enddo
-                   enddo
-                   endif !oceanmixed_ice
-
-                   if (tr_FY) then
-                   do j = jhi-nfact, ibc
-                   do i = 1, nx_block
-                       frz_onset_rest(i,j,iblk) = frz_onset_bry(i,j,iblk)
-                       do n = 1, ncat
-                           trcrn_rest(i,j,nt_FY,n,iblk) = FY_bry(i,j,n,iblk)
-                       enddo
-                   enddo
-                   enddo
-                   endif !tr_FY
-
-                   if (tr_lvl) then
-                   do j = jhi-nfact, ibc
-                   do i = 1, nx_block
-                   do n = 1, ncat
-                       trcrn_rest(i,j,nt_alvl,n,iblk) = alvl_bry(i,j,n,iblk)
-                       trcrn_rest(i,j,nt_vlvl,n,iblk) = vlvl_bry(i,j,n,iblk)
-                   enddo
-                   enddo
-                   enddo
-                   endif !tr_lvl
-
-                   if (tr_iage) then
-                   do j = jhi-nfact, ibc
-                   do i = 1, nx_block
-                   do n = 1, ncat
-                      trcrn_rest(i,j,nt_iage,n,iblk) = iage_bry(i,j,n,iblk)
-                   enddo
-                   enddo
-                   enddo
-                   endif !tr_iage
-
-                   do j = jhi-nfact, ibc
-                   do i = 1, nx_block
-                      uvel_rest(i,j,iblk) = uvel_bry(i,j,iblk)
-                      vvel_rest(i,j,iblk) = vvel_bry(i,j,iblk)
-                      scale_factor_rest(i,j,iblk) = scale_factor_bry(i,j,iblk)
-                      swvdr_rest(i,j,iblk) = swvdr_bry(i,j,iblk)
-                      swvdf_rest(i,j,iblk) = swvdf_bry(i,j,iblk)
-                      swidr_rest(i,j,iblk) = swidr_bry(i,j,iblk)
-                      swidf_rest(i,j,iblk) = swidf_bry(i,j,iblk)
-                      strocnxT_rest(i,j,iblk) = strocnxT_bry(i,j,iblk)
-                      strocnyT_rest(i,j,iblk) = strocnyT_bry(i,j,iblk)
-                      stressp_1_rest(i,j,iblk) = stressp_1_bry(i,j,iblk)
-                      stressp_2_rest(i,j,iblk) = stressp_2_bry(i,j,iblk)
-                      stressp_3_rest(i,j,iblk) = stressp_3_bry(i,j,iblk)
-                      stressp_4_rest(i,j,iblk) = stressp_4_bry(i,j,iblk)
-                      stressm_1_rest(i,j,iblk) = stressm_1_bry(i,j,iblk)
-                      stressm_2_rest(i,j,iblk) = stressm_2_bry(i,j,iblk)
-                      stressm_3_rest(i,j,iblk) = stressm_3_bry(i,j,iblk)
-                      stressm_4_rest(i,j,iblk) = stressm_4_bry(i,j,iblk)
-                      stress12_1_rest(i,j,iblk) = stress12_1_bry(i,j,iblk)
-                      stress12_2_rest(i,j,iblk) = stress12_2_bry(i,j,iblk)
-                      stress12_3_rest(i,j,iblk) = stress12_3_bry(i,j,iblk)
-                      stress12_4_rest(i,j,iblk) = stress12_4_bry(i,j,iblk)
-                      iceumask_rest(i,j,iblk) = iceumask_bry(i,j,iblk)
-                   enddo
-                   enddo
-             else
-                     if (my_task == master_task) write (nu_diag,*) ' ERROR: sea_ice_time_bry=T, but bdy_origin not defined'
-                     call abort_ice(error_message=subname//'if sea_ice_time_bry=T bdy_origin must be =extern or =intern', &
-                            file=__FILE__, line=__LINE__)
-             endif
-         endif
-      endif
-
-   enddo ! iblk
-   endif ! restore_ic
-#endif
-end subroutine ice_HaloRestore_getbdy
+   end subroutine ice_HaloRestore_getbdy
 
 !=======================================================================
 
 ! initialize restoring variables, based on set_state_var
 ! this routine assumes boundaries are not cyclic
 
-    subroutine set_restore_var (nx_block, ny_block, &
-                                ilo, ihi, jlo, jhi, &
-                                iglob,    jglob,    &
-                                iblock,   jblock,   &
-                                Tair, &
-                                Tf,                 &
-                                salinz,   Tmltz,    &
-                                tmask,    aicen,    &
-                                trcrn,    ntrcr,    &
-                                vicen,    vsnon)
+   subroutine set_restore_var (nx_block, ny_block, &
+                               ilo, ihi, jlo, jhi, &
+                               iglob,    jglob,    &
+                               iblock,   jblock,   &
+                               Tair, &
+                               Tf,                 &
+                               salinz,   Tmltz,    &
+                               tmask,    aicen,    &
+                               trcrn,    ntrcr,    &
+                               vicen,    vsnon)
 
 ! authors: E. C. Hunke, LANL
 
       use ice_arrays_column, only: hin_max
-      use ice_blocks, only: nblocks_x, nblocks_y
-      use ice_domain_size, only: nilyr, nslyr, ncat
 
       integer (kind=int_kind), intent(in) :: &
          nx_block, ny_block, & ! block dimensions
@@ -1070,23 +417,23 @@ end subroutine ice_HaloRestore_getbdy
          jblock            , & !
          ntrcr                 ! number of tracers in use
 
-      real (kind=dbl_kind), dimension (nx_block,ny_block), intent(in) :: &
+      real (kind=dbl_kind), dimension (:,:), intent(in) :: & ! (nx_block,ny_block)
          Tair    , & ! air temperature  (K)
          Tf          ! freezing temperature (C)
 
-      real (kind=dbl_kind), dimension (nx_block,ny_block,nilyr), intent(in) :: &
+      real (kind=dbl_kind), dimension (:,:,:), intent(in) :: & ! (nx_block,ny_block,nilyr)
          salinz  , & ! initial salinity profile
          Tmltz       ! initial melting temperature profile
 
-      logical (kind=log_kind), dimension (nx_block,ny_block), intent(in) :: &
+      logical (kind=log_kind), dimension (:,:), intent(in) :: & ! (nx_block,ny_block)
          tmask      ! true for ice/ocean cells
 
-      real (kind=dbl_kind), dimension (nx_block,ny_block,ncat), intent(out) :: &
+      real (kind=dbl_kind), dimension (:,:,:), intent(out) :: & ! (nx_block,ny_block,ncat)
          aicen , & ! concentration of ice
          vicen , & ! volume per unit area of ice          (m)
          vsnon     ! volume per unit area of snow         (m)
 
-      real (kind=dbl_kind), dimension (nx_block,ny_block,ntrcr,ncat), intent(out) :: &
+      real (kind=dbl_kind), dimension (:,:,:,:), intent(out) :: & ! (nx_block,ny_block,ntrcr,ncat)
          trcrn     ! ice tracers
                    ! 1: surface temperature of ice/snow (C)
 
@@ -1299,583 +646,295 @@ end subroutine ice_HaloRestore_getbdy
    end subroutine set_restore_var
 
 !=======================================================================
-
 !  This subroutine is intended for restoring the ice state to desired
-!  values in cells surrounding the grid.
-!  Note: This routine will need to be modified for nghost > 1.
-!        We assume padding occurs only on east and north edges.
+!  values in halo cells surrounding the grid.
 
- subroutine ice_HaloRestore
+   subroutine ice_HaloRestore
 
-      use ice_blocks, only: block, get_block, nblocks_x, nblocks_y
       use ice_calendar, only: dt
-      use ice_domain, only: ew_boundary_type, ns_boundary_type, &
-          nblocks, blocks_ice
-      use ice_communicate, only: my_task, master_task
-      use ice_fileunits, only: nu_diag
 
-!-----------------------------------------------------------------------
-!
-!  local variables
-!
-!-----------------------------------------------------------------------
+      ! local variables
 
-   integer (int_kind) :: &
-     i,j,iblk,nt,n,      &! dummy loop indices
-     ilo,ihi,jlo,jhi,    &! beginning and end of physical domain
-     ibc,                &! ghost cell column or row
-     ntrcr,              &!
-     npad                 ! padding column/row counter
+      integer (int_kind) :: &
+         iblk,i,j,n,nt,      & ! dummy loop indices
+         ilo,ihi,jlo,jhi,    & ! beginning and end of physical domain
+         ntrcr                 ! number of tracers in use
 
-   type (block) :: &
-     this_block  ! block info for current block
+      type (block) :: &
+         this_block  ! block info for current block
 
-   real (dbl_kind) :: &
-     secday,             &!
-     ctime,              &! dt/trest
-     puny
-   logical (kind=log_kind) :: &
-         l_stop          ! if true, abort model
+      real (dbl_kind) :: &
+         secday,             & !
+         crestore,           & ! restoring value restoring term, dt/trest
+         clovalue,           & ! local value restoring term, 1 - dt/trest
+         puny
 
-   integer (kind=int_kind) :: &
-      istop, jstop, k    ! indices of grid cell where model aborts
+      logical (kind=log_kind) :: &
+         l_stop                ! if true, abort model
 
-   character(len=*), parameter :: subname = '(ice_HaloRestore)'
+      integer (kind=int_kind) :: &
+         istop, jstop, k       ! indices of grid cell where model aborts
 
-   l_stop = .false.
-   call ice_timer_start(timer_bound)
-   call icepack_query_parameters(secday_out=secday)
-   call icepack_query_tracer_sizes(ntrcr_out=ntrcr)
-   call icepack_warnings_flush(nu_diag)
-   if (icepack_warnings_aborted()) call abort_ice(error_message=subname, &
-      file=__FILE__, line=__LINE__)
+      character(len=*), parameter :: subname = '(ice_HaloRestore)'
 
-!-----------------------------------------------------------------------
-!
-!  Initialize
-!
-!-----------------------------------------------------------------------
+      if (.not. restore_ice) return
+
+      l_stop = .false.
+      call ice_timer_start(timer_bound)
+
+      call icepack_query_parameters(secday_out=secday)
+      call icepack_query_tracer_sizes(ntrcr_out=ntrcr)
+      call icepack_warnings_flush(nu_diag)
+      if (icepack_warnings_aborted()) call abort_ice(error_message=subname, &
+         file=__FILE__, line=__LINE__)
+
+      !-----------------------------------------------------------------------
+      !  Initialize
+      !-----------------------------------------------------------------------
 
       ! for now, use same restoring constant as for SST
-      if (trestore == 0) then
-         trest = dt          ! use data instantaneously
+      if (trestore == c0) then
+         crestore = c1
+         clovalue = c0
       else
-         trest = real(trestore,kind=dbl_kind) * secday ! seconds
+         crestore = max(abs(dt/(trestore*secday)),c1)
+         clovalue = c1 - crestore
       endif
-      ctime = dt/trest
 
-!-----------------------------------------------------------------------
-!
-!  Restore values in cells surrounding the grid
-!
-!-----------------------------------------------------------------------
-   if ((sea_ice_time_bry) .and. (bdy_origin=='intern' .or. bdy_origin=='restart_f')) then
-   write(nu_diag,*) 'stressm_3 before : ',sum(uvel(2,7,:))
-   write(nu_diag,*) 'ctime : ',ctime
-   call ice_HaloRestore_getbdy
-   write(nu_diag,*) 'stressm_3_bdy before : ',sum(uvel_rest(2,7,:))
-   !$OMP PARALLEL DO PRIVATE(iblk,ilo,ihi,jlo,jhi,this_block, &
-   !$OMP                     i,j,n,nt,ibc,npad)
-   do iblk = 1, nblocks
-      this_block = get_block(blocks_ice(iblk),iblk)
-      ilo = this_block%ilo
-      ihi = this_block%ihi
-      jlo = this_block%jlo
-      jhi = this_block%jhi
-      if (this_block%iblock == 1) then              ! west edge
-         if (trim(ew_boundary_type) /= 'cyclic') then
-!tcx            do i = 1, ilo+nfact !test ims
-            do i = 1, ilo-1+nfact
-            do j = 1, ny_block
-            do n = 1, ncat
-               aicen(i,j,n,iblk) = aicen_rest(i,j,n,iblk) !&
-                  !+ (aicen_rest(i,j,n,iblk)-aicen(i,j,n,iblk))*ctime
-               vicen(i,j,n,iblk) = vicen_rest(i,j,n,iblk) !&
-                  !+ (vicen_rest(i,j,n,iblk)-vicen(i,j,n,iblk))*ctime
-               vsnon(i,j,n,iblk) = vsnon_rest(i,j,n,iblk) !&
-                  !+ (vsnon_rest(i,j,n,iblk)-vsnon(i,j,n,iblk))*ctime
-               dhsn(i,j,n,iblk) = dhs_rest(i,j,n,iblk) !&
-                      !+ (dhs_rest(i,j,n,iblk)-dhsn(i,j,n,iblk))*ctime
-               ffracn(i,j,n,iblk) = ffrac_rest(i,j,n,iblk) !&
-                       !+ (ffrac_rest(i,j,n,iblk)-ffracn(i,j,n,iblk))*ctime
-               do nt = 1, ntrcr
-                  trcrn(i,j,nt,n,iblk) = trcrn_rest(i,j,nt,n,iblk) !&
-                     !+ (trcrn_rest(i,j,nt,n,iblk)-trcrn(i,j,nt,n,iblk))*ctime
-               enddo
-            enddo
-               uvel(i,j,iblk) = uvel_rest(i,j,iblk)! &
-                       !+ (uvel_rest(i,j,iblk)-uvel(i,j,iblk))*ctime
-               vvel(i,j,iblk) = vvel_rest(i,j,iblk) !&
-                       !+ (vvel_rest(i,j,iblk)-vvel(i,j,iblk))*ctime
-               scale_factor(i,j,iblk) = scale_factor_rest(i,j,iblk) !&
-                       !+ (scale_factor_rest(i,j,iblk)-scale_factor(i,j,iblk))*ctime
-               swvdr(i,j,iblk) = swvdr_rest(i,j,iblk) !&
-                       !+ (swvdr_rest(i,j,iblk)-swvdr(i,j,iblk))*ctime
-               swvdf(i,j,iblk) = swvdf_rest(i,j,iblk) !&
-                       !+ (swvdf_rest(i,j,iblk)-swvdf(i,j,iblk))*ctime
-               swidr(i,j,iblk) = swidr_rest(i,j,iblk) !&
-                       !+ (swidr_rest(i,j,iblk)-swidr(i,j,iblk))*ctime
-               swidf(i,j,iblk) = swidf_rest(i,j,iblk) !&
-                       !+ (swidf_rest(i,j,iblk)-swidf(i,j,iblk))*ctime
-               strocnxT_iavg(i,j,iblk) = strocnxT_rest(i,j,iblk) !&
-                       !+ (strocnxT_rest(i,j,iblk)-strocnxT_iavg(i,j,iblk))*ctime
-               strocnyT_iavg(i,j,iblk) = strocnyT_rest(i,j,iblk) !&
-                       !+ (strocnyT_rest(i,j,iblk)-strocnyT_iavg(i,j,iblk))*ctime
-               stressp_1(i,j,iblk) = stressp_1_rest(i,j,iblk) !&
-                       !+ (stressp_1_rest(i,j,iblk)-stressp_1(i,j,iblk))*ctime
-               stressp_2(i,j,iblk) = stressp_2_rest(i,j,iblk) !&
-                       !+ (stressp_2_rest(i,j,iblk)-stressp_2(i,j,iblk))*ctime
-               stressp_3(i,j,iblk) = stressp_3_rest(i,j,iblk) !&
-                       !+ (stressp_3_rest(i,j,iblk)-stressp_3(i,j,iblk))*ctime
-               stressp_4(i,j,iblk) = stressp_4_rest(i,j,iblk) !&
-                       !+ (stressp_4_rest(i,j,iblk)-stressp_4(i,j,iblk))*ctime
-               stressm_1(i,j,iblk) = stressm_1_rest(i,j,iblk) !&
-                       !+ (stressm_1_rest(i,j,iblk)-stressm_1(i,j,iblk))*ctime
-               stressm_2(i,j,iblk) = stressm_2_rest(i,j,iblk) !&
-                       !+ (stressm_2_rest(i,j,iblk)-stressm_2(i,j,iblk))*ctime
-               stressm_3(i,j,iblk) = stressm_3_rest(i,j,iblk) !&
-                       !+ (stressm_3_rest(i,j,iblk)-stressm_3(i,j,iblk))*ctime
-               stressm_4(i,j,iblk) = stressm_4_rest(i,j,iblk) !&
-                       !+ (stressm_4_rest(i,j,iblk)-stressm_4(i,j,iblk))*ctime
-               stress12_1(i,j,iblk) = stress12_1_rest(i,j,iblk) !&
-                       !+ (stress12_1_rest(i,j,iblk)-stress12_1(i,j,iblk))*ctime
-               stress12_2(i,j,iblk) = stress12_2_rest(i,j,iblk) !&
-                       !+ (stress12_2_rest(i,j,iblk)-stress12_2(i,j,iblk))*ctime
-               stress12_3(i,j,iblk) = stress12_3_rest(i,j,iblk) !&
-                       !+ (stress12_3_rest(i,j,iblk)-stress12_3(i,j,iblk))*ctime
-               stress12_4(i,j,iblk) = stress12_4_rest(i,j,iblk) !&
-                       !+ (stress12_4_rest(i,j,iblk)-stress12_4(i,j,iblk))*ctime
-               iceUmask(i,j,iblk) = iceumask_rest(i,j,iblk)!&
-                       !+ (iceumask_rest(i,j,iblk)-iceUmask(i,j,iblk))*ctime
-               frz_onset(i,j,iblk) = frz_onset_rest(i,j,iblk) !&
-                       !+ (frz_onset_rest(i,j,iblk)-frz_onset(i,j,iblk))*ctime
-               fsnow(i,j,iblk) = fsnow_rest(i,j,iblk) !&
-                       !+ (fsnow_rest(i,j,iblk)-fsnow(i,j,iblk))*ctime
-               sst(i,j,iblk) = sst_rest(i,j,iblk) !&
-                       !+ (sst_rest(i,j,iblk)-sst(i,j,iblk))*ctime
-               frzmlt(i,j,iblk) = frzmelt_rest(i,j,iblk) !&
-                       !+ (frzmelt_rest(i,j,iblk)-frzmlt(i,j,iblk))*ctime
-            enddo
-            enddo
-         endif ! this_block%iblock == 1
-      endif ! ew_boundary_type
-      if (this_block%iblock == nblocks_x) then  ! east edge
-         if (trim(ew_boundary_type) /= 'cyclic') then
-#if (1 == 0)
-            ! locate ghost cell column (avoid padding)
-            ibc = nx_block
-            do i = nx_block, 1, -1
-               npad = 0
-               if (this_block%i_glob(i) == 0) then
-                  do j = 1, ny_block
-                     npad = npad + this_block%j_glob(j)
+      !-----------------------------------------------------------------------
+      !  Restore values in cells surrounding the grid
+      !-----------------------------------------------------------------------
+
+      if (bdy_origin == 'intern') then
+
+         do iblk = 1, nblocks
+            this_block = get_block(blocks_ice(iblk),iblk)
+            ilo = this_block%ilo
+            ihi = this_block%ihi
+            jlo = this_block%jlo
+            jhi = this_block%jhi
+
+            if (this_block%iblock == 1) then          ! west edge
+            if (trim(ew_boundary_type) /= 'cyclic') then
+               do n = 1, ncat
+               do j = 1, ny_block
+               do i = 1, ilo
+                  aicen (i,j,n,iblk) = aicen_rest(i,j,n,iblk)*crestore + aicen (i,j,n,iblk)*clovalue
+                  vicen (i,j,n,iblk) = vicen_rest(i,j,n,iblk)*crestore + vicen (i,j,n,iblk)*clovalue
+                  vsnon (i,j,n,iblk) = vsnon_rest(i,j,n,iblk)*crestore + vsnon (i,j,n,iblk)*clovalue
+                  do nt = 1, ntrcr
+                     trcrn(i,j,nt,n,iblk) = trcrn_rest(i,j,nt,n,iblk)*crestore + trcrn(i,j,nt,n,iblk)*clovalue
                   enddo
-               endif
-               if (npad /= 0) ibc = ibc - 1
-            enddo
-#endif
-
-! tcx velocity halo, add 1 block on east and north boundary
-!            do i = ihi-nfact-1, ibc!test ims: ibc
-!            do i = ihi-nfact, ibc!test ims: ibc
-            do i = ihi-nfact, ihi+nghost
-            do j = 1, ny_block
-               uvel(i,j,iblk) = uvel_rest(i,j,iblk)! &
-                       !+ (uvel_rest(i,j,iblk)-uvel(i,j,iblk))*ctime
-               vvel(i,j,iblk) = vvel_rest(i,j,iblk) !&
-                       !+ (vvel_rest(i,j,iblk)-vvel(i,j,iblk))*ctime
-            enddo
-            enddo
-
-!tcx            do i = ihi-nfact, ibc!test ims: ibc
-            do i = ihi+1-nfact, ihi+nghost
-            do j = 1, ny_block
-            do n = 1, ncat
-               aicen(i,j,n,iblk) = aicen_rest(i,j,n,iblk) !&
-                  !+ (aicen_rest(i,j,n,iblk)-aicen(i,j,n,iblk))*ctime
-               vicen(i,j,n,iblk) = vicen_rest(i,j,n,iblk) !&
-                  !+ (vicen_rest(i,j,n,iblk)-vicen(i,j,n,iblk))*ctime
-               vsnon(i,j,n,iblk) = vsnon_rest(i,j,n,iblk) !&
-                  !+ (vsnon_rest(i,j,n,iblk)-vsnon(i,j,n,iblk))*ctime
-               dhsn(i,j,n,iblk) = dhs_rest(i,j,n,iblk) !&
-                      !+ (dhs_rest(i,j,n,iblk)-dhsn(i,j,n,iblk))*ctime
-               ffracn(i,j,n,iblk) = ffrac_rest(i,j,n,iblk) !&
-                       !+ (ffrac_rest(i,j,n,iblk)-ffracn(i,j,n,iblk))*ctime
-               do nt = 1, ntrcr
-                  trcrn(i,j,nt,n,iblk) = trcrn_rest(i,j,nt,n,iblk) !&
-                     !+ (trcrn_rest(i,j,nt,n,iblk)-trcrn(i,j,nt,n,iblk))*ctime
                enddo
-            enddo
-!tcx extend halo fill on velocity points, see above
-!               uvel(i,j,iblk) = uvel_rest(i,j,iblk)! &
-!                       !+ (uvel_rest(i,j,iblk)-uvel(i,j,iblk))*ctime
-!               vvel(i,j,iblk) = vvel_rest(i,j,iblk) !&
-!                       !+ (vvel_rest(i,j,iblk)-vvel(i,j,iblk))*ctime
-               scale_factor(i,j,iblk) = scale_factor_rest(i,j,iblk) !&
-                       !+ (scale_factor_rest(i,j,iblk)-scale_factor(i,j,iblk))*ctime
-               swvdr(i,j,iblk) = swvdr_rest(i,j,iblk) !&
-                       !+ (swvdr_rest(i,j,iblk)-swvdr(i,j,iblk))*ctime
-               swvdf(i,j,iblk) = swvdf_rest(i,j,iblk) !&
-                       !+ (swvdf_rest(i,j,iblk)-swvdf(i,j,iblk))*ctime
-               swidr(i,j,iblk) = swidr_rest(i,j,iblk) !&
-                       !+ (swidr_rest(i,j,iblk)-swidr(i,j,iblk))*ctime
-               swidf(i,j,iblk) = swidf_rest(i,j,iblk) !&
-                       !+ (swidf_rest(i,j,iblk)-swidf(i,j,iblk))*ctime
-               strocnxT_iavg(i,j,iblk) = strocnxT_rest(i,j,iblk) !&
-                       !+ (strocnxT_rest(i,j,iblk)-strocnxT_iavg(i,j,iblk))*ctime
-               strocnyT_iavg(i,j,iblk) = strocnyT_rest(i,j,iblk) !&
-                       !+ (strocnyT_rest(i,j,iblk)-strocnyT_iavg(i,j,iblk))*ctime
-               stressp_1(i,j,iblk) = stressp_1_rest(i,j,iblk) !&
-                       !+ (stressp_1_rest(i,j,iblk)-stressp_1(i,j,iblk))*ctime
-               stressp_2(i,j,iblk) = stressp_2_rest(i,j,iblk) !&
-                       !+ (stressp_2_rest(i,j,iblk)-stressp_2(i,j,iblk))*ctime
-               stressp_3(i,j,iblk) = stressp_3_rest(i,j,iblk) !&
-                       !+ (stressp_3_rest(i,j,iblk)-stressp_3(i,j,iblk))*ctime
-               stressp_4(i,j,iblk) = stressp_4_rest(i,j,iblk) !&
-                       !+ (stressp_4_rest(i,j,iblk)-stressp_4(i,j,iblk))*ctime
-               stressm_1(i,j,iblk) = stressm_1_rest(i,j,iblk) !&
-                       !+ (stressm_1_rest(i,j,iblk)-stressm_1(i,j,iblk))*ctime
-               stressm_2(i,j,iblk) = stressm_2_rest(i,j,iblk) !&
-                       !+ (stressm_2_rest(i,j,iblk)-stressm_2(i,j,iblk))*ctime
-               stressm_3(i,j,iblk) = stressm_3_rest(i,j,iblk) !&
-               stressm_4(i,j,iblk) = stressm_4_rest(i,j,iblk) !&
-                       !+ (stressm_4_rest(i,j,iblk)-stressm_4(i,j,iblk))*ctime
-               stress12_1(i,j,iblk) = stress12_1_rest(i,j,iblk) !&
-                       !+ (stress12_1_rest(i,j,iblk)-stress12_1(i,j,iblk))*ctime
-               stress12_2(i,j,iblk) = stress12_2_rest(i,j,iblk) !&
-                       !+ (stress12_2_rest(i,j,iblk)-stress12_2(i,j,iblk))*ctime
-               stress12_3(i,j,iblk) = stress12_3_rest(i,j,iblk) !&
-                       !+ (stress12_3_rest(i,j,iblk)-stress12_3(i,j,iblk))*ctime
-               stress12_4(i,j,iblk) = stress12_4_rest(i,j,iblk) !&
-                       !+ (stress12_4_rest(i,j,iblk)-stress12_4(i,j,iblk))*ctime
-               iceUmask(i,j,iblk) = iceumask_rest(i,j,iblk)!&
-                       !+ (iceumask_rest(i,j,iblk)-iceUmask(i,j,iblk))*ctime
-               frz_onset(i,j,iblk) = frz_onset_rest(i,j,iblk) !&
-                       !+ (frz_onset_rest(i,j,iblk)-frz_onset(i,j,iblk))*ctime
-               fsnow(i,j,iblk) = fsnow_rest(i,j,iblk) !&
-                       !+ (fsnow_rest(i,j,iblk)-fsnow(i,j,iblk))*ctime
-               sst(i,j,iblk) = sst_rest(i,j,iblk) !&
-                       !+ (sst_rest(i,j,iblk)-sst(i,j,iblk))*ctime
-               frzmlt(i,j,iblk) = frzmelt_rest(i,j,iblk) !&
-                       !+ (frzmelt_rest(i,j,iblk)-frzmlt(i,j,iblk))*ctime
-            enddo
-            enddo
-         endif ! ew_boundary_type
-      endif ! this_block%iblock == nblocks_x
-      if (this_block%jblock == 1) then              ! south edge
-         if (trim(ns_boundary_type) /= 'cyclic') then
-!tcx            do j = 1, jlo+nfact
-            do j = 1, jlo-1+nfact
-            do i = 1, nx_block
-            do n = 1, ncat
-               aicen(i,j,n,iblk) = aicen_rest(i,j,n,iblk) !&
-                  !+ (aicen_rest(i,j,n,iblk)-aicen(i,j,n,iblk))*ctime
-               vicen(i,j,n,iblk) = vicen_rest(i,j,n,iblk) !&
-                  !+ (vicen_rest(i,j,n,iblk)-vicen(i,j,n,iblk))*ctime
-               vsnon(i,j,n,iblk) = vsnon_rest(i,j,n,iblk) !&
-                  !+ (vsnon_rest(i,j,n,iblk)-vsnon(i,j,n,iblk))*ctime
-               dhsn(i,j,n,iblk) = dhs_rest(i,j,n,iblk) !&
-                      !+ (dhs_rest(i,j,n,iblk)-dhsn(i,j,n,iblk))*ctime
-               ffracn(i,j,n,iblk) = ffrac_rest(i,j,n,iblk) !&
-                       !+ (ffrac_rest(i,j,n,iblk)-ffracn(i,j,n,iblk))*ctime
-               do nt = 1, ntrcr
-                  trcrn(i,j,nt,n,iblk) = trcrn_rest(i,j,nt,n,iblk) !&
-                     !+ (trcrn_rest(i,j,nt,n,iblk)-trcrn(i,j,nt,n,iblk))*ctime
                enddo
-            enddo
-               uvel(i,j,iblk) = uvel_rest(i,j,iblk)! &
-                       !+ (uvel_rest(i,j,iblk)-uvel(i,j,iblk))*ctime
-               vvel(i,j,iblk) = vvel_rest(i,j,iblk) !&
-                       !+ (vvel_rest(i,j,iblk)-vvel(i,j,iblk))*ctime
-               scale_factor(i,j,iblk) = scale_factor_rest(i,j,iblk) !&
-                       !+ (scale_factor_rest(i,j,iblk)-scale_factor(i,j,iblk))*ctime
-               swvdr(i,j,iblk) = swvdr_rest(i,j,iblk) !&
-                       !+ (swvdr_rest(i,j,iblk)-swvdr(i,j,iblk))*ctime
-               swvdf(i,j,iblk) = swvdf_rest(i,j,iblk) !&
-                       !+ (swvdf_rest(i,j,iblk)-swvdf(i,j,iblk))*ctime
-               swidr(i,j,iblk) = swidr_rest(i,j,iblk) !&
-                       !+ (swidr_rest(i,j,iblk)-swidr(i,j,iblk))*ctime
-               swidf(i,j,iblk) = swidf_rest(i,j,iblk) !&
-                       !+ (swidf_rest(i,j,iblk)-swidf(i,j,iblk))*ctime
-               strocnxT_iavg(i,j,iblk) = strocnxT_rest(i,j,iblk) !&
-                       !+ (strocnxT_rest(i,j,iblk)-strocnxT_iavg(i,j,iblk))*ctime
-               strocnyT_iavg(i,j,iblk) = strocnyT_rest(i,j,iblk) !&
-                       !+ (strocnyT_rest(i,j,iblk)-strocnyT_iavg(i,j,iblk))*ctime
-               stressp_1(i,j,iblk) = stressp_1_rest(i,j,iblk) !&
-                       !+ (stressp_1_rest(i,j,iblk)-stressp_1(i,j,iblk))*ctime
-               stressp_2(i,j,iblk) = stressp_2_rest(i,j,iblk) !&
-                       !+ (stressp_2_rest(i,j,iblk)-stressp_2(i,j,iblk))*ctime
-               stressp_3(i,j,iblk) = stressp_3_rest(i,j,iblk) !&
-                       !+ (stressp_3_rest(i,j,iblk)-stressp_3(i,j,iblk))*ctime
-               stressp_4(i,j,iblk) = stressp_4_rest(i,j,iblk) !&
-                       !+ (stressp_4_rest(i,j,iblk)-stressp_4(i,j,iblk))*ctime
-               stressm_1(i,j,iblk) = stressm_1_rest(i,j,iblk) !&
-                       !+ (stressm_1_rest(i,j,iblk)-stressm_1(i,j,iblk))*ctime
-               stressm_2(i,j,iblk) = stressm_2_rest(i,j,iblk) !&
-                       !+ (stressm_2_rest(i,j,iblk)-stressm_2(i,j,iblk))*ctime
-               stressm_3(i,j,iblk) = stressm_3_rest(i,j,iblk) !&
-               stressm_4(i,j,iblk) = stressm_4_rest(i,j,iblk) !&
-                       !+ (stressm_4_rest(i,j,iblk)-stressm_4(i,j,iblk))*ctime
-               stress12_1(i,j,iblk) = stress12_1_rest(i,j,iblk) !&
-                       !+ (stress12_1_rest(i,j,iblk)-stress12_1(i,j,iblk))*ctime
-               stress12_2(i,j,iblk) = stress12_2_rest(i,j,iblk) !&
-                       !+ (stress12_2_rest(i,j,iblk)-stress12_2(i,j,iblk))*ctime
-               stress12_3(i,j,iblk) = stress12_3_rest(i,j,iblk) !&
-                       !+ (stress12_3_rest(i,j,iblk)-stress12_3(i,j,iblk))*ctime
-               stress12_4(i,j,iblk) = stress12_4_rest(i,j,iblk) !&
-                       !+ (stress12_4_rest(i,j,iblk)-stress12_4(i,j,iblk))*ctime
-               iceUmask(i,j,iblk) = iceumask_rest(i,j,iblk)!&
-                       !+ (iceumask_rest(i,j,iblk)-iceUmask(i,j,iblk))*ctime
-               frz_onset(i,j,iblk) = frz_onset_rest(i,j,iblk) !&
-                       !+ (frz_onset_rest(i,j,iblk)-frz_onset(i,j,iblk))*ctime
-               fsnow(i,j,iblk) = fsnow_rest(i,j,iblk) !&
-                       !+ (fsnow_rest(i,j,iblk)-fsnow(i,j,iblk))*ctime
-               sst(i,j,iblk) = sst_rest(i,j,iblk) !&
-                       !+ (sst_rest(i,j,iblk)-sst(i,j,iblk))*ctime
-               frzmlt(i,j,iblk) = frzmelt_rest(i,j,iblk) !&
-                       !+ (frzmelt_rest(i,j,iblk)-frzmlt(i,j,iblk))*ctime
-            enddo
-            enddo
-         endif !ns_boundary_type
-      endif ! this_block%jblock == 1
-      if (this_block%jblock == nblocks_y) then  ! north edge
-         if (trim(ns_boundary_type) /= 'cyclic' .and. &
-             trim(ns_boundary_type) /= 'tripole' .and. &
-             trim(ns_boundary_type) /= 'tripoleT') then
-#if (1 == 0)
-            ! locate ghost cell row (avoid padding)
-            ibc = ny_block
-            do j = ny_block, 1, -1
-               npad = 0
-               if (this_block%j_glob(j) == 0) then
-                  do i = 1, nx_block
-                     npad = npad + this_block%i_glob(i)
+               enddo
+            endif
+            endif
+
+            if (this_block%iblock == nblocks_x) then  ! east edge
+            if (trim(ew_boundary_type) /= 'cyclic') then
+               do n = 1, ncat
+               do j = 1, ny_block
+               do i = ihi, ihi+nghost
+                  aicen (i,j,n,iblk) = aicen_rest(i,j,n,iblk)*crestore + aicen (i,j,n,iblk)*clovalue
+                  vicen (i,j,n,iblk) = vicen_rest(i,j,n,iblk)*crestore + vicen (i,j,n,iblk)*clovalue
+                  vsnon (i,j,n,iblk) = vsnon_rest(i,j,n,iblk)*crestore + vsnon (i,j,n,iblk)*clovalue
+                  do nt = 1, ntrcr
+                     trcrn(i,j,nt,n,iblk) = trcrn_rest(i,j,nt,n,iblk)*crestore + trcrn(i,j,nt,n,iblk)*clovalue
                   enddo
-               endif
-               if (npad /= 0) ibc = ibc - 1
-            enddo
-
-   write(nu_diag,*) subname,'tcx11',ny_block,npad,ibc
-#endif
-
-! tcx velocity halo, add 1 block on east and north boundary
-!            do j = jhi-nfact-1, ibc
-!            do j = jhi-nfact, ibc
-            do j = jhi-nfact, jhi+nghost
-            do i = 1, nx_block
-               uvel(i,j,iblk) = uvel_rest(i,j,iblk)! &
-                       !+ (uvel_rest(i,j,iblk)-uvel(i,j,iblk))*ctime
-               vvel(i,j,iblk) = vvel_rest(i,j,iblk) !&
-                       !+ (vvel_rest(i,j,iblk)-vvel(i,j,iblk))*ctime
-            enddo
-            enddo
-
-!tcx            do j = jhi-nfact, ibc
-            do j = jhi+1-nfact, jhi+nghost
-            do i = 1, nx_block
-            do n = 1, ncat
-               aicen(i,j,n,iblk) = aicen_rest(i,j,n,iblk) !&
-                  !+ (aicen_rest(i,j,n,iblk)-aicen(i,j,n,iblk))*ctime
-               vicen(i,j,n,iblk) = vicen_rest(i,j,n,iblk) !&
-                  !+ (vicen_rest(i,j,n,iblk)-vicen(i,j,n,iblk))*ctime
-               vsnon(i,j,n,iblk) = vsnon_rest(i,j,n,iblk) !&
-                  !+ (vsnon_rest(i,j,n,iblk)-vsnon(i,j,n,iblk))*ctime
-               dhsn(i,j,n,iblk) = dhs_rest(i,j,n,iblk) !&
-                      !+ (dhs_rest(i,j,n,iblk)-dhsn(i,j,n,iblk))*ctime
-               ffracn(i,j,n,iblk) = ffrac_rest(i,j,n,iblk) !&
-                       !+ (ffrac_rest(i,j,n,iblk)-ffracn(i,j,n,iblk))*ctime
-               do nt = 1, ntrcr
-                  trcrn(i,j,nt,n,iblk) = trcrn_rest(i,j,nt,n,iblk) !&
-                     !+ (trcrn_rest(i,j,nt,n,iblk)-trcrn(i,j,nt,n,iblk))*ctime
                enddo
-            enddo
-!tcx extend halo fill on velocity points, see above
-!               uvel(i,j,iblk) = uvel_rest(i,j,iblk)! &
-!                       !+ (uvel_rest(i,j,iblk)-uvel(i,j,iblk))*ctime
-!               vvel(i,j,iblk) = vvel_rest(i,j,iblk) !&
-!                       !+ (vvel_rest(i,j,iblk)-vvel(i,j,iblk))*ctime
-               scale_factor(i,j,iblk) = scale_factor_rest(i,j,iblk) !&
-                       !+ (scale_factor_rest(i,j,iblk)-scale_factor(i,j,iblk))*ctime
-               swvdr(i,j,iblk) = swvdr_rest(i,j,iblk) !&
-                       !+ (swvdr_rest(i,j,iblk)-swvdr(i,j,iblk))*ctime
-               swvdf(i,j,iblk) = swvdf_rest(i,j,iblk) !&
-                       !+ (swvdf_rest(i,j,iblk)-swvdf(i,j,iblk))*ctime
-               swidr(i,j,iblk) = swidr_rest(i,j,iblk) !&
-                       !+ (swidr_rest(i,j,iblk)-swidr(i,j,iblk))*ctime
-               swidf(i,j,iblk) = swidf_rest(i,j,iblk) !&
-                       !+ (swidf_rest(i,j,iblk)-swidf(i,j,iblk))*ctime
-               strocnxT_iavg(i,j,iblk) = strocnxT_rest(i,j,iblk) !&
-                       !+ (strocnxT_rest(i,j,iblk)-strocnxT_iavg(i,j,iblk))*ctime
-               strocnyT_iavg(i,j,iblk) = strocnyT_rest(i,j,iblk) !&
-                       !+ (strocnyT_rest(i,j,iblk)-strocnyT_iavg(i,j,iblk))*ctime
-               stressp_1(i,j,iblk) = stressp_1_rest(i,j,iblk) !&
-                       !+ (stressp_1_rest(i,j,iblk)-stressp_1(i,j,iblk))*ctime
-               stressp_2(i,j,iblk) = stressp_2_rest(i,j,iblk) !&
-                       !+ (stressp_2_rest(i,j,iblk)-stressp_2(i,j,iblk))*ctime
-               stressp_3(i,j,iblk) = stressp_3_rest(i,j,iblk) !&
-                       !+ (stressp_3_rest(i,j,iblk)-stressp_3(i,j,iblk))*ctime
-               stressp_4(i,j,iblk) = stressp_4_rest(i,j,iblk) !&
-                       !+ (stressp_4_rest(i,j,iblk)-stressp_4(i,j,iblk))*ctime
-               stressm_1(i,j,iblk) = stressm_1_rest(i,j,iblk) !&
-                       !+ (stressm_1_rest(i,j,iblk)-stressm_1(i,j,iblk))*ctime
-               stressm_2(i,j,iblk) = stressm_2_rest(i,j,iblk) !&
-                       !+ (stressm_2_rest(i,j,iblk)-stressm_2(i,j,iblk))*ctime
-               stressm_3(i,j,iblk) = stressm_3_rest(i,j,iblk) !&
-               stressm_4(i,j,iblk) = stressm_4_rest(i,j,iblk) !&
-                       !+ (stressm_4_rest(i,j,iblk)-stressm_4(i,j,iblk))*ctime
-               stress12_1(i,j,iblk) = stress12_1_rest(i,j,iblk) !&
-                       !+ (stress12_1_rest(i,j,iblk)-stress12_1(i,j,iblk))*ctime
-               stress12_2(i,j,iblk) = stress12_2_rest(i,j,iblk) !&
-                       !+ (stress12_2_rest(i,j,iblk)-stress12_2(i,j,iblk))*ctime
-               stress12_3(i,j,iblk) = stress12_3_rest(i,j,iblk) !&
-                       !+ (stress12_3_rest(i,j,iblk)-stress12_3(i,j,iblk))*ctime
-               stress12_4(i,j,iblk) = stress12_4_rest(i,j,iblk) !&
-                       !+ (stress12_4_rest(i,j,iblk)-stress12_4(i,j,iblk))*ctime
-               iceUmask(i,j,iblk) = iceumask_rest(i,j,iblk)!&
-                       !+ (iceumask_rest(i,j,iblk)-iceUmask(i,j,iblk))*ctime
-               frz_onset(i,j,iblk) = frz_onset_rest(i,j,iblk) !&
-                       !+ (frz_onset_rest(i,j,iblk)-frz_onset(i,j,iblk))*ctime
-               fsnow(i,j,iblk) = fsnow_rest(i,j,iblk) !&
-                       !+ (fsnow_rest(i,j,iblk)-fsnow(i,j,iblk))*ctime
-               sst(i,j,iblk) = sst_rest(i,j,iblk) !&
-                       !+ (sst_rest(i,j,iblk)-sst(i,j,iblk))*ctime
-               frzmlt(i,j,iblk) = frzmelt_rest(i,j,iblk) !&
-                       !+ (frzmelt_rest(i,j,iblk)-frzmlt(i,j,iblk))*ctime
-            enddo
-            enddo
-         endif !ns_boundary_type
-      endif !this_block%jblock == nblocks_y
-   enddo !iblk
-   !$OMP END PARALLEL DO
-   write(nu_diag,*) 'stressm_3 after : ',sum(uvel(2,7,:))
-   !call bound_state (aicen,vicen, vsnon, ntrcr, trcrn)
-   else
-     do iblk = 1, nblocks
-      this_block = get_block(blocks_ice(iblk),iblk)
-      ilo = this_block%ilo
-      ihi = this_block%ihi
-      jlo = this_block%jlo
-      jhi = this_block%jhi
-
-      if (this_block%iblock == 1) then              ! west edge
-         if (trim(ew_boundary_type) /= 'cyclic') then
-            do n = 1, ncat
-            do j = 1, ny_block
-            do i = 1, ilo
-               aicen(i,j,n,iblk) = aicen(i,j,n,iblk) &
-                  + (aicen_rest(i,j,n,iblk)-aicen(i,j,n,iblk))*ctime
-               vicen(i,j,n,iblk) = vicen(i,j,n,iblk) &
-                  + (vicen_rest(i,j,n,iblk)-vicen(i,j,n,iblk))*ctime
-               vsnon(i,j,n,iblk) = vsnon(i,j,n,iblk) &
-                  + (vsnon_rest(i,j,n,iblk)-vsnon(i,j,n,iblk))*ctime
-               do nt = 1, ntrcr
-                  trcrn(i,j,nt,n,iblk) = trcrn(i,j,nt,n,iblk) &
-                     + (trcrn_rest(i,j,nt,n,iblk)-trcrn(i,j,nt,n,iblk))*ctime
                enddo
-            enddo
-            enddo
-            enddo
-         endif
-      endif
+               enddo
+            endif
+            endif
 
-      if (this_block%iblock == nblocks_x) then  ! east edge
-         if (trim(ew_boundary_type) /= 'cyclic') then
-            ! locate ghost cell column (avoid padding)
-            ibc = nx_block
-            do i = nx_block, 1, -1
-               npad = 0
-               if (this_block%i_glob(i) == 0) then
-                  do j = 1, ny_block
-                     npad = npad + this_block%j_glob(j)
+            if (this_block%jblock == 1) then          ! south edge
+            if (trim(ns_boundary_type) /= 'cyclic') then
+               do n = 1, ncat
+               do j = 1, jlo
+               do i = 1, nx_block
+                  aicen (i,j,n,iblk) = aicen_rest(i,j,n,iblk)*crestore + aicen (i,j,n,iblk)*clovalue
+                  vicen (i,j,n,iblk) = vicen_rest(i,j,n,iblk)*crestore + vicen (i,j,n,iblk)*clovalue
+                  vsnon (i,j,n,iblk) = vsnon_rest(i,j,n,iblk)*crestore + vsnon (i,j,n,iblk)*clovalue
+                  do nt = 1, ntrcr
+                     trcrn(i,j,nt,n,iblk) = trcrn_rest(i,j,nt,n,iblk)*crestore + trcrn(i,j,nt,n,iblk)*clovalue
                   enddo
-               endif
-               if (npad /= 0) ibc = ibc - 1
-            enddo
-
-            do n = 1, ncat
-            do j = 1, ny_block
-            do i = ihi, ibc
-               aicen(i,j,n,iblk) = aicen(i,j,n,iblk) &
-                  + (aicen_rest(i,j,n,iblk)-aicen(i,j,n,iblk))*ctime
-               vicen(i,j,n,iblk) = vicen(i,j,n,iblk) &
-                  + (vicen_rest(i,j,n,iblk)-vicen(i,j,n,iblk))*ctime
-               vsnon(i,j,n,iblk) = vsnon(i,j,n,iblk) &
-                  + (vsnon_rest(i,j,n,iblk)-vsnon(i,j,n,iblk))*ctime
-               do nt = 1, ntrcr
-                  trcrn(i,j,nt,n,iblk) = trcrn(i,j,nt,n,iblk) &
-                     + (trcrn_rest(i,j,nt,n,iblk)-trcrn(i,j,nt,n,iblk))*ctime
                enddo
-            enddo
-            enddo
-            enddo
-         endif
-      endif
-
-      if (this_block%jblock == 1) then              ! south edge
-         if (trim(ns_boundary_type) /= 'cyclic') then
-            do n = 1, ncat
-            do j = 1, jlo
-            do i = 1, nx_block
-               aicen(i,j,n,iblk) = aicen(i,j,n,iblk) &
-                  + (aicen_rest(i,j,n,iblk)-aicen(i,j,n,iblk))*ctime
-               vicen(i,j,n,iblk) = vicen(i,j,n,iblk) &
-                  + (vicen_rest(i,j,n,iblk)-vicen(i,j,n,iblk))*ctime
-               vsnon(i,j,n,iblk) = vsnon(i,j,n,iblk) &
-                  + (vsnon_rest(i,j,n,iblk)-vsnon(i,j,n,iblk))*ctime
-               do nt = 1, ntrcr
-                  trcrn(i,j,nt,n,iblk) = trcrn(i,j,nt,n,iblk) &
-                     + (trcrn_rest(i,j,nt,n,iblk)-trcrn(i,j,nt,n,iblk))*ctime
                enddo
-            enddo
-            enddo
-            enddo
-         endif
-      endif
+               enddo
+            endif
+            endif
 
-      if (this_block%jblock == nblocks_y) then  ! north edge
-         if (trim(ns_boundary_type) /= 'cyclic' .and. &
-             trim(ns_boundary_type) /= 'tripole' .and. &
-             trim(ns_boundary_type) /= 'tripoleT') then
-            ! locate ghost cell row (avoid padding)
-            ibc = ny_block
-            do j = ny_block, 1, -1
-               npad = 0
-               if (this_block%j_glob(j) == 0) then
-                  do i = 1, nx_block
-                     npad = npad + this_block%i_glob(i)
+            if (this_block%jblock == nblocks_y) then  ! north edge
+            if (trim(ns_boundary_type) /= 'cyclic' .and. &
+                trim(ns_boundary_type) /= 'tripole' .and. &
+                trim(ns_boundary_type) /= 'tripoleT') then
+
+               do n = 1, ncat
+               do j = jhi, jhi+nghost
+               do i = 1, nx_block
+                  aicen (i,j,n,iblk) = aicen_rest(i,j,n,iblk)*crestore + aicen (i,j,n,iblk)*clovalue
+                  vicen (i,j,n,iblk) = vicen_rest(i,j,n,iblk)*crestore + vicen (i,j,n,iblk)*clovalue
+                  vsnon (i,j,n,iblk) = vsnon_rest(i,j,n,iblk)*crestore + vsnon (i,j,n,iblk)*clovalue
+                  do nt = 1, ntrcr
+                     trcrn(i,j,nt,n,iblk) = trcrn_rest(i,j,nt,n,iblk)*crestore + trcrn(i,j,nt,n,iblk)*clovalue
                   enddo
-               endif
-               if (npad /= 0) ibc = ibc - 1
-            enddo
-
-            do n = 1, ncat
-            do j = jhi, ibc
-            do i = 1, nx_block
-               aicen(i,j,n,iblk) = aicen(i,j,n,iblk) &
-                  + (aicen_rest(i,j,n,iblk)-aicen(i,j,n,iblk))*ctime
-               vicen(i,j,n,iblk) = vicen(i,j,n,iblk) &
-                  + (vicen_rest(i,j,n,iblk)-vicen(i,j,n,iblk))*ctime
-               vsnon(i,j,n,iblk) = vsnon(i,j,n,iblk) &
-                  + (vsnon_rest(i,j,n,iblk)-vsnon(i,j,n,iblk))*ctime
-               do nt = 1, ntrcr
-                  trcrn(i,j,nt,n,iblk) = trcrn(i,j,nt,n,iblk) &
-                     + (trcrn_rest(i,j,nt,n,iblk)-trcrn(i,j,nt,n,iblk))*ctime
                enddo
-            enddo
-            enddo
-            enddo
-         endif
+               enddo
+               enddo
+            endif
+            endif
+         enddo ! iblk
+
+      elseif (bdy_origin == 'restart_f') then
+
+         if (sea_ice_time_bry) call ice_HaloRestore_getbdy()
+
+         do iblk = 1, nblocks
+            this_block = get_block(blocks_ice(iblk),iblk)
+            ilo = this_block%ilo
+            ihi = this_block%ihi
+            jlo = this_block%jlo
+            jhi = this_block%jhi
+
+            if (trim(ew_boundary_type) /= 'cyclic') then
+               ! West Edge
+               if (this_block%iblock == 1) then
+                  call restore_cells(iblk, 1, ilo-1+nfact, 1, ny_block, &
+                       east=.false.,north=.false.,crestore=crestore)
+               endif
+               ! East Edge
+               if (this_block%iblock == nblocks_x) then
+                  call restore_cells(iblk, ihi+1-nfact, ihi+nghost, 1, ny_block, &
+                       east=.true.,north=.false.,crestore=crestore)
+               endif
+            endif
+
+            ! South Edge
+            if (trim(ns_boundary_type) /= 'cyclic') then
+               if (this_block%jblock == 1) then
+                  call restore_cells(iblk, 1, nx_block, 1, jlo-1+nfact, &
+                       east=.false.,north=.false.,crestore=crestore)
+               endif
+            endif
+
+            ! North Edge
+            if (trim(ns_boundary_type) /= 'cyclic' .and. &
+                trim(ns_boundary_type) /= 'tripole' .and. &
+                trim(ns_boundary_type) /= 'tripoleT') then
+               if (this_block%jblock == nblocks_y) then
+                  call restore_cells(iblk, 1, nx_block, jhi+1-nfact, jhi+nghost, &
+                       east=.false.,north=.true.,crestore=crestore)
+               endif
+            endif
+
+         enddo ! iblk
+
+      else
+
+         call abort_ice(error_message=subname//' ERROR: bdy_origin unknown = '//trim(bdy_origin), &
+            file=__FILE__, line=__LINE__)
+
       endif
 
-   enddo ! iblk
-   endif
+      call ice_timer_stop(timer_bound)
 
-   call ice_timer_stop(timer_bound)
-
- end subroutine ice_HaloRestore
+   end subroutine ice_HaloRestore
 
 !=======================================================================
 
-      end module ice_restoring
+   subroutine restore_cells(iblk,i1,i2,j1,j2,east,north,crestore)
+
+      integer(kind=int_kind), intent(in) :: &
+         iblk,      & ! block id
+         i1, i2,    & ! i start and end indices
+         j1, j2       ! j start and end indices
+
+      logical (kind=log_kind), intent(in) :: &
+         east, north  ! are these east or north edges
+
+      real (kind=dbl_kind), intent(in) :: &
+         crestore     ! restoring weight in restoring
+
+      ! local variable
+
+      integer(kind=int_kind) :: &
+         i, j, n, nt, ntrcr, & ! local indices
+         i1v, i2v,  & ! i start and end indices for velocity points
+         j1v, j2v     ! j start and end indices for velocity points
+
+      real(kind=dbl_kind) :: &
+         clovalue     ! local weight in restoring
+
+      character(len=*), parameter :: subname = '(ice_HaloRestore)'
+
+      if (crestore == c0) return
+
+      clovalue = c1 - crestore
+
+      call icepack_query_tracer_sizes(ntrcr_out=ntrcr)
+      call icepack_warnings_flush(nu_diag)
+      if (icepack_warnings_aborted()) call abort_ice(error_message=subname, &
+         file=__FILE__, line=__LINE__)
+
+      i1v = i1
+      i2v = i2
+      j1v = j1
+      j2v = j2
+      if (east ) i1v = i1 - 1
+      if (north) j1v = j1 - 1
+
+      ! NE gridcell
+      do i = i1v, i2v
+      do j = j1v, j2v
+         uvel(i,j,iblk) = uvel_rest(i,j,iblk)*crestore + uvel(i,j,iblk)*clovalue
+         vvel(i,j,iblk) = vvel_rest(i,j,iblk)*crestore + vvel(i,j,iblk)*clovalue
+      enddo
+      enddo
+
+      ! center gridcell
+      do i = i1,i2
+      do j = j1,j2
+         do n = 1, ncat
+            aicen (i,j,n,iblk) = aicen_rest(i,j,n,iblk)*crestore + aicen (i,j,n,iblk)*clovalue
+            vicen (i,j,n,iblk) = vicen_rest(i,j,n,iblk)*crestore + vicen (i,j,n,iblk)*clovalue
+            vsnon (i,j,n,iblk) = vsnon_rest(i,j,n,iblk)*crestore + vsnon (i,j,n,iblk)*clovalue
+            dhsn  (i,j,n,iblk) = dhs_rest  (i,j,n,iblk)*crestore + dhsn  (i,j,n,iblk)*clovalue
+            ffracn(i,j,n,iblk) = ffrac_rest(i,j,n,iblk)*crestore + ffracn(i,j,n,iblk)*clovalue
+            do nt = 1, ntrcr
+               trcrn(i,j,nt,n,iblk) = trcrn_rest(i,j,nt,n,iblk)*crestore + trcrn(i,j,nt,n,iblk)*clovalue
+            enddo
+         enddo
+         swvdr(i,j,iblk) = swvdr_rest(i,j,iblk)*crestore + swvdr(i,j,iblk)*clovalue
+         swvdf(i,j,iblk) = swvdf_rest(i,j,iblk)*crestore + swvdf(i,j,iblk)*clovalue
+         swidr(i,j,iblk) = swidr_rest(i,j,iblk)*crestore + swidr(i,j,iblk)*clovalue
+         swidf(i,j,iblk) = swidf_rest(i,j,iblk)*crestore + swidf(i,j,iblk)*clovalue
+         scale_factor(i,j,iblk) = scale_factor_rest(i,j,iblk)*crestore + scale_factor(i,j,iblk)*clovalue
+         strocnxT_iavg(i,j,iblk) = strocnxT_rest(i,j,iblk)*crestore + strocnxT_iavg(i,j,iblk)*clovalue
+         strocnyT_iavg(i,j,iblk) = strocnyT_rest(i,j,iblk)*crestore + strocnyT_iavg(i,j,iblk)*clovalue
+         stressp_1 (i,j,iblk) = stressp_1_rest (i,j,iblk)*crestore + stressp_1 (i,j,iblk)*clovalue
+         stressp_2 (i,j,iblk) = stressp_2_rest (i,j,iblk)*crestore + stressp_2 (i,j,iblk)*clovalue
+         stressp_3 (i,j,iblk) = stressp_3_rest (i,j,iblk)*crestore + stressp_3 (i,j,iblk)*clovalue
+         stressp_4 (i,j,iblk) = stressp_4_rest (i,j,iblk)*crestore + stressp_4 (i,j,iblk)*clovalue
+         stressm_1 (i,j,iblk) = stressm_1_rest (i,j,iblk)*crestore + stressm_1 (i,j,iblk)*clovalue
+         stressm_2 (i,j,iblk) = stressm_2_rest (i,j,iblk)*crestore + stressm_2 (i,j,iblk)*clovalue
+         stressm_3 (i,j,iblk) = stressm_3_rest (i,j,iblk)*crestore + stressm_3 (i,j,iblk)*clovalue
+         stressm_4 (i,j,iblk) = stressm_4_rest (i,j,iblk)*crestore + stressm_4 (i,j,iblk)*clovalue
+         stress12_1(i,j,iblk) = stress12_1_rest(i,j,iblk)*crestore + stress12_1(i,j,iblk)*clovalue
+         stress12_2(i,j,iblk) = stress12_2_rest(i,j,iblk)*crestore + stress12_2(i,j,iblk)*clovalue
+         stress12_3(i,j,iblk) = stress12_3_rest(i,j,iblk)*crestore + stress12_3(i,j,iblk)*clovalue
+         stress12_4(i,j,iblk) = stress12_4_rest(i,j,iblk)*crestore + stress12_4(i,j,iblk)*clovalue
+         iceUmask  (i,j,iblk) = iceumask_rest  (i,j,iblk)*crestore + iceUmask  (i,j,iblk)*clovalue
+         frz_onset (i,j,iblk) = frz_onset_rest (i,j,iblk)*crestore + frz_onset (i,j,iblk)*clovalue
+         fsnow     (i,j,iblk) = fsnow_rest     (i,j,iblk)*crestore + fsnow     (i,j,iblk)*clovalue
+         sst       (i,j,iblk) = sst_rest       (i,j,iblk)*crestore + sst       (i,j,iblk)*clovalue
+         frzmlt    (i,j,iblk) = frzmelt_rest   (i,j,iblk)*crestore + frzmlt    (i,j,iblk)*clovalue
+      enddo
+      enddo
+
+   end subroutine restore_cells
+!=======================================================================
+
+   end module ice_restoring
 
 !=======================================================================
