@@ -15,7 +15,8 @@
       use ice_domain_size, only: ncat, max_blocks, nilyr, nslyr
       use ice_domain, only: nblocks, blocks_ice, sea_ice_time_bry, bdy_origin, &
           ew_boundary_type, ns_boundary_type
-      use ice_dyn_shared, only: iceUmask
+! tcraig, iceUmask is a logical, can't restore it
+!      use ice_dyn_shared, only: iceUmask
       use ice_exit, only: abort_ice
       use ice_fileunits, only: nu_diag
       use ice_flux, only: stressp_1, stressp_2, stressp_3, &
@@ -90,7 +91,7 @@
          stress12_2_rest, &
          stress12_3_rest, &
          stress12_4_rest, &
-         iceumask_rest, &
+!         iceumask_rest, &
          frz_onset_rest, &
          fsnow_rest, &
          sst_rest, &
@@ -236,7 +237,7 @@
                    stress12_2_rest  (nx_block,ny_block,max_blocks), &
                    stress12_3_rest  (nx_block,ny_block,max_blocks), &
                    stress12_4_rest  (nx_block,ny_block,max_blocks), &
-                   iceumask_rest    (nx_block,ny_block,max_blocks), &
+!                   iceumask_rest    (nx_block,ny_block,max_blocks), &
                    frz_onset_rest   (nx_block,ny_block,max_blocks), &
                    fsnow_rest       (nx_block,ny_block,max_blocks),  &
                    ffrac_rest       (nx_block,ny_block,ncat,max_blocks),  &
@@ -265,7 +266,7 @@
          stress12_2_rest(:,:,:) = c0
          stress12_3_rest(:,:,:) = c0
          stress12_4_rest(:,:,:) = c0
-         iceumask_rest(:,:,:) = c0
+!         iceumask_rest(:,:,:) = c0
          frz_onset_rest(:,:,:) = c0
          fsnow_rest(:,:,:) = c0
          sst_rest(:,:,:) = c0
@@ -383,7 +384,7 @@
       stress12_2_rest(:,:,:) = stress12_2_bry(:,:,:)
       stress12_3_rest(:,:,:) = stress12_3_bry(:,:,:)
       stress12_4_rest(:,:,:) = stress12_4_bry(:,:,:)
-      iceumask_rest(:,:,:) = iceumask_bry(:,:,:)
+!      iceumask_rest(:,:,:) = iceumask_bry(:,:,:)
 
    end subroutine ice_HaloRestore_getbdy
 
@@ -924,7 +925,7 @@
          stress12_2(i,j,iblk) = stress12_2_rest(i,j,iblk)*crestore + stress12_2(i,j,iblk)*clovalue
          stress12_3(i,j,iblk) = stress12_3_rest(i,j,iblk)*crestore + stress12_3(i,j,iblk)*clovalue
          stress12_4(i,j,iblk) = stress12_4_rest(i,j,iblk)*crestore + stress12_4(i,j,iblk)*clovalue
-         iceUmask  (i,j,iblk) = iceumask_rest  (i,j,iblk)*crestore + iceUmask  (i,j,iblk)*clovalue
+!         iceUmask  (i,j,iblk) = iceumask_rest  (i,j,iblk)*crestore + iceUmask  (i,j,iblk)*clovalue
          frz_onset (i,j,iblk) = frz_onset_rest (i,j,iblk)*crestore + frz_onset (i,j,iblk)*clovalue
          fsnow     (i,j,iblk) = fsnow_rest     (i,j,iblk)*crestore + fsnow     (i,j,iblk)*clovalue
          sst       (i,j,iblk) = sst_rest       (i,j,iblk)*crestore + sst       (i,j,iblk)*clovalue
