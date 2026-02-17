@@ -3,6 +3,10 @@ restart        gx3     4x2x25x29x4   dslenderX2
 restart        gx1     64x1x16x16x10 dwghtfile
 restart        gx1     32x2x10x12x32 dsectcart,short
 restart        gbox180 16x1x6x6x60   dspacecurve,debugblocks
+restart        gbox80  4x2x23x21x6   boxgauss,dirichlet
+restart        gbox80  2x2x29x29     boxgauss,neumann
+restart        gbox80  6x2x13x12     boxgauss,closed
+restart        gbox80  8x2x6x7       boxgauss,cyclic
 decomp         gx3     4x2x25x29x5   none
 decomp         gx3     4x2x25x29     none
 decomp         gx3     4x2x25x29x5   dynpicard,reprosum
@@ -26,11 +30,17 @@ restart        gx3     16x2x3x3x100  droundrobin            restart_gx3_4x2x25x2
 restart        gx3     16x2x8x8x80   dspiralcenter          restart_gx3_4x2x25x29x4_dslenderX2
 restart        gx3     10x1x10x29x4  dsquarepop,thread      restart_gx3_4x2x25x29x4_dslenderX2
 restart        gx3     8x1x25x29     drakeX2,thread         restart_gx3_4x2x25x29x4_dslenderX2
+restart        gbox80  1x2x23x21x20  boxgauss,dirichlet       restart_gbox80_4x2x23x21x6_boxgauss_dirichlet
+restart        gbox80  1x1x15x17     boxgauss,neumann,thread  restart_gbox80_2x2x29x29_boxgauss_neumann
+restart        gbox80  1x4x12x13     boxgauss,closed          restart_gbox80_6x2x13x12_boxgauss_closed
+restart        gbox80  1x8x9x8       boxgauss,cyclic          restart_gbox80_8x2x6x7_boxgauss_cyclic
 
 smoke        gx3     4x2x25x29     debug,run2day,dslenderX2
 smoke        gx1     64x1x16x16    debug,run2day,dwghtfile
 smoke        gx1     32x2x10x12    debug,run2day,dsectcart
 smoke        gbox180 16x1x6x6      debug,run2day,dspacecurve,debugblocks
+smoke        gbox80  4x2x23x21x6   debug,run2day,boxgauss,dirichlet
+smoke        gbox80  2x2x29x29     debug,run2day,boxgauss,neumann
 smoke        gx3     1x1x25x58     debug,run2day,droundrobin,thread     smoke_gx3_4x2x25x29_debug_dslenderX2_run2day
 smoke        gx3     20x1x5x116    debug,run2day,dslenderX1,thread      smoke_gx3_4x2x25x29_debug_dslenderX2_run2day
 smoke        gx3     6x2x4x29      debug,run2day,dspacecurve            smoke_gx3_4x2x25x29_debug_dslenderX2_run2day
