@@ -565,7 +565,7 @@
                      endif
                   endif
 
-                  ! zero_gradient and newmann edges then corners
+                  ! zero_gradient and linear_extrap edges then corners
                   if (ew_boundary_type == 'zero_gradient' .or. ew_boundary_type == 'linear_extrap') then
                      wgt1 = c1  ! zero_gradient
                      wgt2 = c0
