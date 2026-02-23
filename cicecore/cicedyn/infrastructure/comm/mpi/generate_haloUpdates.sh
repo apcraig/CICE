@@ -20,7 +20,7 @@ file=HaloUpdate${intfc}.subr
 cdate=`date -u "+%F"`
 echo "generate ${file}"
 
-echo "intfc=${intfc}"
+#echo "intfc=${intfc}"
 if ! [[ ${intfc} =~ 2DL1 ]]; then
 
   # replacement variables
@@ -465,17 +465,17 @@ cat <<EOFF > $file
 
 !-----------------------------------------------------------------------
 !
-! Compute dirichlet and neumann BCs
+! Compute zero_gradient and linear_extrap BCs
 ! BCs in corner can be computed in either direction first
 ! Do full length of edges in both directions to address edge box corners, those halo points will be
 ! computed independently for each box.  Second pass (north/south) will clean global corners
 ! Needs to come after halo update because want halo to be filled by other methods (cyclic) first
-! before applying dirichlet/neumann in other direction
+! before applying zero_gradient/linear_extrap in other direction
 !
 !-----------------------------------------------------------------------
 
-   if (halo%ewBoundaryType == 'dirichlet' .or. halo%ewBoundaryType == 'neumann' .or. &
-       halo%nsBoundaryType == 'dirichlet' .or. halo%nsBoundaryType == 'neumann') then
+   if (halo%ewBoundaryType == 'zero_gradient' .or. halo%ewBoundaryType == 'linear_extrap' .or. &
+       halo%nsBoundaryType == 'zero_gradient' .or. halo%nsBoundaryType == 'linear_extrap') then
       do iblk = 1, halo%numLocalBlocks
          call get_block_parameter(halo%blockGlobalID(iblk),     &
                                   ilo=ilo,       ihi=ihi,       &
@@ -483,59 +483,75 @@ cat <<EOFF > $file
                                   iblock=iblock, jblock=jblock)
 
          if (iblock == 1) then                      ! west edge
-            do j = 1,ny_block
-            do i = 1,nghost
-               if (halo%ewBoundaryType == 'dirichlet'  ) then
+            if (halo%ewBoundaryType == 'zero_gradient'  ) then
+               do j = jlo-nghost,jhi+nghost
+               do i = 1,nghost
                   array(i,j${xtrdims},iblk) = array(ilo,j${xtrdims},iblk)
-               elseif (halo%ewBoundaryType == 'neumann'  ) then
+               enddo
+               enddo
+            elseif (halo%ewBoundaryType == 'linear_extrap'  ) then
+               do j = jlo-nghost,jhi+nghost
+               do i = 1,nghost
                   array(i,j${xtrdims},iblk) = array(ilo,j${xtrdims},iblk) - &
                      real((nghost-i+1),dbl_kind)*(array(ilo+1,j${xtrdims},iblk)-array(ilo,j${xtrdims},iblk))
-               endif
-            enddo
-            enddo
+               enddo
+               enddo
+            endif
          endif
 
          if (iblock == nblocks_x) then              ! east edge
-            do j = 1,ny_block
-            do i = 1,nghost
-               if (halo%ewBoundaryType == 'dirichlet'  ) then
+            if (halo%ewBoundaryType == 'zero_gradient'  ) then
+               do j = jlo-nghost,jhi+nghost
+               do i = 1,nghost
                   array(ihi+i,j${xtrdims},iblk) = array(ihi,j${xtrdims},iblk)
-               elseif (halo%ewBoundaryType == 'neumann') then
+               enddo
+               enddo
+            elseif (halo%ewBoundaryType == 'linear_extrap') then
+               do j = jlo-nghost,jhi+nghost
+               do i = 1,nghost
                   array(ihi+i,j${xtrdims},iblk) = array(ihi,j${xtrdims},iblk) + &
                      real((i),dbl_kind)*(array(ihi,j${xtrdims},iblk)-array(ihi-1,j${xtrdims},iblk))
-               endif
-            enddo
-            enddo
+               enddo
+               enddo
+            endif
          endif
 
          if (jblock == 1) then                      ! south edge
-            do j = 1,nghost
-            do i = 1,nx_block
-               if (halo%nsBoundaryType == 'dirichlet'  ) then
+            if (halo%nsBoundaryType == 'zero_gradient'  ) then
+               do j = 1,nghost
+               do i = ilo-nghost,ihi+nghost
                   array(i,j${xtrdims},iblk) = array(i,jlo${xtrdims},iblk)
-               elseif (halo%nsBoundaryType == 'neumann'  ) then
+               enddo
+               enddo
+            elseif (halo%nsBoundaryType == 'linear_extrap'  ) then
+               do j = 1,nghost
+               do i = ilo-nghost,ihi+nghost
                   array(i,j${xtrdims},iblk) = array(i,jlo${xtrdims},iblk) - &
                      real((nghost-j+1),dbl_kind)*(array(i,jlo+1${xtrdims},iblk)-array(i,jlo${xtrdims},iblk))
-               endif
-            enddo
-            enddo
+               enddo
+               enddo
+            endif
          endif
 
          if (jblock == nblocks_y) then              ! north edge
-            do j = 1,nghost
-            do i = 1,nx_block
-               if (halo%nsBoundaryType == 'dirichlet'  ) then
+            if (halo%nsBoundaryType == 'zero_gradient'  ) then
+               do j = 1,nghost
+               do i = ilo-nghost,ihi+nghost
                   array(i,jhi+j${xtrdims},iblk) = array(i,jhi${xtrdims},iblk)
-               elseif (halo%nsBoundaryType == 'neumann') then
+               enddo
+               enddo
+            elseif (halo%nsBoundaryType == 'linear_extrap') then
+               do j = 1,nghost
+               do i = ilo-nghost,ihi+nghost
                   array(i,jhi+j${xtrdims},iblk) = array(i,jhi${xtrdims},iblk) + &
                      real((j),dbl_kind)*(array(i,jhi${xtrdims},iblk)-array(i,jhi-1${xtrdims},iblk))
-               endif
-            enddo
-            enddo
+               enddo
+               enddo
+            endif
          endif
 
       enddo  ! iblk
-   endif  ! dirichlet or neumann
+   endif  ! zero_gradient or linear_extrap
 
 !-----------------------------------------------------------------------
 !
@@ -836,8 +852,8 @@ cat <<EOFL > ${file}
    endif
 
    ! tcraig, for most BCs, the mod is not needed, iarray will always be 0 or 1.
-   ! for neumann, the bc is not a simple copy, it's a computation from neighbor
-   ! points.  Use the mod to provide a more consistent result for neumann bcs for
+   ! for linear_extrap, the bc is not a simple copy, it's a computation from neighbor
+   ! points.  Use the mod to provide a more consistent result for linear_extrap bcs for
    ! logicals.
    array = .false.
    where (mod(abs(iarray),2) /= 0) array = .true.

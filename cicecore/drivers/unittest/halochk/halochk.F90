@@ -565,19 +565,19 @@
                      endif
                   endif
 
-                  ! dirichlet and newmann edges then corners
-                  if (ew_boundary_type == 'dirichlet' .or. ew_boundary_type == 'neumann') then
-                     wgt1 = c1  ! dirichlet
+                  ! zero_gradient and newmann edges then corners
+                  if (ew_boundary_type == 'zero_gradient' .or. ew_boundary_type == 'linear_extrap') then
+                     wgt1 = c1  ! zero_gradient
                      wgt2 = c0
                      if (this_block%i_glob(ib) == 1         .and. i < ib) then  ! West
-                        if (ew_boundary_type == 'neumann') then
+                        if (ew_boundary_type == 'linear_extrap') then
                            wgt1 = real(ib-i+1,dbl_kind)
                            wgt2 = real(ib-i  ,dbl_kind)   ! wgt1 - 1
                         endif
                         cichk = wgt1*cidata_bas(ib,j,k1,k2,iblock) - wgt2*cidata_bas(ib+1,j,k1,k2,iblock)
                         cjchk = wgt1*cjdata_bas(ib,j,k1,k2,iblock) - wgt2*cjdata_bas(ib+1,j,k1,k2,iblock)
                      elseif (this_block%i_glob(ie) == nx_global .and. i > ie) then  ! East
-                        if (ew_boundary_type == 'neumann') then
+                        if (ew_boundary_type == 'linear_extrap') then
                            wgt1 = real(i-ie+1,dbl_kind)
                            wgt2 = real(i-ie  ,dbl_kind)   ! wgt1 - 1
                         endif
@@ -586,18 +586,18 @@
                      endif
                   endif
 
-                  if (ns_boundary_type == 'dirichlet' .or. ns_boundary_type == 'neumann') then
-                     wgt1 = c1   ! dirichlet
+                  if (ns_boundary_type == 'zero_gradient' .or. ns_boundary_type == 'linear_extrap') then
+                     wgt1 = c1   ! zero_gradient
                      wgt2 = c0
                      if (this_block%j_glob(jb) == 1         .and. j < jb) then  ! South
-                        if (ns_boundary_type == 'neumann') then
+                        if (ns_boundary_type == 'linear_extrap') then
                            wgt1 = real(jb-j+1,dbl_kind)
                            wgt2 = real(jb-j  ,dbl_kind)   ! wgt1 - 1
                         endif
                         cichk = wgt1*cidata_bas(i,jb,k1,k2,iblock) - wgt2*cidata_bas(i,jb+1,k1,k2,iblock)
                         cjchk = wgt1*cjdata_bas(i,jb,k1,k2,iblock) - wgt2*cjdata_bas(i,jb+1,k1,k2,iblock)
                      elseif (this_block%j_glob(je) == ny_global .and. j > je) then  ! North
-                        if (ns_boundary_type == 'neumann') then
+                        if (ns_boundary_type == 'linear_extrap') then
                            wgt1 = real(j-je+1,dbl_kind)
                            wgt2 = real(j-je  ,dbl_kind)   ! wgt1 - 1
                         endif
@@ -606,14 +606,14 @@
                      endif
 
                      ! Boundary Corners, can come at it either direction, do ns then ew
-                     if (ew_boundary_type == 'dirichlet' .or. ew_boundary_type == 'neumann') then
-                        wgt1 = c1   ! dirichlet
+                     if (ew_boundary_type == 'zero_gradient' .or. ew_boundary_type == 'linear_extrap') then
+                        wgt1 = c1   ! zero_gradient
                         wgt2 = c0
                         found = .false.
                         if (this_block%i_glob(ib) == 1         .and. i < ib) then
                            if (this_block%j_glob(jb) == 1         .and. j < jb) then
                               found = .true.  ! Southwest
-                              if (ns_boundary_type == 'neumann') then
+                              if (ns_boundary_type == 'linear_extrap') then
                                  wgt1 = real(jb-j+1,dbl_kind)
                                  wgt2 = real(jb-j  ,dbl_kind)   ! wgt1 - 1
                               endif
@@ -623,7 +623,7 @@
                               cjchk2 = wgt1*cjdata_bas(ib+1,jb,k1,k2,iblock) - wgt2*cjdata_bas(ib+1,jb+1,k1,k2,iblock)
                            elseif (this_block%j_glob(je) == ny_global .and. j > je) then
                               found = .true.  ! Northwest
-                              if (ns_boundary_type == 'neumann') then
+                              if (ns_boundary_type == 'linear_extrap') then
                                  wgt1 = real(j-je+1,dbl_kind)
                                  wgt2 = real(j-je  ,dbl_kind)   ! wgt1 - 1
                               endif
@@ -633,9 +633,9 @@
                               cjchk2 = wgt1*cjdata_bas(ib+1,je,k1,k2,iblock) - wgt2*cjdata_bas(ib+1,je-1,k1,k2,iblock)
                            endif
                            if (found) then
-                              wgt1 = c1   ! dirichlet
+                              wgt1 = c1   ! zero_gradient
                               wgt2 = c0
-                              if (ew_boundary_type == 'neumann') then
+                              if (ew_boundary_type == 'linear_extrap') then
                                  wgt1 = real(ib-i+1,dbl_kind)
                                  wgt2 = real(ib-i  ,dbl_kind)   ! wgt1 - 1
                               endif
@@ -645,7 +645,7 @@
                         elseif (this_block%i_glob(ie) == nx_global .and. i > ie) then
                            if (this_block%j_glob(jb) == 1         .and. j < jb) then
                               found = .true.  ! Southeast
-                              if (ns_boundary_type == 'neumann') then
+                              if (ns_boundary_type == 'linear_extrap') then
                                  wgt1 = real(jb-j+1,dbl_kind)
                                  wgt2 = real(jb-j  ,dbl_kind)   ! wgt1 - 1
                               endif
@@ -655,7 +655,7 @@
                               cjchk2 = wgt1*cjdata_bas(ie-1,jb,k1,k2,iblock) - wgt2*cjdata_bas(ie-1,jb+1,k1,k2,iblock)
                            elseif (this_block%j_glob(je) == ny_global .and. j > je) then
                               found = .true.  ! Northeast
-                              if (ns_boundary_type == 'neumann') then
+                              if (ns_boundary_type == 'linear_extrap') then
                                  wgt1 = real(j-je+1,dbl_kind)
                                  wgt2 = real(j-je  ,dbl_kind)   ! wgt1 - 1
                               endif
@@ -665,9 +665,9 @@
                               cjchk2 = wgt1*cjdata_bas(ie-1,je,k1,k2,iblock) - wgt2*cjdata_bas(ie-1,je-1,k1,k2,iblock)
                            endif
                            if (found) then
-                              wgt1 = c1   ! dirichlet
+                              wgt1 = c1   ! zero_gradient
                               wgt2 = c0
-                              if (ew_boundary_type == 'neumann') then
+                              if (ew_boundary_type == 'linear_extrap') then
                                  wgt1 = real(i-ie+1,dbl_kind)
                                  wgt2 = real(i-ie  ,dbl_kind)   ! wgt1 - 1
                               endif
@@ -676,7 +676,7 @@
                            endif
                         endif
                      endif
-                  endif  ! dirichlet, neumann
+                  endif  ! zero_gradient, linear_extrap
 
                   if (index(halofld,'STRESS') > 0) then
                      ! only updates on tripole zipper for tripole grids

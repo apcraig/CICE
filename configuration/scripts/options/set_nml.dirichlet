@@ -1,3 +1,0 @@
-ew_boundary_type = 'dirichlet'
-ns_boundary_type = 'dirichlet'
-restart_ext = .true.

@@ -21,8 +21,8 @@ smoke          gbox80  2x4        boxnodyn
 smoke          gbox80  4x2        boxclosed,boxforcee,run1day
 smoke          gbox80  4x1        boxclosed,boxforcene,run1day,kmtislands
 smoke          gbox80  4x2        boxopen,kmtislands,boxforcee,run1day
-smoke          gbox80  6x2        boxopen,kmtislands,boxforcee,run1day,dirichlet
-smoke          gbox80  8x1        boxopen,kmtislands,boxforcee,run1day,neumann
+smoke          gbox80  6x2        boxopen,kmtislands,boxforcee,run1day,bczerogradient
+smoke          gbox80  8x1        boxopen,kmtislands,boxforcee,run1day,bclinearextrap
 smoke          gbox80  2x2        boxclosed,boxforcen,run1day,vargrid
 smoke          gx3     1x1x25x29  reprosum,run10day,dwblockall  smoke_gx3_1x1x100x116_reprosum_run10day
 smoke          gx3     1x1x5x4    reprosum,run10day,dwblockall  smoke_gx3_1x1x100x116_reprosum_run10day
@@ -46,8 +46,8 @@ smoke          gbox80  2x4        boxnodyn,gridcd
 smoke          gbox80  4x2        boxclosed,boxforcee,run1day,gridcd
 smoke          gbox80  4x1        boxclosed,boxforcene,run1day,kmtislands,gridcd
 smoke          gbox80  4x2        boxopen,kmtislands,boxforcee,run1day,gridcd
-smoke          gbox80  6x2        boxopen,kmtislands,boxforcee,run1day,dirichlet,gridcd
-smoke          gbox80  8x1        boxopen,kmtislands,boxforcee,run1day,neumann,gridcd
+smoke          gbox80  6x2        boxopen,kmtislands,boxforcee,run1day,bczerogradient,gridcd
+smoke          gbox80  8x1        boxopen,kmtislands,boxforcee,run1day,bclinearextrap,gridcd
 smoke          gbox80  2x2        boxclosed,boxforcen,run1day,vargrid,gridcd
 smoke          gx3     1x1x25x29  reprosum,run10day,dwblockall,gridcd  smoke_gx3_1x1x100x116_gridcd_reprosum_run10day
 smoke          gx3     1x1x5x4    reprosum,run10day,dwblockall,gridcd  smoke_gx3_1x1x100x116_gridcd_reprosum_run10day
@@ -71,8 +71,8 @@ smoke          gbox80  2x4        boxnodyn,gridc
 smoke          gbox80  4x2        boxclosed,boxforcee,run1day,gridc
 smoke          gbox80  4x1        boxclosed,boxforcene,run1day,kmtislands,gridc
 smoke          gbox80  4x2        boxopen,kmtislands,boxforcee,run1day,gridc
-smoke          gbox80  6x2        boxopen,kmtislands,boxforcee,run1day,dirichlet,gridc
-smoke          gbox80  8x1        boxopen,kmtislands,boxforcee,run1day,neumann,gridc
+smoke          gbox80  6x2        boxopen,kmtislands,boxforcee,run1day,bczerogradient,gridc
+smoke          gbox80  8x1        boxopen,kmtislands,boxforcee,run1day,bclinearextrap,gridc
 smoke          gbox80  2x2        boxclosed,boxforcen,run1day,vargrid,gridc
 smoke          gx3     1x1x25x29  reprosum,run10day,dwblockall,gridc  smoke_gx3_1x1x100x116_gridc_reprosum_run10day
 smoke          gx3     1x1x5x4    reprosum,run10day,dwblockall,gridc  smoke_gx3_1x1x100x116_gridc_reprosum_run10day

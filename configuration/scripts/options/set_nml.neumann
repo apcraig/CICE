@@ -1,3 +1,0 @@
-ew_boundary_type = 'neumann'
-ns_boundary_type = 'neumann'
-restart_ext = .true.

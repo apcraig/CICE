@@ -1894,7 +1894,7 @@
             case('cyclic')
                G_T(nx_global+1,:) = G_T(1,:)
                G_N(nx_global+1,:) = G_N(1,:)
-            case('open','dirichlet','neumann')
+            case('open','zero_gradient','linear_extrap')
                do j=1, ny_global+1
                   G_T(nx_global+1,j) = 2 * G_T(nx_global, j) - G_T(nx_global-1, j)
                   G_N(nx_global+1,j) = 2 * G_N(nx_global, j) - G_N(nx_global-1, j)
@@ -1917,7 +1917,7 @@
             case('cyclic')
                G_T(:,ny_global+1) = G_T(:,1)
                G_E(:,ny_global+1) = G_E(:,1)
-            case('open','dirichlet','neumann')
+            case('open','zero_gradient','linear_extrap')
                do i = 1, nx_global+1
                   G_T(i,ny_global+1) = 2 * G_T(i, ny_global) - G_T(i, ny_global-1)
                   G_E(i,ny_global+1) = 2 * G_E(i, ny_global) - G_E(i, ny_global-1)
@@ -2081,7 +2081,7 @@
                   G_dxU(nx_global,j) = work_mom(2*nx_global, jm2) + work_mom(1, jm2)     !dxU
                   jm1 = jm1 + 2 ; jm2 = jm2 + 2
                enddo
-            case('open','dirichlet','neumann')
+            case('open','zero_gradient','linear_extrap')
                do j = 1, ny_global
                   G_dxE(nx_global,j) = 4*work_mom(2*nx_global, jm1) - 2*work_mom(2*nx_global-1, jm1)     !dxE
                   G_dxU(nx_global,j) = 4*work_mom(2*nx_global, jm2) - 2*work_mom(2*nx_global-1, jm2)     !dxU
@@ -2182,7 +2182,7 @@
                   G_dyU(i,ny_global) = work_mom(im2, 2*ny_global) + work_mom(im2, 1)                              !dyU
                   im1 = im1 + 2 ; im2 = im2 + 2
                enddo
-            case('open','dirichlet','neumann')
+            case('open','zero_gradient','linear_extrap')
                do i = 1, nx_global
                   G_dyN(i,ny_global) = 4*work_mom(im1, 2*ny_global) - 2*work_mom(im1, 2*ny_global-1)               !dyN
                   G_dyU(i,ny_global) = 4*work_mom(im2, 2*ny_global) - 2*work_mom(im2, 2*ny_global-1)               !dyU
@@ -2297,7 +2297,7 @@
                case('cyclic')
                   G_uarea(nx_global,j) = work_mom(im2, jm2) + work_mom(im2, jm3) &
                                        + work_mom(im3, jm2) + work_mom(im3, jm3)
-               case('open','dirichlet','neumann')
+               case('open','zero_gradient','linear_extrap')
                   G_uarea(nx_global,j) = 4*work_mom(im2, jm2) + 4*work_mom(im2, jm3) &
                                        - 2*work_mom(im1, jm2) - 2*work_mom(im1, jm3)
             end select
@@ -2317,7 +2317,7 @@
                case('cyclic')
                   G_uarea(i,ny_global) = work_mom(im2, jm2) + work_mom(im2, jm3) &
                                        + work_mom(im3, jm2) + work_mom(im3, jm3)
-               case('open','dirichlet','neumann')
+               case('open','zero_gradient','linear_extrap')
                   G_uarea(i,ny_global) = 4*work_mom(im2, jm2) + 4*work_mom(im3, jm2) &
                                        - 2*work_mom(im2, jm1) - 2*work_mom(im3, jm1)
             end select
@@ -2337,22 +2337,22 @@
                                           + work_mom(im2, 1) + work_mom(1, 1)
          else if ((trim(ns_boundary_type) == 'cyclic') .and. &
                   (trim(ew_boundary_type) == 'open' .or. &
-                   trim(ew_boundary_type) == 'dirichlet' .or. &
-                   trim(ew_boundary_type) == 'neumann')) then
+                   trim(ew_boundary_type) == 'zero_gradient' .or. &
+                   trim(ew_boundary_type) == 'linear_extrap')) then
             G_uarea(nx_global,ny_global) = 4*work_mom(im2, jm2) + 4*work_mom(im2, 1) &
                                           - 2*work_mom(im1, jm2) - 2*work_mom(im1, 1)
          else if ((trim(ns_boundary_type) == 'open' .or. &
-                   trim(ns_boundary_type) == 'dirichlet' .or. &
-                   trim(ns_boundary_type) == 'neumann') .and. &
+                   trim(ns_boundary_type) == 'zero_gradient' .or. &
+                   trim(ns_boundary_type) == 'linear_extrap') .and. &
                   (trim(ew_boundary_type) == 'cyclic')) then
             G_uarea(nx_global,ny_global) = 4*work_mom(im2, jm2) + 4*work_mom(1, jm2) &
                                           - 2*work_mom(im2, jm1) - 2*work_mom(1, jm1)
          else if ((trim(ns_boundary_type) == 'open' .or. &
-                   trim(ns_boundary_type) == 'dirichlet' .or. &
-                   trim(ns_boundary_type) == 'neumann') .and. &
+                   trim(ns_boundary_type) == 'zero_gradient' .or. &
+                   trim(ns_boundary_type) == 'linear_extrap') .and. &
                   (trim(ew_boundary_type) == 'open' .or. &
-                   trim(ew_boundary_type) == 'dirichlet' .or. &
-                   trim(ew_boundary_type) == 'neumann')) then
+                   trim(ew_boundary_type) == 'zero_gradient' .or. &
+                   trim(ew_boundary_type) == 'linear_extrap')) then
             G_uarea(nx_global,ny_global) = 8*work_mom(im2, jm2) &
                                  - 2*work_mom(im2, jm1) - 2*work_mom(im1, jm2)
          endif
@@ -3297,7 +3297,7 @@
             case('cyclic')
                array(:,n)                  = array(:,ny_global+n)
                array(:,ny_global+nghost+n) = array(:,nghost+n)
-            case('open','dirichlet','neumann')
+            case('open','zero_gradient','linear_extrap')
                array(:,n)                  = array(:,nghost+1)
                array(:,ny_global+nghost+n) = array(:,ny_global+nghost)
             case default
@@ -3311,7 +3311,7 @@
             case('cyclic')
                array(n                 ,:) = array(nx_global+n,:)
                array(nx_global+nghost+n,:) = array(nghost+n   ,:)
-            case('open','dirichlet','neumann')
+            case('open','zero_gradient','linear_extrap')
                array(n                 ,:) = array(nghost+1        ,:)
                array(nx_global+nghost+n,:) = array(nx_global+nghost,:)
             case default

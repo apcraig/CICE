@@ -61,7 +61,8 @@ The recommended usage is described below.
   rm tmpfile
   diff ice_boundary.F90 ice_boundary.F90.new
 
-  ! If OK, then
+  ! There may be some extra blank lines or subroutine separators that need to be cleaned up at the
+  ! start or end of the replacement code, but then
 
   mv ice_boundary.F90.new ice_boundary.F90
 
