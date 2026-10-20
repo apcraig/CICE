@@ -42,12 +42,12 @@ jobs:
           echo "SDKROOT=$(xcrun --sdk macosx --show-sdk-path)" >> $GITHUB_ENV
           echo "xcrun --show-sdk-path: $(xcrun --show-sdk-path)"
           echo "xcode-select -p: $(xcode-select -p)"
-      - name: install linux csh
+      - name: install linux tcsh
         shell: /bin/bash {0}
         if: contains( matrix.envdef, 'linux')
         run: |
           sudo apt-get update
-          sudo apt-get install -y csh
+          sudo apt-get install -y tcsh
       - name: system info
         shell: /bin/bash {0}
         run: |
