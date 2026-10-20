@@ -139,7 +139,6 @@ jobs:
         shell: /bin/csh -e {0}
         run: |
           cd $HOME/cice
-          sleep 1  # cice.setup caselist name has 1s resolution, avoid collision with previous step
           ./cice.setup -m conda -e ${{ matrix.envdef }} --test unittest --pes 2x1 -s helloworld --testid hw01
           cd *helloworld*hw01
           ./cice.build
