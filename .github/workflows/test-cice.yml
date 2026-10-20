@@ -26,23 +26,13 @@ jobs:
     strategy:
       fail-fast: false   # <-- Keeps other matrix jobs running if one fails
       matrix:
-#        os: [macos-latest, ubuntu-latest]
-        os: [macos-latest]
-#        os: [macos-13]
-#        os: [ubuntu-latest]
-        include: 
-#          - os: macos-13
-#            envdef: macos
-#            minicond: Miniconda3-latest-MacOSX-x86_64.sh
-#            testsuites: "travis_suite"
+        include:
           - os: macos-latest
             envdef: macos
-            minicond: Miniconda3-latest-MacOSX-arm64.sh
             testsuites: "travis_suite"
-#          - os: ubuntu-latest
-#            envdef: linux
-#            minicond: Miniconda3-latest-Linux-x86_64.sh
-#            testsuites: "travis_suite"
+          - os: ubuntu-latest
+            envdef: linux
+            testsuites: "travis_suite"
     steps:
       - name: install macos xcode
         shell: /bin/bash {0}
@@ -72,12 +62,6 @@ jobs:
           echo "GITHUB_WORKSPACE: $GITHUB_WORKSPACE"
           echo "OS: ${{ matrix.os }}"
           echo "ENVDEF: ${{ matrix.envdef }}"
-          echo "MINICOND: ${{ matrix.minicond }}"
-      - name : install miniconda
-        shell: /bin/bash {0}
-        run: |
-          wget https://repo.anaconda.com/miniconda/${{ matrix.minicond }} -O ~/miniconda.sh
-          bash ~/miniconda.sh -b -p $HOME/miniconda
       - name: clone
         uses: actions/checkout@v4
         with:
@@ -86,6 +70,7 @@ jobs:
         shell: /bin/bash {0}
         run: |
            ln -s "${GITHUB_WORKSPACE}/../CICE" "${HOME}/cice"
+           mkdir -p $HOME/cice-dirs/runs $HOME/cice-dirs/baseline $HOME/cice-dirs/input
 #           ls -al ${HOME}/
 #           ls -al ${GITHUB_WORKSPACE}/
       - name: check for tabs
@@ -104,19 +89,20 @@ jobs:
           end
           exit $cnt
       - name: setup conda env
+        id: micromamba
+        uses: mamba-org/setup-micromamba@v3
+        with:
+          environment-file: configuration/scripts/machines/environment.yml
+          cache-environment: true
+          init-shell: none
+      - name: activate conda env
         shell: /bin/bash {0}
         run: |
-          cd $HOME && mkdir -p cice-dirs/runs cice-dirs/baseline cice-dirs/input
-          source $HOME/miniconda/bin/activate
-          conda init tcsh
-          cd $HOME/cice
-          conda env create -f configuration/scripts/machines/environment.yml
+          echo "CONDA_PREFIX=${{ steps.micromamba.outputs.environment-path }}" >> $GITHUB_ENV
+          echo "${{ steps.micromamba.outputs.environment-path }}/bin" >> $GITHUB_PATH
       - name: check conda env
         shell: /bin/csh -e {0}
         run: |
-          conda activate cice
-          which clang
-          clang --version
           which gfortran
           gfortran --version
           which mpicc
