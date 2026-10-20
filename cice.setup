@@ -417,6 +417,16 @@ if ( ${tdir} != ${spval} ) then
   set tsdir = ${tdir}
 endif
 if (-e ${tsfile}) then
+  # tsfile name has 1s resolution, a previous cice.setup used this second
+  sleep 1
+  set sdate = `date -u "+%y%m%d"`
+  set stime = `date -u "+%H%M%S"`
+  set tsfile = "caselist.${sdate}-${stime}"
+  if ( ${dosuite} == 1 ) then
+    set tsfile = "testsuite.${testid}.${sdate}-${stime}.list"
+  endif
+endif
+if (-e ${tsfile}) then
   echo "${0}: ERROR in tsfile, this should never happen"
   exit -1
 endif
