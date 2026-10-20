@@ -416,14 +416,8 @@ endif
 if ( ${tdir} != ${spval} ) then
   set tsdir = ${tdir}
 endif
-# tsfile has 1s resolution, wait for a new timestamp if a previous cice.setup used this one
-set tscnt = 0
-while (-e ${tsfile})
-  @ tscnt = $tscnt + 1
-  if ($tscnt > 5) then
-    echo "${0}: ERROR in tsfile, ${tsfile} already exists"
-    exit -1
-  endif
+if (-e ${tsfile}) then
+  # tsfile name has 1s resolution, a previous cice.setup used this second
   sleep 1
   set sdate = `date -u "+%y%m%d"`
   set stime = `date -u "+%H%M%S"`
@@ -431,7 +425,11 @@ while (-e ${tsfile})
   if ( ${dosuite} == 1 ) then
     set tsfile = "testsuite.${testid}.${sdate}-${stime}.list"
   endif
-end
+endif
+if (-e ${tsfile}) then
+  echo "${0}: ERROR in tsfile, this should never happen"
+  exit -1
+endif
 
 set remote = `git remote -v | grep -i origin | grep -i push | sed "s|.*\(https.*\)\s.*|\1|g"`
 set branch = `git status | grep -i "on branch" | sed 's|^.*ranch\s*\(\S*\)$|\1|g'`
